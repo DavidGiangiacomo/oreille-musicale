@@ -1,0 +1,20 @@
+# Dépendances et sorties de build
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Journaux
+npm-debug.log*
+*.log
+
+# Éditeurs et systèmes
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Variables locales
+.env
+.env.*
+!.env.example
