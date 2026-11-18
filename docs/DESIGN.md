@@ -848,7 +848,7 @@ oreille-musicale/
 - Politique de confidentialité courte (exigée par le Play Store).
 - En-têtes de sécurité (CSP) sur l'hébergement web ; dépendances surveillées (Dependabot).
 - Crédits des échantillons et des bibliothèques dans l'appli et dans un fichier dédié.
-- **Code open source** (licence à choisir, §14.2) ; échantillons et contenus sous licences compatibles.
+- **Code sous licence GNU GPL v3 ou ultérieure** (fichier `LICENSE`) ; échantillons et contenus sous licences compatibles (CC0, CC BY), crédités.
 - **Dons** : un lien discret (GitHub Sponsors, Ko-fi ou Liberapay) dans l'écran « À propos », jamais pendant les exercices. Avant une publication sur le Play Store, vérifier ses règles de paiement ; au besoin, n'afficher le lien que dans la version web.
 
 ---
@@ -966,19 +966,19 @@ On chante sur la syllabe de son choix (« la », noms des notes, numéros de deg
 | Public | Appli conçue pour pouvoir être publiée un jour ; peu d'effort au début sur la traduction et l'accueil |
 | Framework | React + Vite (§10.2) |
 | Hébergement web | GitHub Pages pour commencer (§10.10) ; avec un compte GitHub gratuit, le dépôt doit être public |
-| Licence et modèle | Open source et gratuit, avec éventuellement un lien de dons (§10.11) |
+| Licence et modèle | Logiciel libre sous GNU GPL v3 ou ultérieure, gratuit, avec éventuellement un lien de dons (§10.11) |
+| Dépôt | Public ; branche principale `main`, chaque tâche passe par une pull request |
 
 ### 14.2 Questions ouvertes
 
-1. **Licence** : MIT (permissive : chacun peut réutiliser le code, y compris dans une appli fermée) ou GPL-3.0 (les versions modifiées et redistribuées doivent rester libres) ?
-2. **Synchronisation web ↔ Android** dès la v1, ou l'export/import suffit-il au début ? Par défaut : export/import.
-3. **Distribution Android** : Play Store ou APK installé directement ?
-4. **Terminologie** : convention française par défaut (Do3 central, 4J, 7M), d'accord ?
-5. **Ordre pédagogique** : l'ordre proposé (3M-5J-8J, puis 4J, 3m, 2M… ; mixolydien et dorien avant lydien et phrygien) te convient-il ? Les accords suspendus ont-ils leur place dès la v1 ?
-6. **Gammes** : la sélection v1 (§6.3) te suffit-elle, ou faut-il ajouter dès maintenant des gammes plus rares (par tons, diminuée, modes de la mineure mélodique) ? Et pour la mineure mélodique : forme classique (elle redescend en mineure naturelle, comme en formation musicale) ou forme jazz (identique dans les deux sens) ?
-7. **Exercices chantés** : les utiliserais-tu plutôt au casque ? Faut-il aussi prévoir de répondre en jouant d'un instrument ?
-8. **Timbres** souhaités après le piano (guitare, cordes, voix…) ?
-9. **Nom** de l'appli : « Oreille musicale » ?
+1. **Synchronisation web ↔ Android** dès la v1, ou l'export/import suffit-il au début ? Par défaut : export/import.
+2. **Distribution Android** : Play Store ou APK installé directement ?
+3. **Terminologie** : convention française par défaut (Do3 central, 4J, 7M), d'accord ?
+4. **Ordre pédagogique** : l'ordre proposé (3M-5J-8J, puis 4J, 3m, 2M… ; mixolydien et dorien avant lydien et phrygien) te convient-il ? Les accords suspendus ont-ils leur place dès la v1 ?
+5. **Gammes** : la sélection v1 (§6.3) te suffit-elle, ou faut-il ajouter dès maintenant des gammes plus rares (par tons, diminuée, modes de la mineure mélodique) ? Et pour la mineure mélodique : forme classique (elle redescend en mineure naturelle, comme en formation musicale) ou forme jazz (identique dans les deux sens) ?
+6. **Exercices chantés** : les utiliserais-tu plutôt au casque ? Faut-il aussi prévoir de répondre en jouant d'un instrument ?
+7. **Timbres** souhaités après le piano (guitare, cordes, voix…) ?
+8. **Nom** de l'appli : « Oreille musicale » ?
 
 ---
 
