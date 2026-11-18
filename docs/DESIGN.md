@@ -1,9 +1,9 @@
 # Oreille musicale — Document de conception
 
-> **Statut** : brouillon v0.2, à relire et valider
+> **Statut** : brouillon v0.3, à relire et valider
 > **Date** : 18 novembre 2026
 > **Objet** : application web et Android d'entraînement de l'oreille musicale (intervalles, accords, gammes et modes), avec difficulté progressive, suivi de progression et révisions espacées.
-> **Historique** : v0.1, version initiale ; v0.2, ajout des gammes et modes, et des exercices chantés prévus en v2.
+> **Historique** : v0.1, version initiale ; v0.2, ajout des gammes et modes, et des exercices chantés prévus en v2 ; v0.3, premières décisions (public, framework, hébergement, licence).
 
 ## Sommaire
 
@@ -20,7 +20,7 @@
 11. [Évolution : exercices chantés (v2)](#11-évolution--exercices-chantés-v2)
 12. [Plan de réalisation](#12-plan-de-réalisation)
 13. [Risques](#13-risques)
-14. [Questions ouvertes](#14-questions-ouvertes)
+14. [Décisions et questions ouvertes](#14-décisions-et-questions-ouvertes)
 15. [Annexes](#15-annexes)
 
 ---
@@ -129,6 +129,7 @@ Chaque fonctionnalité doit pouvoir se rattacher à l'un de ces principes.
 | Rappels | Une notification quotidienne (Android) | Souhaitable |
 | Chansons repères | Mnémotechniques par intervalle, personnalisables | Souhaitable |
 | Timbres supplémentaires | Son pur d'abord, puis guitare, cordes, orgue… | Souhaitable |
+| Dons | Lien discret vers une page de dons (§10.11) | Souhaitable |
 
 ### 5.2 Pistes pour la suite
 
@@ -601,7 +602,7 @@ Après une erreur :
 | Domaine | Choix | Remarques |
 |---|---|---|
 | Langage | TypeScript (strict) | |
-| Interface | React + Vite | Svelte serait une alternative valable |
+| Interface | React + Vite | Choix confirmé |
 | Style | Tailwind CSS | |
 | Navigation | React Router | |
 | État | Zustand pour la séance en cours ; Dexie + `useLiveQuery` pour les données persistées | |
@@ -614,6 +615,7 @@ Après une erreur :
 | Traductions | i18next | Français d'abord |
 | Tests | Vitest, fast-check, Testing Library, Playwright | |
 | Qualité | ESLint, Prettier, GitHub Actions | |
+| Hébergement web | GitHub Pages, déployé par GitHub Actions | Dépôt public requis avec un compte GitHub gratuit |
 
 Les versions seront figées à l'initialisation du projet.
 
@@ -836,7 +838,8 @@ oreille-musicale/
 - **Tests de propriétés** (fast-check) : quelle que soit la graine, une réalisation respecte son registre, la bonne réponse figure parmi les choix, etc.
 - **Tests de composants** (Testing Library) et **de bout en bout** (Playwright) avec un moteur audio factice et une horloge simulée : premier lancement → étape 1 → validation → révision le lendemain.
 - **Recette audio manuelle** : Chrome, Firefox et Safari sur ordinateur ; un Android d'entrée de gamme et un de milieu de gamme.
-- **Intégration continue** (GitHub Actions) : lint, typage, tests et build à chaque push ; déploiement web automatique depuis `main` ; APK de test en artefact.
+- **Intégration continue** (GitHub Actions) : lint, typage, tests et build à chaque push ; déploiement automatique sur GitHub Pages depuis la branche principale ; APK de test en artefact.
+- **GitHub Pages** : l'appli est servie sous `/oreille-musicale/` (option `base` de Vite), et le serveur ne sait pas rediriger les routes vers `index.html` : routage par `#` (HashRouter) ou copie d'`index.html` en `404.html`.
 - **Budgets** : JS initial ≤ 250 Ko compressé ; échantillons de piano ≤ 3 Mo ; son audible ≤ 150 ms après le geste ; appli interactive en moins de 3 s sur un Android de milieu de gamme.
 
 ### 10.11 Confidentialité, sécurité et licences
@@ -845,6 +848,8 @@ oreille-musicale/
 - Politique de confidentialité courte (exigée par le Play Store).
 - En-têtes de sécurité (CSP) sur l'hébergement web ; dépendances surveillées (Dependabot).
 - Crédits des échantillons et des bibliothèques dans l'appli et dans un fichier dédié.
+- **Code open source** (licence à choisir, §14.2) ; échantillons et contenus sous licences compatibles.
+- **Dons** : un lien discret (GitHub Sponsors, Ko-fi ou Liberapay) dans l'écran « À propos », jamais pendant les exercices. Avant une publication sur le Play Store, vérifier ses règles de paiement ; au besoin, n'afficher le lien que dans la version web.
 
 ---
 
@@ -922,14 +927,14 @@ On chante sur la syllabe de son choix (« la », noms des notes, numéros de deg
 
 | Jalon | Contenu | Terminé quand… |
 |---|---|---|
-| **J0 · Fondations** | Projet Vite + React + TS, outillage, CI, déploiement de prévisualisation ; `core/theory` testé ; prototype audio (son pur + piano) ; **essai sur un vrai téléphone Android via Capacitor** pour lever au plus tôt le risque audio | Un bouton joue un intervalle aléatoire correctement nommé, sur le web et sur Android |
+| **J0 · Fondations** | Projet Vite + React + TS, outillage, CI, déploiement sur GitHub Pages, licence ; `core/theory` testé ; prototype audio (son pur + piano) ; **essai sur un vrai téléphone Android via Capacitor** pour lever au plus tôt le risque audio | Un bouton joue un intervalle aléatoire correctement nommé, sur le web et sur Android |
 | **J1 · Premier exercice** | Génération d'intervalles, écran d'exercice, feedback contrastif, journal des réponses | Une série de 20 questions est jouable de bout en bout |
 | **J2 · Parcours Intervalles** | Curriculum en grille, 4 phases, déblocages, écran Parcours, accueil | On progresse de l'étape 1 à 10 en ascendant |
 | **J3 · Révisions** | FSRS, notation automatique, séance de révision, révisions implicites, matrice de confusion, duels, séance du jour | Avec une horloge simulée, les compétences reviennent aux bonnes dates |
 | **J4 · Accords** | Triades, septièmes, renversements | Les trois parcours d'accords sont jouables |
 | **J5 · Gammes et modes** | Génération des gammes, bourdon, mélodies modales, parcours Gammes et Modes | Les deux parcours sont jouables, note caractéristique mise en évidence dans le feedback |
 | **J6 · Android et hors-ligne** | PWA, build Capacitor, notifications, export/import, test fermé | L'appli s'installe et fonctionne en mode avion |
-| **J7 · Finitions** | Tests de positionnement, chansons repères, statistiques complètes, accessibilité, autres timbres | Version 1.0 |
+| **J7 · Finitions** | Tests de positionnement, chansons repères, statistiques complètes, accessibilité, autres timbres, lien de dons | Version 1.0 |
 
 **Après la v1** : la v2 commencera par un prototype de détection de hauteur sur plusieurs téléphones (voix graves et aiguës, pièce calme et pièce bruyante) avant de construire les exercices chantés (§11).
 
@@ -952,20 +957,28 @@ On chante sur la syllabe de son choix (« la », noms des notes, numéros de deg
 
 ---
 
-## 14. Questions ouvertes
+## 14. Décisions et questions ouvertes
 
-1. **Pour qui ?** D'abord pour toi, ou pour un public (élèves, amis, Play Store) ? Cela change l'effort sur l'accueil, la publication et la traduction.
-2. **Synchronisation web ↔ Android** dès la v1, ou l'export/import suffit-il au début ?
-3. **Framework** : React te convient-il, ou as-tu une préférence (Svelte, Vue…) ?
-4. **Hébergement web** : GitHub Pages, Netlify, Cloudflare Pages… ?
-5. **Distribution Android** : Play Store ou APK installé directement ?
-6. **Licence et modèle** : open source ? entièrement gratuit ?
-7. **Terminologie** : convention française par défaut (Do3 central, 4J, 7M), d'accord ?
-8. **Ordre pédagogique** : l'ordre proposé (3M-5J-8J, puis 4J, 3m, 2M… ; mixolydien et dorien avant lydien et phrygien) te convient-il ? Les accords suspendus ont-ils leur place dès la v1 ?
-9. **Gammes** : la sélection v1 (§6.3) te suffit-elle, ou faut-il ajouter dès maintenant des gammes plus rares (par tons, diminuée, modes de la mineure mélodique) ? Et pour la mineure mélodique : forme classique (elle redescend en mineure naturelle, comme en formation musicale) ou forme jazz (identique dans les deux sens) ?
-10. **Exercices chantés** : les utiliserais-tu plutôt au casque ? Faut-il aussi prévoir de répondre en jouant d'un instrument ?
-11. **Timbres** souhaités après le piano (guitare, cordes, voix…) ?
-12. **Nom** de l'appli : « Oreille musicale » ?
+### 14.1 Décisions prises
+
+| Sujet | Décision |
+|---|---|
+| Public | Appli conçue pour pouvoir être publiée un jour ; peu d'effort au début sur la traduction et l'accueil |
+| Framework | React + Vite (§10.2) |
+| Hébergement web | GitHub Pages pour commencer (§10.10) ; avec un compte GitHub gratuit, le dépôt doit être public |
+| Licence et modèle | Open source et gratuit, avec éventuellement un lien de dons (§10.11) |
+
+### 14.2 Questions ouvertes
+
+1. **Licence** : MIT (permissive : chacun peut réutiliser le code, y compris dans une appli fermée) ou GPL-3.0 (les versions modifiées et redistribuées doivent rester libres) ?
+2. **Synchronisation web ↔ Android** dès la v1, ou l'export/import suffit-il au début ? Par défaut : export/import.
+3. **Distribution Android** : Play Store ou APK installé directement ?
+4. **Terminologie** : convention française par défaut (Do3 central, 4J, 7M), d'accord ?
+5. **Ordre pédagogique** : l'ordre proposé (3M-5J-8J, puis 4J, 3m, 2M… ; mixolydien et dorien avant lydien et phrygien) te convient-il ? Les accords suspendus ont-ils leur place dès la v1 ?
+6. **Gammes** : la sélection v1 (§6.3) te suffit-elle, ou faut-il ajouter dès maintenant des gammes plus rares (par tons, diminuée, modes de la mineure mélodique) ? Et pour la mineure mélodique : forme classique (elle redescend en mineure naturelle, comme en formation musicale) ou forme jazz (identique dans les deux sens) ?
+7. **Exercices chantés** : les utiliserais-tu plutôt au casque ? Faut-il aussi prévoir de répondre en jouant d'un instrument ?
+8. **Timbres** souhaités après le piano (guitare, cordes, voix…) ?
+9. **Nom** de l'appli : « Oreille musicale » ?
 
 ---
 
