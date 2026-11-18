@@ -2,9 +2,9 @@
 
 Application web et Android pour entraîner son oreille musicale : reconnaissance d'intervalles, d'accords, de gammes et de modes, difficulté progressive, suivi de progression et révisions espacées.
 
-**Essayer** : <https://davidgiangiacomo.github.io/oreille-musicale/> (prototype audio pour l'instant).
+**Essayer** : <https://davidgiangiacomo.github.io/oreille-musicale/> (séries de reconnaissance d'intervalles pour l'instant).
 
-Le projet en est au premier jalon. La conception est décrite dans le [document de conception](docs/DESIGN.md), et le plan de réalisation suit les [issues](https://github.com/DavidGiangiacomo/oreille-musicale/issues).
+Le projet avance jalon par jalon. La conception est décrite dans le [document de conception](docs/DESIGN.md), et le plan de réalisation suit les [issues](https://github.com/DavidGiangiacomo/oreille-musicale/issues).
 
 ## Développement
 
@@ -28,6 +28,8 @@ Le code est organisé en couches (§10.3 du document de conception) :
 
 - `src/core` : cœur métier en TypeScript pur, sans DOM, sans audio ni React. Il contient la théorie musicale et, plus tard, la génération des questions, la progression et les révisions.
 - `src/audio` : moteur audio Web Audio et échantillons.
+- `src/data` : journal des réponses et réglages, enregistrés dans le navigateur (IndexedDB, via Dexie).
+- `src/platform` : fonctions propres au web ou à Android (stockage persistant…).
 - `src/ui` : interface React.
 - `android/` : projet Android généré par Capacitor.
 
