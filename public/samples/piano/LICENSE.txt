@@ -1,0 +1,15 @@
+Échantillons de piano — Salamander Grand Piano
+================================================
+
+Auteur : Alexander Holm (piano Yamaha C5, enregistré à 48 kHz / 24 bits)
+Licence : Creative Commons Attribution 3.0 (CC BY 3.0)
+          https://creativecommons.org/licenses/by/3.0/
+Source : version publiée dans le dépôt Tone.js, dossier « salamander »
+         https://github.com/Tonejs/audio
+
+Modifications apportées pour Oreille musicale
+(script : scripts/prepare-piano-samples.mjs) :
+- sélection de 22 notes, de A1 à C7, une tous les 3 demi-tons ;
+- passage en mono, coupure à 5 secondes avec un fondu de sortie de 2 secondes ;
+- gain fixe par note pour égaliser la sonie (-25 LUFS, crête limitée à -1 dBTP) ;
+- réencodage en MP3.

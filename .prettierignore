@@ -1,0 +1,7 @@
+dist/
+coverage/
+android/
+package-lock.json
+LICENSE
+public/samples/
+docs/

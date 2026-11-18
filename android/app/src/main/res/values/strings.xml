@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Oreille musicale</string>
+    <string name="title_activity_main">Oreille musicale</string>
+    <string name="package_name">io.github.davidgiangiacomo.oreillemusicale</string>
+    <string name="custom_url_scheme">io.github.davidgiangiacomo.oreillemusicale</string>
+</resources>
