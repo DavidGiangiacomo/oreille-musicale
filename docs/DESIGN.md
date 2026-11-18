@@ -1,8 +1,9 @@
 # Oreille musicale — Document de conception
 
-> **Statut** : brouillon v0.1, à relire et valider
+> **Statut** : brouillon v0.2, à relire et valider
 > **Date** : 18 novembre 2026
-> **Objet** : application web et Android d'entraînement de l'oreille musicale (intervalles et accords), avec difficulté progressive, suivi de progression et révisions espacées.
+> **Objet** : application web et Android d'entraînement de l'oreille musicale (intervalles, accords, gammes et modes), avec difficulté progressive, suivi de progression et révisions espacées.
+> **Historique** : v0.1, version initiale ; v0.2, ajout des gammes et modes, et des exercices chantés prévus en v2.
 
 ## Sommaire
 
@@ -16,29 +17,33 @@
 8. [Révisions et séance du jour](#8-révisions-et-séance-du-jour)
 9. [Expérience utilisateur](#9-expérience-utilisateur)
 10. [Architecture technique](#10-architecture-technique)
-11. [Plan de réalisation](#11-plan-de-réalisation)
-12. [Risques](#12-risques)
-13. [Questions ouvertes](#13-questions-ouvertes)
-14. [Annexes](#14-annexes)
+11. [Évolution : exercices chantés (v2)](#11-évolution--exercices-chantés-v2)
+12. [Plan de réalisation](#12-plan-de-réalisation)
+13. [Risques](#13-risques)
+14. [Questions ouvertes](#14-questions-ouvertes)
+15. [Annexes](#15-annexes)
 
 ---
 
 ## 1. Résumé
 
-*Oreille musicale* est une application d'entraînement auditif pour le web et Android. Elle propose deux familles d'exercices, la **reconnaissance d'intervalles** et la **reconnaissance d'accords**, organisées en **parcours progressifs** : on part de quelques éléments très contrastés, on en ajoute un à la fois, et on passe des présentations les plus faciles (intervalles ascendants, accords arpégés) aux plus difficiles (intervalles harmoniques, accords renversés).
+*Oreille musicale* est une application d'entraînement auditif pour le web et Android. Elle propose trois familles d'exercices, la **reconnaissance d'intervalles**, **d'accords** et **de gammes et modes**, organisées en **parcours progressifs** : on part de quelques éléments très contrastés, on en ajoute un à la fois, et on passe des présentations les plus faciles (intervalles ascendants, accords arpégés, modes sur bourdon) aux plus difficiles (intervalles harmoniques, accords renversés, mélodies modales).
 
 Chaque élément acquis entre dans un système de **révisions espacées** (algorithme FSRS) qui le refait travailler juste avant qu'il ne soit oublié. Les erreurs alimentent une **matrice de confusion** qui déclenche des exercices ciblés entre éléments souvent confondus. Au quotidien, un seul bouton suffit : la **séance du jour** (≈ 10 min) enchaîne révisions et nouvelles notions.
+
+Une v2 ajoutera des **exercices chantés** : chanter un intervalle, l'arpège d'un accord ou une gamme, avec analyse de la voix au micro (§11).
 
 **Décisions structurantes**
 
 | # | Décision | Raison |
 |---|---|---|
-| D1 | Une seule base de code **TypeScript + React**, publiée en **PWA** sur le web et empaquetée pour **Android avec Capacitor** | Un seul code à maintenir ; Web Audio couvre le besoin ; accès aux fonctions natives (notifications) |
+| D1 | Une seule base de code **TypeScript + React**, publiée en **PWA** sur le web et empaquetée pour **Android avec Capacitor** | Un seul code à maintenir ; Web Audio couvre le besoin ; accès aux fonctions natives (notifications, micro) |
 | D2 | **Local-first**, sans compte en v1 ; un **journal d'événements** est la source de vérité | Hors-ligne, confidentialité, simplicité ; recalculs et synchronisation future facilités |
 | D3 | Questions **générées** à la volée (fondamentale, registre, orthographe) et jouées par un **échantillonneur de piano** | Entraîner l'oreille relative plutôt que la mémoire de sons précis |
-| D4 | Progression en **grille** (éléments × modes de jeu), chaque étape en 4 phases : découverte → comparaison → entraînement → validation | Difficulté progressive et lisible, sans marche trop haute |
+| D4 | Progression en **grille** (éléments × présentations), chaque étape en 4 phases : découverte → comparaison → entraînement → validation | Difficulté progressive et lisible, sans marche trop haute |
 | D5 | Révisions par **compétence** (ex. « tierce mineure descendante ») avec **FSRS** et une **note calculée automatiquement** | Planification éprouvée, adaptée à des questions toujours renouvelées |
 | D6 | **Cœur métier en TypeScript pur** (théorie, génération, progression, révisions), testé indépendamment de l'interface et de l'audio | Fiabilité et testabilité |
+| D7 | Le **type de réponse** est abstrait dès la v1 : boutons en v1, chant au micro en v2 | Ajouter les exercices chantés sans refonte |
 
 ---
 
@@ -46,21 +51,23 @@ Chaque élément acquis entre dans un système de **révisions espacées** (algo
 
 ### 2.1 Contexte
 
-Reconnaître intervalles et accords à l'oreille sert à jouer d'oreille, relever des morceaux, improviser ou réussir ses examens de formation musicale. Cette compétence se construit par une pratique **courte, régulière et progressive**. L'appli combine trois choses : un parcours guidé, une vraie répétition espacée et un travail ciblé sur ses propres confusions, le tout en français et hors-ligne.
+Reconnaître intervalles, accords et gammes à l'oreille sert à jouer d'oreille, relever des morceaux, improviser ou réussir ses examens de formation musicale. Cette compétence se construit par une pratique **courte, régulière et progressive**. L'appli combine trois choses : un parcours guidé, une vraie répétition espacée et un travail ciblé sur ses propres confusions, le tout en français et hors-ligne.
 
 ### 2.2 Objectifs
 
 - **O1** — Reconnaître les 12 intervalles simples, ascendants, descendants et harmoniques.
 - **O2** — Reconnaître les principaux accords : triades (majeur, mineur, diminué, augmenté, suspendus) et accords de septième (7, 7M, m7, ø, °7, m7M, 7sus4), y compris renversés.
-- **O3** — Rendre la progression **automatique et visible** : l'appli choisit quoi travailler, on voit ce qu'on maîtrise.
-- **O4** — **Retenir dans la durée** grâce aux révisions espacées.
-- **O5** — Fonctionner **hors-ligne**, en séances de 5 à 15 min, sur téléphone comme sur ordinateur.
-- **O6** — Interface et terminologie **françaises** (Do Ré Mi, 3M, 5J…) ; anglais possible plus tard.
+- **O3** — Reconnaître les gammes usuelles (majeure, mineures naturelle, harmonique et mélodique, pentatoniques, blues) et les 7 modes de la gamme majeure.
+- **O4** — Rendre la progression **automatique et visible** : l'appli choisit quoi travailler, on voit ce qu'on maîtrise.
+- **O5** — **Retenir dans la durée** grâce aux révisions espacées.
+- **O6** — Fonctionner **hors-ligne**, en séances de 5 à 15 min, sur téléphone comme sur ordinateur.
+- **O7** — Interface et terminologie **françaises** (Do Ré Mi, 3M, 5J, dorien…) ; anglais possible plus tard.
 
 ### 2.3 Non-objectifs de la v1
 
-- Dictée mélodique, rythme, réponse chantée (détection de hauteur au micro).
-- Écoute fonctionnelle (degrés, cadences, enchaînements d'accords) : piste prioritaire pour la v2.
+- Exercices chantés (détection de hauteur au micro) : prévus en v2, voir §11.
+- Dictée mélodique, rythme.
+- Écoute fonctionnelle (degrés, cadences, enchaînements d'accords) : autre piste prioritaire pour la v2.
 - Application iOS native (la PWA reste utilisable sur iPhone).
 - Comptes, synchronisation, fonctions sociales, monétisation.
 
@@ -78,8 +85,8 @@ Reconnaître intervalles et accords à l'oreille sert à jouer d'oreille, releve
 | Profil | Besoins | Conséquences pour l'appli |
 |---|---|---|
 | **Débuter de zéro** (amateur, autodidacte) | Être guidé, ne pas se décourager, séances courtes | Parcours guidé, chansons repères, feedback pédagogique, séance du jour |
-| **Préparer la formation musicale** (école de musique, conservatoire) | Intervalles, accords et renversements avec le vocabulaire des cours | Terminologie française exacte (4J, 5−, septième de dominante…), convention Do3 = do central |
-| **Entretenir et approfondir** (jazz, accompagnement) | Accords de septième, renversements, entretien des acquis | Test de positionnement, révisions, entraînement libre paramétrable |
+| **Préparer la formation musicale** (école de musique, conservatoire) | Intervalles, accords, renversements et gammes avec le vocabulaire des cours | Terminologie française exacte (4J, 5−, septième de dominante, mineure harmonique…), convention Do3 = do central |
+| **Entretenir et approfondir** (jazz, accompagnement, improvisation) | Accords de septième, renversements, modes, entretien des acquis | Tests de positionnement, modes sur bourdon, révisions, entraînement libre paramétrable |
 
 Contexte d'usage principal : une séance quotidienne de 5 à 15 min, souvent sur téléphone avec écouteurs, parfois sur ordinateur au clavier.
 
@@ -89,14 +96,15 @@ Contexte d'usage principal : une séance quotidienne de 5 à 15 min, souvent sur
 
 Chaque fonctionnalité doit pouvoir se rattacher à l'un de ces principes.
 
-1. **Du contraste à la nuance.** Commencer par des éléments très différents (tierce majeure, quinte, octave), ajouter un élément à la fois et le confronter d'abord à son voisin le plus proche (4J contre 5J, 3m contre 3M).
+1. **Du contraste à la nuance.** Commencer par des éléments très différents (tierce majeure, quinte, octave), ajouter un élément à la fois et le confronter d'abord à son voisin le plus proche (4J contre 5J, 3m contre 3M, dorien contre éolien).
 2. **Variabilité.** Fondamentale et registre changent à chaque question (puis timbre et tempo) : on apprend à reconnaître une *relation* entre des notes, pas un son précis.
 3. **Pratique entrelacée.** Dès qu'un élément est introduit, il est mélangé aux autres : on apprend mieux à discriminer en alternant qu'en répétant un même élément en bloc (Kornell & Bjork, 2008).
 4. **Récupération active et feedback contrastif.** Chaque question appelle une réponse (Roediger & Karpicke, 2006) ; après une erreur, on réentend la bonne réponse **et** la sienne, sur la même fondamentale.
 5. **Répétition espacée.** Ce qui est acquis revient à intervalles croissants, juste avant l'oubli (Cepeda et al., 2006).
 6. **Difficulté désirable.** En apprentissage, viser 80 à 85 % de réussite (Wilson et al., 2019) : au-dessus, on ajoute de la variabilité ; en dessous, on simplifie.
 7. **Peu mais souvent.** Des séances courtes et quotidiennes plutôt que longues et rares.
-8. **Échafaudages amovibles.** Les aides (chansons repères, réécoute, arpège d'un accord plaqué) sont là au début puis s'effacent ; leur usage est pris en compte dans l'évaluation.
+8. **Échafaudages amovibles.** Les aides (chansons repères, réécoute, arpège d'un accord plaqué, bourdon sous un mode) sont là au début puis s'effacent ; leur usage est pris en compte dans l'évaluation.
+9. **Entendre, puis produire.** On commence par reconnaître ; chanter ce qu'on reconnaît (v2) relie ensuite l'oreille à la voix et consolide les deux.
 
 ---
 
@@ -108,13 +116,14 @@ Chaque fonctionnalité doit pouvoir se rattacher à l'un de ces principes.
 |---|---|---|
 | Intervalles | 12 intervalles simples ; ascendants, descendants, harmoniques | Indispensable |
 | Accords | Triades et septièmes ; reconnaissance de la qualité (même renversée) et identification du renversement | Indispensable |
+| Gammes et modes | Gammes majeure, mineures, pentatoniques, blues ; 7 modes présentés sur bourdon et reconnus par leur note caractéristique | Indispensable |
 | Parcours progressifs | Étapes débloquées en grille, 4 phases par étape (§7) | Indispensable |
 | Révisions espacées | FSRS par compétence, notation automatique (§8) | Indispensable |
 | Séance du jour | Révisions dues + duels + étape en cours, ≈ 10 min (§8.7) | Indispensable |
 | Feedback contrastif | Écoute comparée bonne réponse / réponse donnée, notes affichées sur un mini-clavier | Indispensable |
 | Hors-ligne | PWA (web), application installable (Android) | Indispensable |
 | Statistiques | Grille de maîtrise, matrice de confusion, historique, série | Important |
-| Entraînement libre | Choix des éléments, modes, registre, tempo, nombre de questions | Important |
+| Entraînement libre | Choix des éléments, présentations, registre, tempo, nombre de questions | Important |
 | Sauvegarde | Export / import d'un fichier JSON | Important |
 | Tests de positionnement | Valider d'emblée les étapes déjà maîtrisées (§7.6) | Important |
 | Rappels | Une notification quotidienne (Android) | Souhaitable |
@@ -123,11 +132,13 @@ Chaque fonctionnalité doit pouvoir se rattacher à l'un de ces principes.
 
 ### 5.2 Pistes pour la suite
 
+- **Exercices chantés** : chanter un intervalle, l'arpège d'un accord, une gamme ou un mode, avec analyse de la voix (§11).
 - Écoute fonctionnelle : degrés dans une tonalité, cadences, enchaînements (II–V–I…).
 - Accords enrichis (6, 9, 11, 13, altérations), voicings ouverts et drop 2.
-- Intervalles composés (au-delà de l'octave), gammes et modes.
+- Intervalles composés (au-delà de l'octave) ; modes des mineures mélodique et harmonique, gammes symétriques (par tons, diminuée), gammes bebop.
+- Réponse jouée à l'instrument ou sur un clavier MIDI.
 - Synchronisation entre appareils (compte optionnel).
-- Réponse chantée ou jouée (détection de hauteur), dictée mélodique, rythme.
+- Dictée mélodique, rythme.
 - Interface en anglais.
 
 ---
@@ -189,23 +200,67 @@ Les codes servent d'identifiants internes ; l'interface affiche l'abréviation f
 
 Les accords **symétriques** (augmenté, septième diminuée) et **suspendus** sont exclus de l'identification du renversement, et les suspendus de la reconnaissance de qualité en renversement : leurs renversements sont indiscernables, à l'oreille, d'autres accords à l'état fondamental (Dosus4 renversé donne Fa–Sol–Do, c'est-à-dire Fasus2).
 
-### 6.3 Modes de jeu
+### 6.3 Gammes et modes
 
-| Famille | Modes, du plus facile au plus difficile |
+**Gammes**
+
+| Code | Nom | ½ tons | Sur Do | Remarque |
+|---|---|---|---|---|
+| `major` | Majeure | 0-2-4-5-7-9-11 | Do Ré Mi Fa Sol La Si | |
+| `natmin` | Mineure naturelle (ancienne) | 0-2-3-5-7-8-10 | Do Ré Mi♭ Fa Sol La♭ Si♭ | |
+| `harmin` | Mineure harmonique | 0-2-3-5-7-8-11 | Do Ré Mi♭ Fa Sol La♭ Si | Seconde augmentée entre les 6e et 7e degrés |
+| `melmin` | Mineure mélodique | 0-2-3-5-7-9-11 en montant | Do Ré Mi♭ Fa Sol La Si | Forme classique : redescend en mineure naturelle |
+| `pentmaj` | Pentatonique majeure | 0-2-4-7-9 | Do Ré Mi Sol La | |
+| `pentmin` | Pentatonique mineure | 0-3-5-7-10 | Do Mi♭ Fa Sol Si♭ | |
+| `blues` | Blues | 0-3-5-6-7-10 | Do Mi♭ Fa Sol♭ Sol Si♭ | Pentatonique mineure + quinte diminuée (*blue note*) |
+
+Le nombre de notes varie de 5 à 7 : c'est un indice légitime, qui fait partie de la reconnaissance.
+
+**Modes de la gamme majeure**, du plus lumineux au plus sombre. Chaque mode ne diffère du suivant que par une note abaissée ; c'est aussi l'ordre des boutons de réponse.
+
+| Code | Mode | Famille | ½ tons | Note caractéristique | Sur Do |
+|---|---|---|---|---|---|
+| `lydian` | Lydien | majeure | 0-2-4-6-7-9-11 | 4+ | Do Ré Mi Fa♯ Sol La Si |
+| `ionian` | Ionien | majeure | 0-2-4-5-7-9-11 | — (référence majeure) | Do Ré Mi Fa Sol La Si |
+| `mixolydian` | Mixolydien | majeure | 0-2-4-5-7-9-10 | 7m | Do Ré Mi Fa Sol La Si♭ |
+| `dorian` | Dorien | mineure | 0-2-3-5-7-9-10 | 6M | Do Ré Mi♭ Fa Sol La Si♭ |
+| `aeolian` | Éolien | mineure | 0-2-3-5-7-8-10 | — (référence mineure) | Do Ré Mi♭ Fa Sol La♭ Si♭ |
+| `phrygian` | Phrygien | mineure | 0-1-3-5-7-8-10 | 2m | Do Ré♭ Mi♭ Fa Sol La♭ Si♭ |
+| `locrian` | Locrien | diminuée | 0-1-3-5-6-8-10 | 2m et 5− | Do Ré♭ Mi♭ Fa Sol♭ La♭ Si♭ |
+
+Principes propres aux modes :
+
+- **Un mode n'existe que par rapport à sa tonique.** Joué sans repère, un ré dorien s'entend facilement comme un do majeur commencé sur ré. Les modes sont donc d'abord présentés **sur un bourdon** : la tonique tenue, doublée à l'octave, sans tierce ni quinte pour ne rien révéler (le locrien n'a pas de quinte juste).
+- **Approche par note caractéristique** : on reconnaît d'abord la famille (tierce majeure ou mineure), puis la note qui distingue le mode de l'ionien ou de l'éolien. Le feedback met cette note en évidence, et l'écoute comparée oppose le mode à sa référence sur la même tonique.
+- L'ionien et l'éolien sont la gamme majeure et la mineure naturelle, présentées ici sur bourdon et sous leur nom modal (« Ionien (majeur) »).
+
+Plus tard : modes des mineures mélodique (lydien ♭7, altéré…) et harmonique (phrygien dominant…), gammes symétriques (par tons, diminuée), gammes bebop.
+
+### 6.4 Présentations
+
+La **présentation** est la façon de faire entendre un élément.
+
+| Famille | Présentations, de la plus facile à la plus difficile |
 |---|---|
 | Intervalles | mélodique ascendant (`asc`) → mélodique descendant (`desc`) → harmonique, notes simultanées (`harm`) |
 | Accords | arpégé montant (`arp`) → plaqué à l'état fondamental (`block`) → plaqué renversé (`inv`) → voicings ouverts (expert, v2) |
+| Gammes | montante puis descendante (`updown`) → montante seule (`asc`) → descendante seule (`desc`) |
+| Modes | gamme sur bourdon (`drone`) → gamme sans bourdon (`plain`) → mélodie dans le mode, sur bourdon (`melody`) |
 
-### 6.4 Génération d'une question
+En v2, une présentation chantée (`sing`) s'ajoutera aux familles qui s'y prêtent (§11).
+
+### 6.5 Génération d'une question
 
 Une question est produite à partir d'une **compétence** (ex. `int:m3:asc`) et des **paramètres de l'étape**. Sa version concrète s'appelle une **réalisation**.
 
-1. **Fondamentale** tirée au hasard dans le registre autorisé (F3–F5 au début pour les intervalles, élargi jusqu'à C3–C6), différente de celle de la question précédente.
+1. **Fondamentale** (ou tonique) tirée au hasard dans le registre autorisé, différente de celle de la question précédente : F3–F5 au début pour les intervalles, élargi jusqu'à C3–C6 ; tonique entre C3 et C4 pour les gammes.
 2. **Registre grave** : jamais d'intervalle d'une tierce ou moins entre deux voix sous C3 (le son devient confus) ; basse des accords en position serrée entre C3 et C4.
-3. **Orthographe** : notes écrites de façon à limiter les altérations, sans double altération sauf dans la septième diminuée. Une 3m sur Do s'affiche Do → Mi♭, jamais Do → Ré♯.
+3. **Orthographe** : notes écrites de façon à limiter les altérations, sans double altération sauf dans la septième diminuée et la sensible de certaines tonalités mineures. Une 3m sur Do s'affiche Do → Mi♭, jamais Do → Ré♯. Les gammes heptatoniques s'écrivent avec une lettre par degré.
 4. **Voicing** : position serrée ; les renversements sont obtenus par rotation, la basse étant tirée dans le registre autorisé.
-5. **Durées** (tempo normal) : note mélodique 0,9 s + 0,1 s de silence ; intervalle harmonique 1,8 s ; accord plaqué 2 s ; arpège 0,45 s entre les notes, notes tenues jusqu'à la fin. Tempo lent ×1,4, rapide ×0,7.
-6. **Nuance** constante (vélocité moyenne) ; légère variation aléatoire en mode expert.
+5. **Durées** (tempo normal) : note mélodique 0,9 s + 0,1 s de silence ; intervalle harmonique 1,8 s ; accord plaqué 2 s ; arpège 0,45 s entre les notes, notes tenues jusqu'à la fin ; gamme 0,3 s par note, dernière note tenue 1 s. Tempo lent ×1,4, rapide ×0,7.
+6. **Bourdon** : la tonique doublée à l'octave, sous la gamme ou la mélodie, jouée par un son synthétique tenu (le piano s'éteint trop vite) et nettement plus doux ; il commence une seconde avant la première note.
+7. **Mélodie modale** : 8 à 12 notes, qui commencent et finissent sur la tonique, surtout par degrés conjoints (sauts limités à la quinte), avec au moins deux fois la note caractéristique, sur un rythme simple.
+8. **Nuance** constante (vélocité moyenne) ; légère variation aléatoire au chapitre Expert.
 
 Le hasard passe par un **générateur pseudo-aléatoire initialisable** (graine), injecté : les tests sont reproductibles et les bugs rejouables.
 
@@ -215,15 +270,15 @@ Le hasard passe par un **générateur pseudo-aléatoire initialisable** (graine)
 
 ### 7.1 Vocabulaire
 
-- **Élément** : ce qu'on reconnaît (tierce mineure, accord m7…).
-- **Mode** : la façon de le faire entendre (ascendant, harmonique, plaqué…).
-- **Compétence** : un élément dans un mode, ex. « tierce mineure ascendante » (`int:m3:asc`). C'est l'unité de suivi et de révision.
-- **Étape** : une leçon qui introduit en général **un** nouvel élément dans un mode, au milieu d'un ensemble de réponses possibles.
-- **Parcours** : une grille d'étapes (Intervalles, Triades, Septièmes, Renversements).
+- **Élément** : ce qu'on reconnaît (tierce mineure, accord m7, mode dorien…).
+- **Présentation** : la façon de le faire entendre (ascendant, harmonique, plaqué, sur bourdon…).
+- **Compétence** : un élément dans une présentation, ex. « tierce mineure ascendante » (`int:m3:asc`). C'est l'unité de suivi et de révision.
+- **Étape** : une leçon qui introduit en général **un** nouvel élément dans une présentation, au milieu d'un ensemble de réponses possibles.
+- **Parcours** : une grille d'étapes (Intervalles, Triades, Septièmes, Renversements, Gammes, Modes).
 
 ### 7.2 Grilles de progression
 
-En colonnes, l'ensemble des réponses s'agrandit d'un élément à la fois ; en lignes, les modes vont du plus facile au plus difficile. **Une étape se débloque quand l'étape à sa gauche et l'étape au-dessus sont validées.** On progresse ainsi sur plusieurs fronts à la fois, sans jamais sauter de marche.
+En colonnes, l'ensemble des réponses s'agrandit d'un élément à la fois ; en lignes, les présentations vont de la plus facile à la plus difficile. **Une étape se débloque quand l'étape à sa gauche et l'étape au-dessus sont validées.** On progresse ainsi sur plusieurs fronts à la fois, sans jamais sauter de marche.
 
 ```
               1        2        3        4        5
@@ -237,7 +292,19 @@ Harmonique    [x] ──── [>] ──── [ ] ──── [ ] ───�
 [x] validée    [>] disponible    [ ] verrouillée
 ```
 
-**Parcours Intervalles** : 3 lignes (`asc`, `desc`, `harm`) × 10 colonnes = 30 étapes.
+**Vue d'ensemble**
+
+| Parcours | Lignes (présentations) | Colonnes | Étapes | Débloqué par |
+|---|---|---|---|---|
+| Intervalles | `asc`, `desc`, `harm` | 10 | 30 | — (dès le départ) |
+| Triades | `arp`, `block`, `inv` | 5 | 13 | — (dès le départ) |
+| Septièmes | `arp`, `block`, `inv` | 6 | 17 | Triades `block`, colonne 2 |
+| Renversements | suite linéaire | — | 6 | Triades `block`, colonne 1 |
+| Gammes | `updown`, `asc`, `desc` | 6 | 17 | Intervalles `asc`, colonne 3 (tierces connues) |
+| Modes | `drone`, `plain`, `melody` | 6 | 18 | Gammes `updown`, colonne 2 |
+| **Total** | | | **101** | |
+
+**Parcours Intervalles**
 
 | Col. | Ajout | Réponses possibles | Comparé à |
 |---|---|---|---|
@@ -254,7 +321,7 @@ Harmonique    [x] ──── [>] ──── [ ] ──── [ ] ───�
 
 Une fois la grille terminée s'ouvre un chapitre **Expert** : directions mélangées, registre large, tempo rapide, timbres variés ; puis les intervalles composés en v2.
 
-**Parcours Triades** : lignes `arp`, `block`, `inv` ; 13 étapes.
+**Parcours Triades**
 
 | Col. | Ajout | Comparé à | Remarque |
 |---|---|---|---|
@@ -264,7 +331,7 @@ Une fois la grille terminée s'ouvre un chapitre **Expert** : directions mélang
 | 4 | sus4 | majeur | lignes `arp` et `block` seulement |
 | 5 | sus2 | sus4 | lignes `arp` et `block` seulement |
 
-**Parcours Septièmes** : lignes `arp`, `block`, `inv` ; 17 étapes ; débloqué par l'étape Triades `block` colonne 2.
+**Parcours Septièmes**
 
 | Col. | Ajout | Comparé à | Remarque |
 |---|---|---|---|
@@ -275,7 +342,7 @@ Une fois la grille terminée s'ouvre un chapitre **Expert** : directions mélang
 | 5 | m7M | m7 | |
 | 6 | 7sus4 | 7 | lignes `arp` et `block` seulement |
 
-**Parcours Renversements** (accords plaqués ; on répond par le renversement) : 6 étapes.
+**Parcours Renversements** (accords plaqués ; on répond par le renversement)
 
 | Étape | Accords | Réponses | Débloquée par |
 |---|---|---|---|
@@ -286,14 +353,38 @@ Une fois la grille terminée s'ouvre un chapitre **Expert** : directions mélang
 | R5 | septième de dominante | fondamental, 1er, 2e, 3e | R4 + Septièmes `block` col. 1 |
 | R6 | 7, 7M, m7 mêlés | fondamental, 1er, 2e, 3e | R5 + Septièmes `block` col. 2 |
 
-Au total : 66 étapes. Le curriculum est une **donnée versionnée** (un fichier TypeScript), pas de la logique : on peut réordonner ou ajouter des étapes sans toucher au code.
+**Parcours Gammes**
+
+| Col. | Ajout | Comparé à | Remarque |
+|---|---|---|---|
+| 1 | majeure, mineure naturelle | — | |
+| 2 | mineure harmonique | mineure naturelle | |
+| 3 | pentatonique majeure | majeure | |
+| 4 | pentatonique mineure | mineure naturelle | |
+| 5 | blues | pentatonique mineure | |
+| 6 | mineure mélodique | mineure harmonique, majeure | lignes `updown` et `asc` seulement : sa descente classique se confond avec la mineure naturelle |
+
+**Parcours Modes**
+
+| Col. | Ajout | Comparé à | Note caractéristique |
+|---|---|---|---|
+| 1 | ionien, éolien | — | (références majeure et mineure) |
+| 2 | mixolydien | ionien | 7m |
+| 3 | dorien | éolien | 6M |
+| 4 | lydien | ionien | 4+ |
+| 5 | phrygien | éolien | 2m |
+| 6 | locrien | phrygien | 5− |
+
+L'ordre suit la fréquence d'usage : mixolydien et dorien (rock, folk, jazz) d'abord, locrien en dernier.
+
+Le curriculum est une **donnée versionnée** (un fichier TypeScript), pas de la logique : on peut réordonner ou ajouter des étapes sans toucher au code.
 
 ```ts
 // Intervalles ascendants, colonne 2. Les prérequis se déduisent de la position dans la grille.
 const step: StepDef = {
   id: 'int.asc.02',
   track: 'intervals',
-  mode: 'asc',
+  presentation: 'asc',
   answers: ['M3', 'P4', 'P5', 'P8'],
   newItems: ['P4'],
   contrast: { P4: ['P5', 'M3'] },
@@ -306,7 +397,7 @@ const step: StepDef = {
 
 | Phase | Contenu | Passage à la suite |
 |---|---|---|
-| 1 · Découverte | Le nouvel élément est joué 4 fois sur des fondamentales différentes, avec son nom et sa chanson repère, puis alterné avec son voisin. Non noté. | Quand l'utilisateur le souhaite (phase facultative) |
+| 1 · Découverte | Le nouvel élément est joué 4 fois sur des fondamentales différentes, avec son nom (et sa chanson repère ou sa note caractéristique), puis alterné avec son voisin. Non noté. | Quand l'utilisateur le souhaite (phase facultative) |
 | 2 · Comparaison | « Duel » à deux réponses : le nouvel élément contre son voisin. | 8 bonnes réponses sur les 10 dernières, ou 20 questions au plus |
 | 3 · Entraînement | Tout l'ensemble de l'étape ; ≈ 40 % des questions sur le nouvel élément ; feedback complet ; difficulté ajustée (§7.5). | Dès 85 % de réussite sur les 20 dernières questions et 5 passages du nouvel élément, le test est proposé |
 | 4 · Validation | Test de 4 questions par réponse possible (entre 12 et 30), dont ≈ 30 % sur le nouvel élément ; feedback bref. | Réussi avec au moins 90 % au total et 75 % sur le nouvel élément |
@@ -341,7 +432,7 @@ La **stabilité** (au sens de FSRS) est le nombre de jours au bout duquel la pro
 
 ### 7.6 Tests de positionnement
 
-Chaque parcours a son test, proposé au premier lancement (« J'ai déjà des bases ») puis accessible depuis l'écran du parcours. Il avance par paliers (pour les intervalles : colonnes 1, 4, 7 et 10, ligne par ligne), à raison de 6 questions par palier, et s'arrête au premier palier sous 5/6. Les étapes jusqu'au dernier palier réussi sont validées et leurs compétences entrent en révision. Durée : 10 min au plus.
+Chaque parcours a son test, proposé au premier lancement (« J'ai déjà des bases ») puis accessible depuis l'écran du parcours. Il avance par paliers (pour les intervalles : colonnes 1, 4, 7 et 10, ligne par ligne), à raison de 6 questions par palier, et s'arrête au premier palier sous 5/6. Les étapes jusqu'au dernier palier réussi sont validées et leurs compétences entrent en révision. Durée : 10 min au plus par parcours.
 
 ---
 
@@ -371,18 +462,18 @@ FSRS attend une note parmi *À revoir*, *Difficile*, *Bien* et *Facile*. En rév
 | 3 bonnes, rapides (temps médian < 0,6 × référence) et sans aide | Facile (*Easy*) |
 
 - **Temps de réponse** : de la fin de la première écoute jusqu'à la réponse, corrigé de la latence de sortie audio quand le navigateur la fournit (utile avec des écouteurs Bluetooth).
-- **Référence** : temps médian personnel des bonnes réponses dans le même contexte (au départ : 3 s pour les intervalles, 4 s pour les accords).
+- **Référence** : temps médian personnel des bonnes réponses dans le même contexte (au départ : 3 s pour les intervalles, 4 s pour les accords et les gammes).
 - **Aides** : plus d'une réécoute, « écouter arpégé ».
 
 ### 8.4 Séance de révision
 
 1. **Sélection** des compétences dues, les plus en retard d'abord, **8 au maximum** par séance (réglable). Après une longue absence, le retard est étalé sur plusieurs jours, en commençant par les compétences fragiles.
-2. **Regroupement par contexte de réponse** (famille + mode, ex. « intervalles descendants »), car les boutons de réponse doivent être homogènes.
+2. **Regroupement par contexte de réponse** (famille + présentation, ex. « intervalles descendants », « modes sur bourdon »), car les boutons de réponse doivent être homogènes.
 3. **Mélange** : les 3 questions de chaque compétence due sont entrelacées avec ≈ 30 % de questions « distractrices » portant sur les autres compétences acquises du même contexte ; sans elles, la réponse serait devinable.
 4. **Réponses proposées** : toutes les compétences acquises du contexte.
 5. **Fin de séance** : chaque compétence due reçoit sa note FSRS et donc sa nouvelle échéance. Une note *À revoir* rend la compétence fragile et programme un duel ciblé.
 
-Durée typique : 8 compétences × 3 questions + distracteurs, soit ≈ 35 questions et 5 min.
+Durée typique : 8 compétences × 3 questions + distracteurs, soit ≈ 35 questions et 5 min (davantage si beaucoup de gammes, plus longues à écouter).
 
 ### 8.5 Révisions implicites
 
@@ -401,8 +492,8 @@ Elle est composée automatiquement pour durer le temps de l'objectif quotidien (
 
 1. **révisions** dues (§8.4) ;
 2. **duels** en attente (deux au maximum) ;
-3. **étape en cours** : l'étape disponible la plus ancienne (lignes du haut d'abord), reprise à sa phase ;
-4. s'il reste du temps, une deuxième étape disponible.
+3. une étape d'un **parcours actif** (l'utilisateur en choisit un ou plusieurs ; par défaut Intervalles et Triades), en alternant d'un jour à l'autre : la première étape disponible, lignes du haut d'abord, reprise à sa phase ;
+4. s'il reste du temps, une étape d'un autre parcours actif.
 
 La séance s'arrête proprement à la fin d'un bloc quand l'objectif est atteint ; on peut toujours continuer.
 
@@ -415,11 +506,11 @@ La séance s'arrête proprement à la fin d'un bloc quand l'objectif est atteint
 | Écran | Contenu |
 |---|---|
 | Accueil | Bouton « Séance du jour » avec son contenu (ex. « 6 révisions · Intervalles descendants : + 2m ») ; série, objectif du jour ; accès aux parcours, à l'entraînement libre et aux statistiques |
-| Parcours | Les grilles (§7.2) avec l'état de chaque étape et la progression globale |
+| Parcours | Les grilles (§7.2) avec l'état de chaque étape, la progression globale et le choix des parcours actifs |
 | Étape | Phase en cours, accès direct au test (« Je connais déjà ») |
 | Exercice | Écran de question commun à tous les exercices (§9.2) |
 | Bilan | Score, compétences en progrès, confusions repérées, prochaines révisions |
-| Entraînement libre | Famille, éléments, modes, registre, tempo, timbre, nombre de questions ; préréglages enregistrables |
+| Entraînement libre | Famille, éléments, présentations, registre, tempo, timbre, nombre de questions ; préréglages enregistrables |
 | Statistiques | Grille de maîtrise, matrice de confusion, courbes de réussite et de temps par compétence, calendrier d'activité |
 | Réglages | Notation, convention d'octave, timbre, tempo, volume, passage automatique, objectif, rappel, chansons repères, thème, export/import, réinitialisation, crédits |
 | Premier lancement | Présentation, test audio, préférences, niveau (§9.3) |
@@ -451,9 +542,9 @@ Après une erreur :
 ```
 
 - Le son part dès l'affichage de la question (les navigateurs exigent un premier geste de l'utilisateur : il a lieu au démarrage de la séance).
-- Boutons dans un **ordre fixe** (par taille d'intervalle, par famille d'accords) pour créer des automatismes ; abréviation, et nom complet si la place le permet.
+- Boutons dans un **ordre fixe** (par taille d'intervalle, par famille d'accords, du mode le plus lumineux au plus sombre) pour créer des automatismes ; abréviation, et nom complet si la place le permet.
 - **Bonne réponse** : confirmation brève, passage automatique à la question suivante (désactivable).
-- **Erreur** : panneau de correction avec les notes jouées (nommées et sur un mini-clavier) et l'**écoute comparée** des deux réponses sur la même fondamentale.
+- **Erreur** : panneau de correction avec les notes jouées (nommées et sur un mini-clavier) et l'**écoute comparée** des deux réponses sur la même fondamentale. Pour une gamme ou un mode, le mini-clavier met en évidence la note qui fait la différence (ex. le Si♮ du ré dorien face au Si♭ du ré éolien).
 - Le feedback ne repose jamais sur la couleur seule (icône + texte).
 - **Aides** (prises en compte dans la note) : réécouter ; « écouter arpégé » pour un accord plaqué.
 - **Clavier** (web) : Espace pour réécouter, rangée des chiffres pour répondre, Entrée pour continuer. Les touches sont lues par position physique (`KeyboardEvent.code`) pour fonctionner en AZERTY sans Maj.
@@ -481,6 +572,7 @@ Après une erreur :
 - Octaves : convention française (Do3 = do central, La3 = 440 Hz ; par défaut) ou scientifique (C4 = do central).
 - Intervalles : 2m, 2M, 3m, 3M, 4J, 4+/5−, 5J, 6m, 6M, 7m, 7M, 8J ; nom complet dans le feedback et pour les lecteurs d'écran.
 - Accords : nom français et symbole (Do7M, Doø, Dom7…), notation anglo-saxonne en option (Cmaj7, Cm7♭5…).
+- Gammes : majeure, mineure naturelle (ancienne), harmonique, mélodique, pentatoniques, blues ; modes : ionien, dorien, phrygien, lydien, mixolydien, éolien, locrien.
 - Ton : tutoiement, bienveillant, phrases courtes.
 
 ### 9.6 Accessibilité
@@ -502,7 +594,7 @@ Après une erreur :
 | C. React Native + Expo (+ react-native-web) | Interface native sur Android | Audio à traiter séparément côté natif et côté web, ou via des bibliothèques encore jeunes |
 | D. PWA seule (+ TWA pour le Play Store) | Le plus simple | Pas de notifications locales planifiées (il faudrait un serveur de push) ; dépend du navigateur installé |
 
-**Choix : A.** Le besoin audio (jouer quelques notes à la demande, sans réagir en temps réel à un instrument) est entièrement couvert par Web Audio, y compris dans la WebView Android ; la latence de sortie n'y est pas critique.
+**Choix : A.** Le besoin audio (jouer quelques notes à la demande, sans réagir en temps réel à un instrument) est entièrement couvert par Web Audio, y compris dans la WebView Android ; la latence de sortie n'y est pas critique. Pour les exercices chantés de la v2, l'analyse du micro se fait aussi en Web Audio (§11.6).
 
 ### 10.2 Pile technique
 
@@ -513,7 +605,7 @@ Après une erreur :
 | Style | Tailwind CSS | |
 | Navigation | React Router | |
 | État | Zustand pour la séance en cours ; Dexie + `useLiveQuery` pour les données persistées | |
-| Théorie musicale | `tonal`, encapsulé dans `core/theory` | Notes, intervalles, accords, orthographe |
+| Théorie musicale | `tonal`, encapsulé dans `core/theory` | Notes, intervalles, accords, gammes, modes, orthographe |
 | Révisions | `ts-fsrs`, encapsulé dans `core/srs` | |
 | Audio | Web Audio API, échantillonneur maison | Tone.js en plan B |
 | Stockage | IndexedDB via Dexie | |
@@ -536,9 +628,9 @@ flowchart TB
     progress["progress<br/>déblocages, maîtrise"]
     srs["srs<br/>FSRS, notation automatique"]
     curriculum["curriculum<br/>parcours et étapes (données)"]
-    theory["theory<br/>notes, intervalles, accords, voicings"]
+    theory["theory<br/>notes, intervalles, accords, gammes, voicings"]
   end
-  audio["audio/<br/>moteur Web Audio, instruments"]
+  audio["audio/<br/>lecture Web Audio, instruments<br/>(capture du micro en v2)"]
   data["data/<br/>IndexedDB (Dexie), journal, export"]
   platform["platform/<br/>web ou Capacitor"]
 
@@ -570,10 +662,11 @@ interface AudioEngine {
 }
 
 interface NoteEvent {
-  midi: number;      // hauteur
-  start: number;     // secondes, relatif au début de la réalisation
-  duration: number;  // secondes
-  velocity: number;  // 0..1
+  midi: number;               // hauteur
+  start: number;              // secondes, relatif au début de la réalisation
+  duration: number;           // secondes
+  velocity: number;           // 0..1
+  instrument?: InstrumentId;  // par défaut celui de la séance ; 'drone' pour le bourdon
 }
 ```
 
@@ -581,6 +674,7 @@ interface NoteEvent {
 - **Échantillonneur** : un échantillon tous les 3 demi-tons ; les autres notes sont obtenues en variant la vitesse de lecture (`playbackRate = 2^(écart/12)`, un demi-ton d'écart au plus). Échantillons normalisés en volume ; enveloppe (attaque ≈ 5 ms, relâchement ≈ 250 ms) contre les clics ; compresseur-limiteur en sortie pour les accords.
 - **Piano** : échantillons *Salamander Grand Piano* (licence CC BY 3.0), une ou deux couches de vélocité, de A1 à C7, en MP3 (décodable partout, Safari compris) : 1 à 2 Mo.
 - **Son pur** (oscillateur avec enveloppe) : aucun téléchargement, sert de repli.
+- **Bourdon** : instrument synthétique tenu (oscillateurs et filtre passe-bas, attaque et relâchement lents), sans téléchargement.
 - **Planification** : tous les événements d'une réalisation sont programmés d'un coup sur l'horloge audio ; une nouvelle lecture coupe la précédente par un fondu court.
 - **Chargement** paresseux par instrument, avec indicateur de progression ; tampons décodés gardés en mémoire.
 - **Cycle de vie** : son coupé quand l'appli passe en arrière-plan, `AudioContext` repris au retour.
@@ -591,8 +685,8 @@ interface NoteEvent {
 Un **journal d'événements en ajout seul** est la source de vérité ; les états (cartes FSRS, maîtrise, déblocages, matrice de confusion) sont des **projections** recalculables. On peut ainsi corriger une règle de notation et tout recalculer, migrer sans perte, et préparer la synchronisation par simple fusion de journaux.
 
 ```ts
-type CompetenceId = string; // 'int:m3:asc', 'chd:m7b5:block', 'inv:maj:1'
-type StepId = string;       // 'int.asc.04', 'tri.block.02', 'sev.inv.03', 'inv.R2'
+type CompetenceId = string; // 'int:m3:asc', 'chd:m7b5:block', 'inv:maj:1', 'scl:harmin:updown', 'mod:dorian:drone'
+type StepId = string;       // 'int.asc.04', 'tri.block.02', 'sev.inv.03', 'inv.R2', 'scl.asc.03', 'mod.drone.02'
 
 // ——— Journal (source de vérité) ———
 
@@ -615,12 +709,14 @@ interface Attempt {
   rendition: {
     midi: number[];
     spelling: string[];          // ex. ['D4', 'F#4']
-    mode: PlaybackMode;
+    presentation: Presentation;  // 'asc', 'block', 'drone'…
     instrument: InstrumentId;
     tempo: Tempo;
   };
-  choices: string[];             // réponses proposées
-  answer: string;                // réponse donnée
+  choices?: string[];            // réponses proposées (réponse par boutons)
+  answer:
+    | { type: 'choice'; value: string }       // v1 : bouton choisi
+    | { type: 'sung'; notes: SungNote[] };    // v2 : notes chantées détectées (§11)
   correct: boolean;
   responseTimeMs: number;
   replays: number;
@@ -673,6 +769,7 @@ interface Settings {
   volume: number;
   autoAdvance: boolean;
   dailyGoalMinutes: number;
+  activeTracks: string[];        // parcours actifs pour la séance du jour
   reminder: { enabled: boolean; time: string };  // '19:00'
   mnemonics: Record<string, string>;             // chansons repères personnalisées
   haptics: boolean;
@@ -735,7 +832,7 @@ oreille-musicale/
 
 ### 10.10 Qualité et livraison
 
-- **Tests unitaires** (Vitest) sur tout `core` : orthographe correcte pour toutes les fondamentales, contraintes de registre, règles de déblocage, notation FSRS, ajustement de la difficulté.
+- **Tests unitaires** (Vitest) sur tout `core` : orthographe correcte pour toutes les fondamentales, contraintes de registre, règles de déblocage, notation FSRS, ajustement de la difficulté, mélodies modales (tonique au début et à la fin, note caractéristique présente).
 - **Tests de propriétés** (fast-check) : quelle que soit la graine, une réalisation respecte son registre, la bonne réponse figure parmi les choix, etc.
 - **Tests de composants** (Testing Library) et **de bout en bout** (Playwright) avec un moteur audio factice et une horloge simulée : premier lancement → étape 1 → validation → révision le lendemain.
 - **Recette audio manuelle** : Chrome, Firefox et Safari sur ordinateur ; un Android d'entrée de gamme et un de milieu de gamme.
@@ -751,7 +848,77 @@ oreille-musicale/
 
 ---
 
-## 11. Plan de réalisation
+## 11. Évolution : exercices chantés (v2)
+
+Chanter ce qu'on reconnaît relie l'oreille à la voix : c'est l'idée des exercices du type « chante l'arpège de cet accord » ou « chante cette gamme ». Ils sortent du périmètre de la v1, mais la v1 est conçue pour les accueillir sans refonte (§11.7).
+
+### 11.1 Faisabilité
+
+C'est faisable, sur le web comme sur Android, sans serveur :
+
+- **Accès au micro** : `getUserMedia` sur le web (page servie en HTTPS) ; sous Android, permission `RECORD_AUDIO`, que Capacitor transmet à la WebView.
+- **Détection de hauteur** : pour une voix seule (une note à la fois), des algorithmes éprouvés comme YIN ou McLeod (MPM) suffisent ; ils tournent en temps réel sur un téléphone, entièrement en local.
+- **Précision** : largement suffisante pour distinguer les demi-tons, et même pour indiquer la justesse en cents.
+
+Les vraies difficultés sont ailleurs : bruit ambiant, micros d'entrée de gamme, erreurs d'octave des détecteurs, voix qui dérivent, utilisateurs peu à l'aise avec le chant. On les traite par la conception ci-dessous et par un prototype sur de vrais téléphones avant de construire la fonctionnalité.
+
+### 11.2 Exercices envisagés
+
+| Exercice | Exemple de consigne | Ce qui est vérifié |
+|---|---|---|
+| Écho | L'appli joue un arpège ou un fragment de gamme ; on le rechante | Chaque note |
+| Intervalle | « Voici Ré. Chante une sixte majeure au-dessus. » | La note d'arrivée |
+| Arpège | « Voici Do. Chante l'arpège de Do7M, en montant puis en descendant. » | La suite Do-Mi-Sol-Si-Sol-Mi-Do |
+| Gamme ou mode | « Sur ce bourdon de Ré, chante le mode dorien. » | Les huit notes, à la montée et à la descente |
+| Degré (avec l'écoute fonctionnelle) | « En sol majeur, chante le 6e degré. » | La note visée |
+
+On chante sur la syllabe de son choix (« la », noms des notes, numéros de degrés) : seule la hauteur est analysée.
+
+### 11.3 Déroulé d'une question chantée
+
+1. L'appli joue la référence (note de départ, éventuellement bourdon) et affiche la consigne.
+2. L'utilisateur chante ; une **courbe de hauteur** s'affiche en temps réel face aux notes attendues, à la manière d'un *piano roll*.
+3. La voix est découpée en notes (hauteur stable pendant au moins 150 ms), puis comparée à la suite attendue.
+4. Feedback note par note (juste, un peu haut, un peu bas, fausse), puis écoute comparée : le modèle, et ce qui a été chanté rejoué au piano, pour entendre l'écart.
+
+### 11.4 Évaluation
+
+- **Note correcte** si elle tombe à moins de 50 cents de la cible (le demi-ton le plus proche) ; **bien centrée** à moins de 25 cents.
+- **Justesse relative** : chaque note est jugée par rapport à la première note chantée, elle-même à moins de 50 cents de la référence. Un léger décalage d'ensemble n'est donc pas pénalisé, mais une dérive progressive l'est.
+- **Octave libre** : chanter tout l'exercice une octave plus bas ou plus haut est accepté.
+- **Note FSRS** : tout correct → *Bien* (*Facile* si tout est bien centré et que le chant démarre vite) ; une note fausse → *Difficile* ; deux ou plus → *À revoir*.
+
+### 11.5 Intégration dans la progression
+
+- Le chant devient une **présentation supplémentaire** (`sing`), sous forme d'une ligne « chanté » **facultative** dans les grilles Intervalles, Triades, Septièmes, Gammes et Modes. Elle se rattache à la première ligne de reconnaissance (on chante ce qu'on sait déjà reconnaître) mais ne bloque jamais les autres lignes.
+- Les compétences chantées (`int:M6:sing`, `chd:maj7:sing`, `mod:dorian:sing`) suivent les mêmes règles de révision que les autres.
+- Un réglage « Exercices chantés » les active ; désactivés, ils disparaissent sans rien bloquer.
+
+### 11.6 Technique
+
+- **Capture** : `getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } })`. Ces traitements, utiles en visioconférence, déforment le signal et gênent la détection.
+- **Analyse** dans un `AudioWorklet`, hors du fil principal : fenêtres d'environ 40 ms, pas de 10 ms, plage 70–1 100 Hz (de la basse à la soprano) ; algorithme McLeod (bibliothèque `pitchy`) ou YIN ; seuil de confiance, seuil de bruit et filtre médian contre les erreurs d'octave.
+- **Nouvelle interface `PitchTracker`** dans `audio/`, à côté d'`AudioEngine` : démarrer, arrêter, et un flux d'estimations `{ temps, fréquence, confiance }`. Le découpage en notes et l'évaluation restent dans `core`, en fonctions pures.
+- **Tessiture** : au premier exercice chanté, on chante sa note la plus grave puis la plus aiguë confortables ; les références sont ensuite transposées dans cette tessiture (réglable à tout moment).
+- **Pas de son pendant le chant**, sauf si l'utilisateur indique porter un casque : le micro capterait sinon la référence ou le bourdon.
+- **Tests** : un petit corpus d'enregistrements annotés (voix graves et aiguës, justes et fausses, au calme et dans le bruit), enregistrés pour l'occasion, rejoué dans les tests du découpage et de l'évaluation.
+- **Confidentialité** : la voix n'est ni enregistrée ni transmise ; seules les notes détectées entrent dans le journal. Un écran explique à quoi sert le micro avant la demande de permission.
+
+### 11.7 Ce que la v1 prépare dès maintenant
+
+- Une notion de **type de réponse** dans `core/exercise` : boutons en v1, chant (ou instrument) ensuite. L'évaluation ne dépend pas des boutons.
+- Un champ `answer` extensible dans le journal (§10.5).
+- Des présentations définies comme une liste ouverte, pour ajouter `sing` sans migration.
+
+### 11.8 Prolongements possibles
+
+- **Répondre à l'instrument** (flûte, violon, guitare en notes isolées) : même détection, puisqu'on joue une note à la fois.
+- **Clavier MIDI** (API Web MIDI, selon les navigateurs) pour répondre en jouant les notes.
+- Analyser des **accords joués** (plusieurs notes simultanées) est nettement plus difficile : pas avant une v3.
+
+---
+
+## 12. Plan de réalisation
 
 | Jalon | Contenu | Terminé quand… |
 |---|---|---|
@@ -760,27 +927,32 @@ oreille-musicale/
 | **J2 · Parcours Intervalles** | Curriculum en grille, 4 phases, déblocages, écran Parcours, accueil | On progresse de l'étape 1 à 10 en ascendant |
 | **J3 · Révisions** | FSRS, notation automatique, séance de révision, révisions implicites, matrice de confusion, duels, séance du jour | Avec une horloge simulée, les compétences reviennent aux bonnes dates |
 | **J4 · Accords** | Triades, septièmes, renversements | Les trois parcours d'accords sont jouables |
-| **J5 · Android et hors-ligne** | PWA, build Capacitor, notifications, export/import, test fermé | L'appli s'installe et fonctionne en mode avion |
-| **J6 · Finitions** | Tests de positionnement, chansons repères, statistiques complètes, accessibilité, autres timbres | Version 1.0 |
+| **J5 · Gammes et modes** | Génération des gammes, bourdon, mélodies modales, parcours Gammes et Modes | Les deux parcours sont jouables, note caractéristique mise en évidence dans le feedback |
+| **J6 · Android et hors-ligne** | PWA, build Capacitor, notifications, export/import, test fermé | L'appli s'installe et fonctionne en mode avion |
+| **J7 · Finitions** | Tests de positionnement, chansons repères, statistiques complètes, accessibilité, autres timbres | Version 1.0 |
+
+**Après la v1** : la v2 commencera par un prototype de détection de hauteur sur plusieurs téléphones (voix graves et aiguës, pièce calme et pièce bruyante) avant de construire les exercices chantés (§11).
 
 ---
 
-## 12. Risques
+## 13. Risques
 
 | Risque | Impact | Parade |
 |---|---|---|
 | Audio insuffisant (qualité, latence) dans la WebView Android | Élevé | Essai réel dès J0 ; l'interface `AudioEngine` permet un plan B natif (plugin Capacitor) |
 | Poids des échantillons | Moyen | Un échantillon par tierce mineure, 1 ou 2 couches de vélocité, MP3, chargement paresseux |
 | Licences des sons | Élevé si négligé | Sources sous licence libre uniquement (CC0, CC BY), crédits affichés |
+| Modes difficiles à percevoir sans contexte tonal | Moyen | Bourdon de tonique, approche par note caractéristique, présentation sans bourdon seulement ensuite |
 | Planification FSRS mal adaptée à l'entraînement auditif | Moyen | Journal complet, donc règles ajustables et recalculables ; suivi du taux de réussite réel en révision |
 | Perte des données locales (désinstallation, nettoyage) | Élevé | Stockage persistant, export/import, synchronisation en v2 |
 | Lassitude, abandon | Moyen | Séances courtes, séance du jour, progrès visibles |
-| Dérive du périmètre | Moyen | v1 limitée aux intervalles simples et aux accords ; le reste attend en backlog |
+| Dérive du périmètre | Moyen | v1 limitée aux intervalles simples, accords, gammes et modes usuels ; le reste attend en backlog |
 | Contraintes de publication sur le Play Store | Faible | Les anticiper ; APK direct en attendant |
+| (v2) Détection de la voix peu fiable (bruit, micro, erreurs d'octave) | Moyen | Prototype sur vrais téléphones, filtrage, tolérances réglables, exercices chantés facultatifs |
 
 ---
 
-## 13. Questions ouvertes
+## 14. Questions ouvertes
 
 1. **Pour qui ?** D'abord pour toi, ou pour un public (élèves, amis, Play Store) ? Cela change l'effort sur l'accueil, la publication et la traduction.
 2. **Synchronisation web ↔ Android** dès la v1, ou l'export/import suffit-il au début ?
@@ -789,20 +961,23 @@ oreille-musicale/
 5. **Distribution Android** : Play Store ou APK installé directement ?
 6. **Licence et modèle** : open source ? entièrement gratuit ?
 7. **Terminologie** : convention française par défaut (Do3 central, 4J, 7M), d'accord ?
-8. **Ordre pédagogique** : l'ordre proposé (3M-5J-8J, puis 4J, 3m, 2M…) te convient-il ? Les accords suspendus ont-ils leur place dès la v1 ?
-9. **Timbres** souhaités après le piano (guitare, cordes, voix…) ?
-10. **Nom** de l'appli : « Oreille musicale » ?
+8. **Ordre pédagogique** : l'ordre proposé (3M-5J-8J, puis 4J, 3m, 2M… ; mixolydien et dorien avant lydien et phrygien) te convient-il ? Les accords suspendus ont-ils leur place dès la v1 ?
+9. **Gammes** : la sélection v1 (§6.3) te suffit-elle, ou faut-il ajouter dès maintenant des gammes plus rares (par tons, diminuée, modes de la mineure mélodique) ? Et pour la mineure mélodique : forme classique (elle redescend en mineure naturelle, comme en formation musicale) ou forme jazz (identique dans les deux sens) ?
+10. **Exercices chantés** : les utiliserais-tu plutôt au casque ? Faut-il aussi prévoir de répondre en jouant d'un instrument ?
+11. **Timbres** souhaités après le piano (guitare, cordes, voix…) ?
+12. **Nom** de l'appli : « Oreille musicale » ?
 
 ---
 
-## 14. Annexes
+## 15. Annexes
 
-### 14.1 Glossaire
+### 15.1 Glossaire
 
 | Terme | Définition |
 |---|---|
-| Compétence | Un élément dans un mode (ex. tierce mineure descendante) ; unité de suivi et de révision |
-| Contexte de réponse | Famille + mode ; détermine les boutons de réponse proposés |
+| Compétence | Un élément dans une présentation (ex. tierce mineure descendante) ; unité de suivi et de révision |
+| Présentation | La façon de faire entendre un élément : ascendant, harmonique, plaqué, sur bourdon… |
+| Contexte de réponse | Famille + présentation ; détermine les boutons de réponse proposés |
 | Réalisation | Version concrète d'une question : notes, instrument, tempo |
 | Stabilité | (FSRS) Nombre de jours au bout duquel la probabilité de se souvenir tombe à 90 % |
 | Échéance | Date à laquelle une compétence doit être révisée |
@@ -811,14 +986,21 @@ oreille-musicale/
 | Position serrée | Notes de l'accord rapprochées au maximum |
 | Renversement | Accord dont la basse n'est pas la fondamentale |
 | Drop 2 | Voicing obtenu en descendant d'une octave la deuxième voix en partant du haut |
+| Mode | Gamme définie par sa tonique et la place de ses tons et demi-tons (dorien, lydien…) |
+| Note caractéristique | Note qui distingue un mode du majeur ou du mineur naturel (6M pour le dorien, 4+ pour le lydien…) |
+| Bourdon | Note tenue sous une gamme ou une mélodie (ici la tonique, doublée à l'octave) pour fixer le centre tonal |
+| Cent | Centième de demi-ton ; unité de mesure de la justesse |
 
-### 14.2 Références
+### 15.2 Références
 
 - Cepeda, N. J., Pashler, H., Vul, E., Wixted, J. T. & Rohrer, D. (2006). *Distributed practice in verbal recall tasks: A review and quantitative synthesis.* Psychological Bulletin, 132(3), 354–380.
+- de Cheveigné, A. & Kawahara, H. (2002). *YIN, a fundamental frequency estimator for speech and music.* The Journal of the Acoustical Society of America, 111(4), 1917–1930.
 - Kornell, N. & Bjork, R. A. (2008). *Learning concepts and categories: Is spacing the "enemy of induction"?* Psychological Science, 19(6), 585–592.
+- McLeod, P. & Wyvill, G. (2005). *A smarter way to find pitch.* Proceedings of the International Computer Music Conference (ICMC).
 - Roediger, H. L. & Karpicke, J. D. (2006). *Test-enhanced learning: Taking memory tests improves long-term retention.* Psychological Science, 17(3), 249–255.
 - Wilson, R. C., Shenhav, A., Straccia, M. & Cohen, J. D. (2019). *The Eighty Five Percent Rule for optimal learning.* Nature Communications, 10, 4646.
 - FSRS (`ts-fsrs`) : https://github.com/open-spaced-repetition/ts-fsrs
 - Tonal : https://github.com/tonaljs/tonal
+- Pitchy : https://github.com/ianprime0509/pitchy
 - Capacitor : https://capacitorjs.com
 - Dexie : https://dexie.org
