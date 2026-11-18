@@ -1,6 +1,6 @@
 # Crédits
 
-Oreille musicale est distribuée sous licence [GNU GPL v3 ou ultérieure](LICENSE). Elle s'appuie sur les travaux suivants, dont les licences sont compatibles avec la GPL.
+Oreille musicale est distribuée sous licence [GNU GPL v3 ou ultérieure](LICENSE). Elle s'appuie sur les travaux suivants, dont les licences (MIT, Apache 2.0, CC BY) sont compatibles avec la GPL v3.
 
 ## Sons
 
@@ -12,13 +12,14 @@ Les échantillons ont été modifiés pour l'appli (sélection de notes, mono, d
 
 ## Bibliothèques incluses dans l'appli
 
-| Bibliothèque                              | Rôle                                                        | Licence |
-| ----------------------------------------- | ----------------------------------------------------------- | ------- |
-| [React](https://react.dev) et React DOM   | Interface                                                   | MIT     |
-| [React Router](https://reactrouter.com)   | Navigation                                                  | MIT     |
-| [Tonal](https://github.com/tonaljs/tonal) | Théorie musicale (orthographe des notes et des intervalles) | MIT     |
-| [Capacitor](https://capacitorjs.com)      | Application Android                                         | MIT     |
-| [Tailwind CSS](https://tailwindcss.com)   | Styles                                                      | MIT     |
+| Bibliothèque                              | Rôle                                                        | Licence    |
+| ----------------------------------------- | ----------------------------------------------------------- | ---------- |
+| [React](https://react.dev) et React DOM   | Interface                                                   | MIT        |
+| [React Router](https://reactrouter.com)   | Navigation                                                  | MIT        |
+| [Tonal](https://github.com/tonaljs/tonal) | Théorie musicale (orthographe des notes et des intervalles) | MIT        |
+| [Capacitor](https://capacitorjs.com)      | Application Android                                         | MIT        |
+| [Dexie](https://dexie.org)                | Stockage local (IndexedDB)                                  | Apache 2.0 |
+| [Tailwind CSS](https://tailwindcss.com)   | Styles                                                      | MIT        |
 
 ## Outils de développement
 

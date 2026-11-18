@@ -6,6 +6,12 @@ export interface PlaybackHandle {
   readonly startTime: number;
   /** Durée totale, relâchement compris (secondes). */
   readonly duration: number;
+  /**
+   * Instant où la dernière note cesse d'être tenue, sur l'horloge de
+   * `performance.now()` (ms), latence de sortie comprise quand elle est connue.
+   * Point de départ du temps de réponse.
+   */
+  readonly notesEndAt: number;
   /** Se résout quand toutes les notes ont fini de sonner, ou après `stop()`. */
   readonly finished: Promise<void>;
   /** Arrête la lecture par un fondu court. */
@@ -21,6 +27,8 @@ export interface PlayOptions {
 export interface AudioEngine {
   /** Débloque la sortie audio ; à appeler pendant un geste de l'utilisateur. */
   unlock(): Promise<void>;
+  /** Vrai quand la sortie audio est débloquée et qu'une lecture serait entendue. */
+  readonly running: boolean;
   /** Charge un instrument ; `onProgress` reçoit une proportion de 0 à 1. */
   load(instrument: InstrumentId, onProgress?: (ratio: number) => void): Promise<void>;
   isLoaded(instrument: InstrumentId): boolean;
@@ -74,6 +82,17 @@ export class WebAudioEngine implements AudioEngine {
   get context(): BaseAudioContext {
     this.#context ??= new AudioContext({ latencyHint: 'interactive' });
     return this.#context;
+  }
+
+  get running(): boolean {
+    return this.#context?.state === 'running';
+  }
+
+  /** Latence entre la planification et le haut-parleur, quand le navigateur la donne. */
+  #outputLatency(): number {
+    const context = this.context;
+    if (typeof AudioContext === 'undefined' || !(context instanceof AudioContext)) return 0;
+    return (context.baseLatency || 0) + (context.outputLatency || 0);
   }
 
   async unlock(): Promise<void> {
@@ -144,9 +163,15 @@ export class WebAudioEngine implements AudioEngine {
     });
 
     const end = voices.reduce((latest, voice) => Math.max(latest, voice.end), startTime);
+    const lastNoteEnd = notes.reduce(
+      (latest, note) => Math.max(latest, note.start + note.duration),
+      0,
+    );
+    const untilStart = startTime - this.context.currentTime;
     return {
       startTime,
       duration: end - startTime,
+      notesEndAt: performance.now() + (untilStart + lastNoteEnd + this.#outputLatency()) * 1000,
       finished,
       stop: () => voices.forEach((voice) => this.#fadeOut(voice)),
     };
