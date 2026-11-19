@@ -75,9 +75,17 @@ test('le changement d’écran met à jour le titre et place le focus sur le tit
   await page.goto('./#/bienvenue');
   await page.getByRole('button', { name: "C'est parti" }).click();
   await expect(page).toHaveTitle('Oreille musicale');
-  await page.getByRole('link', { name: 'Statistiques' }).click();
-  await expect(page).toHaveTitle('Statistiques · Oreille musicale');
-  await expect(page.getByRole('heading', { level: 1, name: 'Statistiques' })).toBeFocused();
+  await page.getByRole('link', { name: 'Parcours', exact: true }).click();
+  await expect(page).toHaveTitle('Parcours · Oreille musicale');
+  const title = page.getByRole('heading', { level: 1, name: 'Parcours' });
+  await expect(title).toBeFocused();
+  // La tabulation repart du titre : l'élément suivant est après lui, pas en haut de page.
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('link', { name: 'Accueil' })).not.toBeFocused();
+  const afterTitle = await title.evaluate(
+    (h1) =>
+      document.activeElement !== null &&
+      document.activeElement !== document.body &&
+      (h1.compareDocumentPosition(document.activeElement) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0,
+  );
+  expect(afterTitle).toBe(true);
 });

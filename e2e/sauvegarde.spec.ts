@@ -52,8 +52,10 @@ test('transfère la progression d’un appareil à l’autre', async ({ page, br
   await otherBackup.getByLabel('Fichier de sauvegarde à importer').setInputFiles(file);
   await expect(otherBackup.getByText(/Elle remplacera toutes les données/)).toBeVisible();
   await expect(otherBackup.getByText(/1 séance et 12 réponses/)).toBeVisible();
+  // L'import recharge la page : attendre ce rechargement avant de naviguer.
+  const reloaded = other.waitForEvent('load');
   await otherBackup.getByRole('button', { name: 'Remplacer mes données' }).click();
-  await other.waitForLoadState('load');
+  await reloaded;
   await other.goto('./#/parcours');
   await expect(
     other.getByRole('region', { name: 'Intervalles' }).getByText('1 / 30 étapes validées'),
