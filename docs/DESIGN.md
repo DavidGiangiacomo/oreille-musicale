@@ -1,9 +1,9 @@
 # Oreille musicale — Document de conception
 
-> **Statut** : brouillon v0.5, à relire et valider
+> **Statut** : brouillon v0.6, à relire et valider
 > **Date** : 18 novembre 2026
 > **Objet** : application web et Android d'entraînement de l'oreille musicale (intervalles, accords, gammes et modes), avec difficulté progressive, suivi de progression et révisions espacées.
-> **Historique** : v0.1, version initiale ; v0.2, ajout des gammes et modes, et des exercices chantés prévus en v2 ; v0.3, premières décisions (public, framework, hébergement, licence) ; v0.4, révisions recalculées depuis le journal (J3) ; v0.5, accords et renversements (J4).
+> **Historique** : v0.1, version initiale ; v0.2, ajout des gammes et modes, et des exercices chantés prévus en v2 ; v0.3, premières décisions (public, framework, hébergement, licence) ; v0.4, révisions recalculées depuis le journal (J3) ; v0.5, accords et renversements (J4) ; v0.6, gammes et modes (J5), décisions de #10.
 
 ## Sommaire
 
@@ -977,17 +977,21 @@ On chante sur la syllabe de son choix (« la », noms des notes, numéros de deg
 | Accords en révision | Le contexte de réponse est la famille et la présentation : triades et septièmes acquises dans une même présentation partagent les boutons d'une révision. Pas de duel de renversements |
 | Test d'étape | Au moins deux questions par nouvel élément (R6 en introduit huit) ; une étape sans nouvel élément (R4) commence directement à l'entraînement |
 | Parcours actifs par défaut | Intervalles et Triades ; Septièmes et Renversements s'ajoutent depuis l'écran Parcours |
+| Synchronisation | Export/import en v1 ; la synchronisation entre appareils est une tâche à part, en v2 ou v3 (#52) |
+| Terminologie | Convention française par défaut : Do3 central, 4J, 7M |
+| Ordre pédagogique | Celui du §7.2, accords suspendus compris dès la v1 |
+| Gammes v1 | La sélection du §6.3 ; mineure mélodique en forme classique (elle redescend en mineure naturelle), donc absente de la ligne « descendante » |
+| Nom | « Oreille musicale » |
+| Modes sur bourdon | Le bourdon est un son synthétique tenu (onde riche filtrée, attaque et relâchement lents), la tonique doublée à l'octave inférieure, nettement plus doux que la gamme, une seconde avant la première note. Gamme jouée montante puis descendante |
+| Mélodies modales | 8 à 12 notes entre la tonique et son octave, surtout par degrés conjoints, sauts d'une quinte au plus, finale sur la tonique. Notes à faire entendre au moins deux fois : la note caractéristique, ou pour l'ionien 4J et 7M, pour l'éolien 2M et 6m (ce qui les distingue de leurs voisins). L'écoute comparée rejoue la même mélodie dans l'autre mode |
+| Feedback des modes | Note caractéristique en couleur sur le mini-clavier, avec son intervalle (« Do♯ (6M) ») ; bouton « Comparer avec le mode de référence » sur la même tonique |
+| Boutons des gammes et modes | Gammes : Majeure, Mineure, Harmonique, Mélodique, Penta M, Penta m, Blues. Modes : nom et famille avec la note caractéristique (« Dorien — mineur, 6M »), du lydien au locrien |
 
 ### 14.2 Questions ouvertes
 
-1. **Synchronisation web ↔ Android** dès la v1, ou l'export/import suffit-il au début ? Par défaut : export/import.
-2. **Distribution Android** : Play Store ou APK installé directement ?
-3. **Terminologie** : convention française par défaut (Do3 central, 4J, 7M), d'accord ?
-4. **Ordre pédagogique** : l'ordre proposé (3M-5J-8J, puis 4J, 3m, 2M… ; mixolydien et dorien avant lydien et phrygien) te convient-il ? Les accords suspendus ont-ils leur place dès la v1 ?
-5. **Gammes** : la sélection v1 (§6.3) te suffit-elle, ou faut-il ajouter dès maintenant des gammes plus rares (par tons, diminuée, modes de la mineure mélodique) ? Et pour la mineure mélodique : forme classique (elle redescend en mineure naturelle, comme en formation musicale) ou forme jazz (identique dans les deux sens) ?
-6. **Exercices chantés** : les utiliserais-tu plutôt au casque ? Faut-il aussi prévoir de répondre en jouant d'un instrument ?
-7. **Timbres** souhaités après le piano (guitare, cordes, voix…) ?
-8. **Nom** de l'appli : « Oreille musicale » ?
+1. **Distribution Android** : Play Store ou APK installé directement ? (avant J6)
+2. **Exercices chantés** : les utiliserais-tu plutôt au casque ? Faut-il aussi prévoir de répondre en jouant d'un instrument ? (v2)
+3. **Timbres** souhaités après le piano (guitare, cordes, voix…) ?
 
 ---
 

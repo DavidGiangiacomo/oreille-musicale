@@ -51,8 +51,8 @@ export function WelcomeScreen() {
       <header className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold">Bienvenue !</h1>
         <p className={muted}>
-          Oreille musicale t'apprend à reconnaître intervalles et accords à l'oreille, étape par
-          étape : on écoute, on répond, et on revient un peu chaque jour.
+          Oreille musicale t'apprend à reconnaître intervalles, accords, gammes et modes à
+          l'oreille, étape par étape : on écoute, on répond, et on revient un peu chaque jour.
         </p>
       </header>
 

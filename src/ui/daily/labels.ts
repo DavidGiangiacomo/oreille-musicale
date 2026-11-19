@@ -24,13 +24,25 @@ export function blockTitle(block: QuestionBlock): string {
 /** Ce que la séance demande, en une phrase. */
 export function blockDescription(block: QuestionBlock): string {
   if (block.kind === 'duel') {
-    const what = block.family === 'int' ? 'intervalles' : 'accords';
+    const what = {
+      int: 'intervalles',
+      chd: 'accords',
+      inv: 'accords',
+      scl: 'gammes',
+      mod: 'modes',
+    }[block.family];
     return `Deux réponses seulement, ${block.plan.length} questions. Après chaque réponse, les deux ${what} sont rejoués pour comparer.`;
   }
   const count = block.focus.length;
   const items = block.focus.map((item) => itemShort(block.family, item)).join(', ');
   const mixed = block.plan.length > count * ANSWERS_PER_REVIEW ? ', mêlés à quelques autres' : '';
-  const noun = { int: 'intervalle', chd: 'accord', inv: 'renversement' }[block.family];
+  const noun = {
+    int: 'intervalle',
+    chd: 'accord',
+    inv: 'renversement',
+    scl: 'gamme',
+    mod: 'mode',
+  }[block.family];
   return `${count} ${noun}${count > 1 ? 's' : ''} à réviser (${items})${mixed} : ${block.plan.length} questions.`;
 }
 

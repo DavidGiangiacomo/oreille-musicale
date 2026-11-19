@@ -1,9 +1,8 @@
 import { getTrack, type StepDef, type StepPhase } from '../../core/curriculum';
 import type { StepStatus } from '../../core/progress/projection';
 import { parseInversionItem } from '../../core/exercise/chordQuestion';
-import type { ChordQuality, IntervalCode } from '../../core/theory';
-import { intervalName } from '../format';
-import { answerLabel, answersList, chordName, itemShort } from '../items';
+import type { ChordQuality } from '../../core/theory';
+import { answerLabel, answersList, chordName, itemName, itemShort } from '../items';
 
 export const PHASE_LABELS: Record<StepPhase, string> = {
   discover: 'Découverte',
@@ -63,8 +62,7 @@ export function newItemsLabel(step: StepDef): string {
       .join(' ; ');
   }
   const names = step.newItems.map((item, i) => {
-    const name =
-      step.family === 'int' ? intervalName(item as IntervalCode) : chordName(item as ChordQuality);
+    const name = itemName(step.family, item);
     return i === 0 ? name : name.toLowerCase();
   });
   return listOf(names);
@@ -84,5 +82,7 @@ export function stepSubtitle(step: StepDef): string {
       : `Nouveau : ${newItemsLabel(step)}`;
   }
   const prefix = step.column === 1 ? 'Premiers repères' : 'Nouveau';
+  // Gammes et modes : leur nom suffit, l'abréviation de la grille n'apporterait rien.
+  if (step.family === 'scl' || step.family === 'mod') return `${prefix} : ${newItemsLabel(step)}`;
   return `${prefix} : ${newItemsLabel(step)} (${columnLabel(step).replace('+ ', '')})`;
 }

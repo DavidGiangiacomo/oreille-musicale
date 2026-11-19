@@ -15,8 +15,20 @@ const INTRODUCTIONS: Record<FamilyId, (several: boolean) => string> = {
     `Écoute ${several ? 'chaque intervalle' : 'le nouvel intervalle'} sur plusieurs notes de départ, puis compare-le à ceux que tu connais. Rien n'est noté : passe à la suite quand tu veux.`,
   chd: (several) =>
     `Écoute ${several ? 'chaque accord' : 'le nouvel accord'} sur plusieurs fondamentales, puis compare-le à ceux que tu connais. Rien n'est noté : passe à la suite quand tu veux.`,
+  scl: (several) =>
+    `Écoute ${several ? 'chaque gamme' : 'la nouvelle gamme'} sur plusieurs toniques, puis compare-la à celles que tu connais : même tonique, une ou deux notes changent. Rien n'est noté : passe à la suite quand tu veux.`,
+  mod: (several) =>
+    `Écoute ${several ? 'chaque mode' : 'le nouveau mode'} sur plusieurs toniques. Un mode s'entend par rapport à sa tonique : repère la note caractéristique qui le distingue du mode de référence. Rien n'est noté : passe à la suite quand tu veux.`,
   inv: (several) =>
     `Écoute ${several ? 'chaque renversement' : 'le nouveau renversement'} : c'est la note la plus grave, la basse, qui change. Rien n'est noté : passe à la suite quand tu veux.`,
+};
+
+const COMPARE_LABELS: Record<FamilyId, string> = {
+  int: 'Les comparer depuis la même note',
+  chd: 'Les comparer sur la même fondamentale',
+  inv: 'Les comparer sur la même fondamentale',
+  scl: 'Les comparer sur la même tonique',
+  mod: 'Les comparer sur la même tonique',
 };
 
 /** Phase de découverte (§7.3) : écoutes libres, rien n'est noté. */
@@ -76,9 +88,7 @@ export function DiscoveryPanel({
           onClick={() => play(comparisonExamples(step, step.newItems, random))}
         >
           <span aria-hidden="true">▶ </span>
-          {step.family === 'int'
-            ? 'Les comparer depuis la même note'
-            : 'Les comparer sur la même fondamentale'}
+          {COMPARE_LABELS[step.family]}
         </button>
       )}
       <button type="button" className={primaryButton} onClick={onContinue}>

@@ -2,8 +2,8 @@ export interface KeyMark {
   midi: number;
   /** Nom affiché sous la touche (« Ré3 »). */
   label: string;
-  /** Note jouée, ou note de la réponse donnée (écoute comparée). */
-  kind: 'played' | 'answer';
+  /** Note jouée, note caractéristique d'un mode, ou note de la réponse comparée. */
+  kind: 'played' | 'characteristic' | 'answer';
 }
 
 const WHITE_PITCH_CLASSES = [0, 2, 4, 5, 7, 9, 11];
@@ -23,7 +23,14 @@ const FILL = {
   white: 'fill-white dark:fill-slate-100',
   black: 'fill-slate-900 dark:fill-slate-950',
   played: 'fill-amber-400',
+  characteristic: 'fill-violet-400',
   answer: 'fill-sky-300',
+};
+
+const LABEL_FILL = {
+  played: 'fill-amber-800 dark:fill-amber-300',
+  characteristic: 'fill-violet-700 dark:fill-violet-300',
+  answer: 'fill-sky-700 dark:fill-sky-300',
 };
 
 /**
@@ -120,7 +127,7 @@ export function MiniKeyboard({ marks, description }: { marks: KeyMark[]; descrip
           x={x}
           y={WHITE_HEIGHT + 15 + row * LABEL_ROW}
           textAnchor="middle"
-          className={`text-[11px] font-semibold ${mark.kind === 'answer' ? 'fill-sky-700 dark:fill-sky-300' : 'fill-amber-800 dark:fill-amber-300'}`}
+          className={`text-[11px] font-semibold ${LABEL_FILL[mark.kind]}`}
         >
           {mark.label}
         </text>

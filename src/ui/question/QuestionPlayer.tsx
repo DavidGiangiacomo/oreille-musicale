@@ -1,6 +1,7 @@
 import { useEffect, useEffectEvent, useRef } from 'react';
 import { arpeggiatedEvents } from '../../core/exercise/chordQuestion';
 import { FAMILIES, type Question } from '../../core/exercise/families';
+import { MODES, type ModeCode } from '../../core/theory';
 import { sequenceEvents } from '../../core/exercise/intervalQuestion';
 import type { NoteEvent } from '../../core/exercise/rendition';
 import type { AnswerMetrics, QuestionResult } from '../../core/session/series';
@@ -75,8 +76,20 @@ export function QuestionPlayer({
         sound: family.soundFrom(question, family.itemFor(question, comparedAnswer)),
       }
     : null;
+  // Mode : comparaison avec son mode de référence sur la même tonique (§6.3).
+  const referenceMode =
+    question.family === 'mod' ? MODES[question.answer as ModeCode].reference : null;
+  const reference: Comparison | null =
+    result && referenceMode
+      ? {
+          answer: referenceMode,
+          isAnswer: referenceMode === result.answer,
+          sound: family.soundFrom(question, referenceMode),
+        }
+      : null;
   // Aide « écouter arpégé » : pour un accord plaqué, comptée dans la note de révision.
-  const canArpeggiate = question.family !== 'int' && question.presentation !== 'arp';
+  const canArpeggiate =
+    (question.family === 'chd' || question.family === 'inv') && question.presentation !== 'arp';
   const helpUsed = useRef(false);
 
   function play(events: NoteEvent[]) {
@@ -89,7 +102,7 @@ export function QuestionPlayer({
   }
 
   function arpeggiate() {
-    if (question.family === 'int') return;
+    if (question.family !== 'chd' && question.family !== 'inv') return;
     play(arpeggiatedEvents(question));
     if (asking) helpUsed.current = true;
   }
@@ -223,6 +236,7 @@ export function QuestionPlayer({
           question={question}
           result={result}
           comparison={comparison}
+          reference={reference}
           settings={settings}
           brief={brief}
           autoAdvancing={autoAdvancing}
@@ -230,6 +244,7 @@ export function QuestionPlayer({
           nextButtonRef={nextButton}
           onPlayCorrect={() => play(question.events)}
           onPlayComparison={() => comparison && play(comparison.sound.events)}
+          onPlayReference={() => reference && play(reference.sound.events)}
           onNext={onNext}
         />
       )}
