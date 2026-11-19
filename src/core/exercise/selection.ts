@@ -81,3 +81,34 @@ export function selectNextItem<T>(
   });
   return weightedPick(random, items, weights);
 }
+
+/**
+ * Tirage qui met en avant certains éléments (les nouveaux d'une étape) : ils
+ * reviennent dans une proportion `share` des questions environ, les autres se
+ * partagent le reste selon `selectNextItem`. La limite des répétitions d'affilée
+ * reste respectée.
+ */
+export function selectWithFocus<T>(
+  items: readonly T[],
+  focus: readonly T[],
+  share: number,
+  history: readonly AskedItem<T>[],
+  random: Random,
+  options: SelectionOptions = {},
+): T {
+  const focused = items.filter((item) => focus.includes(item));
+  const others = items.filter((item) => !focus.includes(item));
+  if (focused.length === 0 || others.length === 0) {
+    return selectNextItem(items, history, random, options);
+  }
+  const { maxRepeat = 3 } = options;
+  const recent = history.slice(-maxRepeat);
+  const blocked =
+    focused.length === 1 &&
+    recent.length === maxRepeat &&
+    recent.every((entry) => entry.item === focused[0]);
+  if (!blocked && random.next() < share) {
+    return selectNextItem(focused, history, random, options);
+  }
+  return selectNextItem(others, history, random, options);
+}
