@@ -133,6 +133,8 @@ export interface Settings {
   dailyGoalMinutes: number;
   /** Rappel quotidien, sur Android (§10.7). */
   reminder: ReminderSettings;
+  /** Thème de l'interface (§9.6). */
+  theme: 'system' | 'light' | 'dark';
   /** Premier lancement terminé (test audio, notation). */
   onboardingDone: boolean;
 }
@@ -147,6 +149,7 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = {
   activeTracks: ['intervals', 'triads'],
   dailyGoalMinutes: DEFAULT_DAILY_GOAL_MINUTES,
   reminder: { ...DEFAULT_REMINDER },
+  theme: 'system',
   onboardingDone: false,
 };
 
@@ -200,6 +203,7 @@ export function normalizeSettings(stored: unknown): Settings {
       ? (raw.dailyGoalMinutes as number)
       : d.dailyGoalMinutes,
     reminder: normalizeReminder(raw.reminder),
+    theme: oneOf(raw.theme, ['system', 'light', 'dark'], d.theme),
     onboardingDone: raw.onboardingDone === true,
   };
 }

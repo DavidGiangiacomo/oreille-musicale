@@ -10,6 +10,7 @@ import { AboutScreen } from './screens/AboutScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { SeriesScreen } from './series/SeriesScreen';
 import { SettingsProvider } from './settings/SettingsProvider';
+import { StatsScreen } from './stats/StatsScreen';
 import { StepScreen } from './step/StepScreen';
 
 // Routage par « # » : GitHub Pages ne sait pas rediriger les routes vers index.html,
@@ -22,6 +23,7 @@ const router = createHashRouter([
   { path: '/etape/:stepId', element: <StepScreen /> },
   { path: '/serie', element: <SeriesScreen /> },
   { path: '/a-propos', element: <AboutScreen /> },
+  { path: '/statistiques', element: <StatsScreen /> },
   { path: '*', element: <Navigate to="/" replace /> },
 ]);
 

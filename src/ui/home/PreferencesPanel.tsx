@@ -22,6 +22,16 @@ export function PreferencesPanel() {
       />
       <ReminderPreference />
       <OptionGroup
+        legend="Thème"
+        value={settings.theme}
+        options={[
+          { value: 'system', label: 'Système' },
+          { value: 'light', label: 'Clair' },
+          { value: 'dark', label: 'Sombre' },
+        ]}
+        onChange={(theme) => updateSettings({ theme })}
+      />
+      <OptionGroup
         legend="Timbre"
         value={settings.instrument}
         options={[
