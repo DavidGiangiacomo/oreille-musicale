@@ -3,6 +3,7 @@ import { defineConfig, devices } from '@playwright/test';
 // Tests de bout en bout (docs/DESIGN.md §10.10) : serveur de développement avec un
 // moteur audio silencieux, horloge simulée dans chaque test.
 const PORT = 5199;
+export const PREVIEW_PORT = 5200;
 
 export default defineConfig({
   testDir: 'e2e',
@@ -19,10 +20,19 @@ export default defineConfig({
     trace: 'off',
   },
   projects: [{ name: 'chromium', use: { browserName: 'chromium' } }],
-  webServer: {
-    command: `npx vite --port ${PORT} --strictPort`,
-    env: { VITE_FAKE_AUDIO: '1' },
-    url: `http://localhost:${PORT}/`,
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: [
+    {
+      command: `npx vite --port ${PORT} --strictPort`,
+      env: { VITE_FAKE_AUDIO: '1' },
+      url: `http://localhost:${PORT}/`,
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      // Version construite, avec son service worker : pour le fonctionnement hors-ligne.
+      command: `npm run build && npx vite preview --port ${PREVIEW_PORT} --strictPort`,
+      url: `http://localhost:${PREVIEW_PORT}/`,
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+    },
+  ],
 });

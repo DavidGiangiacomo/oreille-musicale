@@ -1,4 +1,6 @@
 import { createHashRouter, Navigate, RouterProvider } from 'react-router';
+import { isNativeApp } from '../platform/native';
+import { UpdatePrompt } from './components/UpdatePrompt';
 import { CourseScreen } from './course/CourseScreen';
 import { DailySessionScreen } from './daily/DailySessionScreen';
 import { WelcomeScreen } from './onboarding/WelcomeScreen';
@@ -19,10 +21,14 @@ const router = createHashRouter([
   { path: '*', element: <Navigate to="/" replace /> },
 ]);
 
+// Le service worker ne sert qu'à la version web publiée.
+const withServiceWorker = import.meta.env.PROD && !isNativeApp();
+
 export function App() {
   return (
     <SettingsProvider>
       <RouterProvider router={router} />
+      {withServiceWorker && <UpdatePrompt />}
     </SettingsProvider>
   );
 }
