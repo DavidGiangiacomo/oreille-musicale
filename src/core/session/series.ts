@@ -20,6 +20,8 @@ export interface SeriesConfig {
   length: number;
   tempo: Tempo;
   range: readonly [number, number];
+  /** Renfort des paires confondues dans les tirages (§8.6). */
+  boost?: ReadonlyMap<IntervalCode, number>;
 }
 
 export const DEFAULT_SERIES_LENGTH = 20;
@@ -64,6 +66,7 @@ export function createSeriesConfig(
     length,
     tempo: overrides.tempo ?? 'normal',
     range: overrides.range ?? DEFAULT_INTERVAL_RANGE,
+    ...(overrides.boost ? { boost: overrides.boost } : {}),
   };
 }
 
@@ -74,7 +77,7 @@ function nextEntry(config: SeriesConfig, entries: readonly SeriesEntry[], random
   }));
   const previous = entries.at(-1)?.question;
   const question = createIntervalQuestion({
-    item: selectNextItem(config.items, history, random),
+    item: selectNextItem(config.items, history, random, { boost: config.boost }),
     presentation: config.presentation,
     choices: config.items,
     range: config.range,
