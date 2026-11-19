@@ -181,3 +181,40 @@ describe('événements et étapes', () => {
     expect((await journal.attempts()).map((a) => a.id)).toEqual(['a1', 'a2']);
   });
 });
+
+describe('sauvegarde', () => {
+  it('exporte tout, puis remplace les données d’un autre appareil', async () => {
+    const source = createJournal(freshDatabase());
+    await source.startSession(session('s1', 1000));
+    await source.addAttempt(attempt('a1', 's1', 2000, true));
+    await source.addEvent({
+      id: 'e1',
+      at: 1500,
+      type: 'phase_started',
+      stepId: 'int.asc.01',
+      phase: 'train',
+    });
+    await source.saveSettings({ ...DEFAULT_SETTINGS, noteNames: 'en' });
+    const data = await source.exportAll();
+    expect(data.attempts.map((a) => a.id)).toEqual(['a1']);
+    expect(data.settings.noteNames).toBe('en');
+
+    const target = createJournal(freshDatabase());
+    await target.startSession(session('autre', 5000));
+    await target.addAttempt(attempt('b1', 'autre', 6000, false));
+    await target.replaceAll(data);
+    expect(await target.exportAll()).toEqual(data);
+  });
+
+  it('ne modifie rien si l’import échoue', async () => {
+    const journal = createJournal(freshDatabase());
+    await journal.startSession(session('s1', 1000));
+    await journal.addAttempt(attempt('a1', 's1', 2000, true));
+    const before = await journal.exportAll();
+    const duplicate = attempt('x', 's1', 3000, true);
+    await expect(
+      journal.replaceAll({ ...before, attempts: [duplicate, duplicate] }),
+    ).rejects.toThrow();
+    expect(await journal.exportAll()).toEqual(before);
+  });
+});

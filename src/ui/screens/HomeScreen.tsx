@@ -1,4 +1,5 @@
 import { Navigate } from 'react-router';
+import { BackupPanel } from '../home/BackupPanel';
 import { ContinueCard } from '../home/ContinueCard';
 import { DailyCard } from '../home/DailyCard';
 import { HistoryList } from '../home/HistoryList';
@@ -24,6 +25,7 @@ export function HomeScreen() {
       <SeriesLauncher />
       <HistoryList />
       <PreferencesPanel />
+      <BackupPanel />
 
       <footer className="text-xs text-slate-500 dark:text-slate-400">
         <p>Version {__APP_VERSION__}.</p>
