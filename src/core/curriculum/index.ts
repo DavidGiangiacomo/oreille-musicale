@@ -2,18 +2,20 @@ import { answersFor, FAMILIES } from '../exercise/families';
 import { midiOf } from '../theory';
 import { INVERSIONS_TRACK, SEVENTHS_TRACK, TRIADS_TRACK } from './chords';
 import { INTERVALS_TRACK } from './intervals';
+import { MODES_TRACK, SCALES_TRACK } from './scales';
 import type { StepDef, TrackDef, TrackId } from './types';
 
 export type { StepDef, StepPhase, TrackColumn, TrackDef, TrackId, TrackRow } from './types';
 export { INTERVALS_TRACK } from './intervals';
 export { INVERSIONS_TRACK, SEVENTHS_TRACK, TRIADS_TRACK } from './chords';
+export { MODES_TRACK, SCALES_TRACK } from './scales';
 
 /**
  * Version du curriculum, enregistrée avec chaque séance. À incrémenter dès qu'une
  * étape change (réponses, ordre, seuils) : le journal garde ainsi le contexte.
- * 2 : parcours Triades, Septièmes et Renversements.
+ * 2 : parcours Triades, Septièmes et Renversements. 3 : Gammes et Modes.
  */
-export const CURRICULUM_VERSION = '2';
+export const CURRICULUM_VERSION = '3';
 
 /** Seuils de validation d'une étape (§7.3). */
 export const VALIDATION = { minAccuracy: 0.9, minNewItemAccuracy: 0.75 } as const;
@@ -23,6 +25,8 @@ export const TRACKS: readonly TrackDef[] = [
   TRIADS_TRACK,
   SEVENTHS_TRACK,
   INVERSIONS_TRACK,
+  SCALES_TRACK,
+  MODES_TRACK,
 ];
 
 export function stepId(track: TrackDef, row: number, column: number): string {

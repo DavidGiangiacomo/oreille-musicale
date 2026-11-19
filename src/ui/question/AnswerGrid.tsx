@@ -54,7 +54,7 @@ export function AnswerGrid({
             aria-keyshortcuts={hint ?? undefined}
             className={`relative flex min-h-16 flex-col items-center justify-center rounded-xl border-2 px-2 py-2 transition-colors enabled:hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 disabled:cursor-default dark:enabled:hover:bg-slate-800 ${state} ${result !== null && !isCorrect && !isWrongChoice ? 'opacity-50' : ''}`}
           >
-            <span className="text-xl font-bold">
+            <span className={`${label.short.length > 7 ? 'text-base' : 'text-xl'} font-bold`}>
               {isCorrect && <span aria-hidden="true">✓ </span>}
               {isWrongChoice && <span aria-hidden="true">✗ </span>}
               {label.short}

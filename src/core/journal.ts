@@ -146,7 +146,14 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = {
   onboardingDone: false,
 };
 
-const KNOWN_TRACKS: readonly TrackId[] = ['intervals', 'triads', 'sevenths', 'inversions'];
+const KNOWN_TRACKS: readonly TrackId[] = [
+  'intervals',
+  'triads',
+  'sevenths',
+  'inversions',
+  'scales',
+  'modes',
+];
 
 function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
   return allowed.includes(value as T) ? (value as T) : fallback;

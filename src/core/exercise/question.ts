@@ -3,10 +3,10 @@
 import type { NoteName } from '../theory';
 import type { NoteEvent, Presentation, Tempo } from './rendition';
 
-/** Familles d'éléments : intervalles, accords (qualité), renversements. */
-export type FamilyId = 'int' | 'chd' | 'inv';
+/** Familles d'éléments : intervalles, accords (qualité), renversements, gammes, modes. */
+export type FamilyId = 'int' | 'chd' | 'inv' | 'scl' | 'mod';
 
-export const FAMILY_IDS: readonly FamilyId[] = ['int', 'chd', 'inv'];
+export const FAMILY_IDS: readonly FamilyId[] = ['int', 'chd', 'inv', 'scl', 'mod'];
 
 /** Notes orthographiées, hauteurs MIDI et événements à jouer. */
 export interface Sound {

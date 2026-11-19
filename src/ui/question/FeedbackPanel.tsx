@@ -3,7 +3,15 @@ import type { Question } from '../../core/exercise/families';
 import type { Sound } from '../../core/exercise/question';
 import type { Settings } from '../../core/journal';
 import type { QuestionResult } from '../../core/session/series';
-import { chordSymbol, formatNote } from '../../core/theory';
+import { characteristicNotes } from '../../core/exercise/scaleQuestion';
+import {
+  chordSymbol,
+  formatNote,
+  frenchIntervalLabel,
+  midiOf,
+  MODES,
+  type ModeCode,
+} from '../../core/theory';
 import { MiniKeyboard, type KeyMark } from '../components/MiniKeyboard';
 import { formatNotes } from '../format';
 import { answerLabel, answerWithArticle, itemDescription } from '../items';
@@ -21,6 +29,8 @@ interface FeedbackPanelProps {
   question: Question;
   result: QuestionResult;
   comparison: Comparison | null;
+  /** Mode de référence joué sur la même tonique (modes seulement). */
+  reference: Comparison | null;
   settings: Settings;
   /** Verdict seul, sans mini-clavier ni écoute comparée (test de validation). */
   brief: boolean;
@@ -30,6 +40,7 @@ interface FeedbackPanelProps {
   nextButtonRef: Ref<HTMLButtonElement>;
   onPlayCorrect: () => void;
   onPlayComparison: () => void;
+  onPlayReference: () => void;
   onNext: () => void;
 }
 
@@ -38,7 +49,7 @@ interface FeedbackPanelProps {
  * basse d'un accord renversé : « Do/Mi · C/E ».
  */
 function chordSymbols(question: Question): string | null {
-  if (question.family === 'int') return null;
+  if (question.family !== 'chd' && question.family !== 'inv') return null;
   const symbol = (naming: 'fr' | 'en') => {
     const bass = question.notes[0];
     const slash =
@@ -54,6 +65,7 @@ export function FeedbackPanel({
   question,
   result,
   comparison,
+  reference,
   settings,
   brief,
   autoAdvancing,
@@ -61,34 +73,58 @@ export function FeedbackPanel({
   nextButtonRef,
   onPlayCorrect,
   onPlayComparison,
+  onPlayReference,
   onNext,
 }: FeedbackPanelProps) {
   const format = (note: string) =>
     formatNote(note, { naming: settings.noteNames, octave: settings.octaveConvention });
   const { family } = question;
 
-  const marks: KeyMark[] = question.notes.map((note, i) => ({
-    midi: question.midi[i] as number,
-    label: format(note),
-    kind: 'played',
-  }));
+  const isScale = question.family === 'scl' || question.family === 'mod';
+  // Clavier : les notes de l'intervalle ou de l'accord, ou les degrés de la gamme.
+  const shown = isScale ? question.degrees : question.notes;
+  const shownMidi = shown.map(midiOf);
+  // Note caractéristique d'un mode, mise en évidence avec son intervalle (« Si (6M) »).
+  const characteristic = new Map<number, string>();
+  if (question.family === 'mod') {
+    const mode = MODES[question.code as ModeCode];
+    characteristicNotes(question).forEach((note, i) => {
+      characteristic.set(midiOf(note), frenchIntervalLabel(mode.characteristic[i] as string));
+    });
+  }
+  const marks: KeyMark[] = shown.map((note, i) => {
+    const midi = shownMidi[i] as number;
+    const interval = characteristic.get(midi);
+    return interval
+      ? { midi, label: `${format(note)} (${interval})`, kind: 'characteristic' }
+      : { midi, label: format(note), kind: 'played' };
+  });
   const correct = answerLabel(family, question.answer).short;
   const compared = comparison ? answerLabel(family, comparison.answer).short : '';
   const comparedLabel = comparison?.isAnswer ? 'ta réponse' : compared;
-  // Notes de la réponse comparée absentes de ce qui a été joué.
+  // Notes de la réponse comparée absentes de ce qui a été joué, une fois chacune.
   const comparedNotes = comparison
     ? comparison.sound.notes
         .map((note, i) => ({ note, midi: comparison.sound.midi[i] as number }))
-        .filter(({ midi }) => !question.midi.includes(midi))
+        .filter(
+          ({ midi }, i, all) =>
+            !shownMidi.includes(midi) && all.findIndex((n) => n.midi === midi) === i,
+        )
     : [];
   for (const { note, midi } of comparedNotes) {
     marks.push({ midi, label: `${format(note)} (${comparedLabel})`, kind: 'answer' });
   }
   const keyboardDescription =
-    `Clavier : ${question.notes.map(format).join(', ')} joués` +
+    `Clavier : ${shown.map(format).join(', ')} ${isScale ? 'dans la gamme' : 'joués'}` +
+    (characteristic.size > 0
+      ? ` ; note caractéristique : ${[...characteristic.values()].join(', ')}`
+      : '') +
     (comparedNotes.length > 0
       ? ` ; ${comparedNotes.map(({ note }) => format(note)).join(', ')} pour ${comparedLabel}`
       : '');
+  // L'abréviation n'apporte rien quand le nom la contient (renversements, gammes, modes).
+  const withShort = family === 'int' || family === 'chd';
+  const showReference = !brief && reference !== null && reference.answer !== comparison?.answer;
   const symbols = chordSymbols(question);
 
   return (
@@ -110,17 +146,21 @@ export function FeedbackPanel({
             <p className="text-xl font-bold">
               <span aria-hidden="true">✗ </span>Non : c'était{' '}
               {answerWithArticle(family, question.answer)}
-              {family === 'inv' ? '' : ` (${correct})`}
+              {withShort ? ` (${correct})` : ''}
             </p>
             <p>
               Ta réponse : {answerWithArticle(family, result.answer)}
-              {family === 'inv' ? '' : ` (${answerLabel(family, result.answer).short})`}
+              {withShort ? ` (${answerLabel(family, result.answer).short})` : ''}
             </p>
           </>
         )}
         {symbols && <p className="font-semibold">{symbols}</p>}
         {!brief && (
-          <p className="text-lg">{formatNotes(question.notes, question.presentation, settings)}</p>
+          <p className="text-lg">
+            {isScale
+              ? question.degrees.map(format).join(' ')
+              : formatNotes(question.notes, question.presentation, settings)}
+          </p>
         )}
       </div>
 
@@ -136,6 +176,13 @@ export function FeedbackPanel({
             {comparison.isAnswer ? `Écouter ta réponse (${compared})` : `Écouter ${compared}`}
           </button>
         </div>
+      )}
+
+      {showReference && (
+        <button type="button" className={secondaryButton} onClick={onPlayReference}>
+          <span aria-hidden="true">▶ </span>Comparer avec le mode de référence (
+          {answerLabel(family, reference.answer).short.toLowerCase()})
+        </button>
       )}
 
       {autoAdvancing && <p className={`text-sm ${muted}`}>Question suivante dans un instant…</p>}

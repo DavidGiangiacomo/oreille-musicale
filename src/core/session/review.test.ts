@@ -148,3 +148,19 @@ describe('révisions d’accords et de renversements', () => {
     }
   });
 });
+
+describe('révisions de gammes et de modes', () => {
+  it('ajoute un bloc par contexte, après les autres familles', () => {
+    const reviews = reviewsOf([
+      'int:M3:asc',
+      'scl:major:updown',
+      'scl:natmin:updown',
+      'mod:dorian:drone',
+    ]);
+    const plan = planReview(reviews, T0 + 3 * DAY, createRandom(3));
+    expect(plan.blocks.map((b) => b.context)).toEqual(['int:asc', 'scl:updown', 'mod:drone']);
+    expect(plan.blocks[1]?.choices).toEqual(['major', 'natmin']);
+    const question = blockQuestion(plan.blocks[2]!, 'dorian', createRandom(1), null);
+    expect(question.events.some((e) => e.instrument === 'drone')).toBe(true);
+  });
+});

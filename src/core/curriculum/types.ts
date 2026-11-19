@@ -1,8 +1,8 @@
 import type { FamilyId, Generation } from '../exercise/question';
 import type { Presentation } from '../exercise/rendition';
 
-/** Parcours disponibles ; les gammes et modes s'ajouteront ici. */
-export type TrackId = 'intervals' | 'triads' | 'sevenths' | 'inversions';
+/** Parcours disponibles (§7.2). */
+export type TrackId = 'intervals' | 'triads' | 'sevenths' | 'inversions' | 'scales' | 'modes';
 
 /** Phases d'une étape (§7.3). */
 export type StepPhase = 'discover' | 'contrast' | 'train' | 'test';

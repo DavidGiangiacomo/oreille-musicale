@@ -1,7 +1,8 @@
 // Réalisation d'une question : la liste des notes à jouer, produite par le cœur
 // métier et jouée telle quelle par le moteur audio (docs/DESIGN.md §6.5 et §10.4).
 
-export type InstrumentId = 'piano' | 'pure';
+/** Piano, son pur, et le son synthétique tenu du bourdon (jamais choisi par l'utilisateur). */
+export type InstrumentId = 'piano' | 'pure' | 'drone';
 
 export type Tempo = 'slow' | 'normal' | 'fast';
 
@@ -28,8 +29,15 @@ export type IntervalPresentation = 'asc' | 'desc' | 'harm';
 /** Accords : arpégé montant, plaqué à l'état fondamental, plaqué renversé (§6.4). */
 export type ChordPresentation = 'arp' | 'block' | 'inv';
 
-/** Façon de faire entendre un élément ; s'étendra aux gammes et aux modes. */
-export type Presentation = IntervalPresentation | ChordPresentation;
+/** Gammes : montante puis descendante, montante seule, descendante seule. */
+export type ScalePresentation = 'updown' | 'asc' | 'desc';
+
+/** Modes : gamme sur bourdon, gamme sans bourdon, mélodie sur bourdon. */
+export type ModePresentation = 'drone' | 'plain' | 'melody';
+
+/** Façon de faire entendre un élément (§6.4). */
+export type Presentation =
+  IntervalPresentation | ChordPresentation | ScalePresentation | ModePresentation;
 
 export const DEFAULT_VELOCITY = 0.7;
 

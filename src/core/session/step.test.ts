@@ -271,3 +271,29 @@ describe('étapes d’accords et de renversements', () => {
     expect(sounds[0]?.midi[0]).toBe(sounds[1]?.midi[0]);
   });
 });
+
+describe('étapes de gammes et de modes', () => {
+  it('pose une mélodie modale sur bourdon, avec les modes de l’étape comme réponses', () => {
+    const s = step('mod.melody.03');
+    const question = nextStepQuestion({
+      step: s,
+      phase: 'train',
+      history: [],
+      phaseResults: [],
+      random: createRandom(6),
+      previousAnchor: null,
+    });
+    expect(question.choices).toEqual(['ionian', 'mixolydian', 'dorian', 'aeolian']);
+    expect(question.presentation).toBe('melody');
+    expect(question.events.some((event) => event.instrument === 'drone')).toBe(true);
+  });
+
+  it('compare deux gammes sur la même tonique', () => {
+    const sounds = comparisonExamples(step('scl.asc.02'), ['harmin', 'natmin'], createRandom(2));
+    expect(sounds).toHaveLength(4);
+    expect(sounds[0]?.midi[0]).toBe(sounds[1]?.midi[0]);
+    // Mineure harmonique et naturelle : seule la septième diffère.
+    const diff = sounds[0]!.midi.filter((m, i) => m !== sounds[1]!.midi[i]);
+    expect(diff).toHaveLength(1);
+  });
+});

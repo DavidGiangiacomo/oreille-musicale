@@ -61,12 +61,17 @@ const FADE_OUT = 0.03;
 /** Les échantillons sont normalisés à -25 LUFS : ce gain les ramène à un niveau confortable. */
 const PIANO_GAIN = 1.6;
 const PURE_GAIN = 0.32;
+/** Bourdon : attaque et relâchement lents, gain faible (la vélocité l'abaisse encore). */
+const DRONE_GAIN = 0.3;
+const DRONE_ATTACK = 0.5;
+const DRONE_RELEASE = 0.8;
 
 export class WebAudioEngine implements AudioEngine {
   #context: BaseAudioContext | null;
   #output: GainNode | null = null;
   #volume = 1;
   #pureWave: PeriodicWave | null = null;
+  #droneWave: PeriodicWave | null = null;
   readonly #piano = new Map<number, AudioBuffer>();
   #pianoLoading: Promise<void> | null = null;
   readonly #voices = new Set<Voice>();
@@ -143,9 +148,11 @@ export class WebAudioEngine implements AudioEngine {
     const voices = notes.map((note) => {
       const instrument = note.instrument ?? options.instrument ?? 'piano';
       const voice =
-        instrument === 'piano' && this.isLoaded('piano')
-          ? this.#pianoVoice(note, startTime)
-          : this.#pureVoice(note, startTime);
+        instrument === 'drone'
+          ? this.#droneVoice(note, startTime)
+          : instrument === 'piano' && this.isLoaded('piano')
+            ? this.#pianoVoice(note, startTime)
+            : this.#pureVoice(note, startTime);
       this.#voices.add(voice);
       return voice;
     });
@@ -225,6 +232,38 @@ export class WebAudioEngine implements AudioEngine {
     oscillator.setPeriodicWave(this.#pureWave);
     oscillator.frequency.value = 440 * 2 ** ((note.midi - 69) / 12);
     return this.#schedule(oscillator, note, startTime, note.velocity * PURE_GAIN, 0.6);
+  }
+
+  /**
+   * Son tenu du bourdon (§6.5) : une onde riche en harmoniques adoucie par un filtre
+   * passe-bas, qui entre et sort lentement. Le piano s'éteindrait trop vite.
+   */
+  #droneVoice(note: NoteEvent, startTime: number): Voice {
+    const context = this.context;
+    this.#droneWave ??= context.createPeriodicWave(
+      new Float32Array([0, 1, 0.55, 0.35, 0.22, 0.12, 0.08, 0.05]),
+      new Float32Array(8),
+    );
+    const oscillator = context.createOscillator();
+    oscillator.setPeriodicWave(this.#droneWave);
+    oscillator.frequency.value = 440 * 2 ** ((note.midi - 69) / 12);
+    const filter = context.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 900;
+    filter.Q.value = 0.4;
+    const gain = context.createGain();
+    const peak = note.velocity * DRONE_GAIN;
+    const start = startTime + note.start;
+    const release = start + Math.max(note.duration, DRONE_ATTACK);
+    const end = release + DRONE_RELEASE;
+    gain.gain.setValueAtTime(0, start);
+    gain.gain.linearRampToValueAtTime(peak, start + DRONE_ATTACK);
+    gain.gain.setValueAtTime(peak, release);
+    gain.gain.setTargetAtTime(0, release, DRONE_RELEASE / 4);
+    oscillator.connect(filter).connect(gain).connect(this.#outputNode);
+    oscillator.start(start);
+    oscillator.stop(end);
+    return { source: oscillator, gain, end };
   }
 
   /**

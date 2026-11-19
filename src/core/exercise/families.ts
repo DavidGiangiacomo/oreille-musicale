@@ -1,7 +1,16 @@
 // Familles d'éléments (docs/DESIGN.md §6) : ce qui distingue intervalles, accords et
 // renversements, derrière une interface commune au reste du cœur.
 import type { Random } from '../random';
-import { INTERVAL_CODES, INTERVALS, type ChordQuality, type IntervalCode } from '../theory';
+import {
+  INTERVAL_CODES,
+  INTERVALS,
+  MODE_CODES,
+  SCALE_CODES,
+  type ChordQuality,
+  type IntervalCode,
+  type ModeCode,
+  type ScaleCode,
+} from '../theory';
 import {
   CHORD_ORDER,
   chordSoundFrom,
@@ -20,9 +29,24 @@ import {
   type IntervalQuestion,
 } from './intervalQuestion';
 import type { Difficulty, FamilyId, Generation, Sound } from './question';
-import type { ChordPresentation, IntervalPresentation, Presentation, Tempo } from './rendition';
+import {
+  createScaleQuestion,
+  DEFAULT_TONIC_RANGE,
+  isModeCode,
+  isScaleCode,
+  scaleSoundFrom,
+  type ScaleQuestion,
+} from './scaleQuestion';
+import type {
+  ChordPresentation,
+  IntervalPresentation,
+  ModePresentation,
+  Presentation,
+  ScalePresentation,
+  Tempo,
+} from './rendition';
 
-export type Question = IntervalQuestion | ChordQuestion;
+export type Question = IntervalQuestion | ChordQuestion | ScaleQuestion;
 
 export interface QuestionOptions {
   item: string;
@@ -174,10 +198,48 @@ const inversions: Family = {
   defaultRange: DEFAULT_BASS_RANGE,
 };
 
+/** Gammes et modes : tonique entre C3 et C4 ; plus lent ou plus rapide selon la difficulté. */
+function scaleGeneration(base: Generation, difficulty: Difficulty): Generation {
+  if (difficulty === 'easier') return { range: base.range, tempo: 'slow' };
+  if (difficulty === 'harder') return { range: base.range, tempo: 'fast' };
+  return base;
+}
+
+function scaleFamily(id: 'scl' | 'mod'): Family {
+  const order: readonly string[] = id === 'scl' ? SCALE_CODES : MODE_CODES;
+  return {
+    id,
+    presentations: id === 'scl' ? ['updown', 'asc', 'desc'] : ['drone', 'plain', 'melody'],
+    answerOrder: order,
+    isItem: id === 'scl' ? isScaleCode : isModeCode,
+    answerOf: (item) => item,
+    distance: (a, b) => Math.abs(orderIndex(order, a) - orderIndex(order, b)),
+    createQuestion: (options) =>
+      createScaleQuestion({
+        family: id,
+        item: options.item,
+        presentation: options.presentation as ScalePresentation | ModePresentation,
+        choices: options.choices,
+        random: options.random,
+        ...(options.range ? { range: options.range } : {}),
+        ...(options.tempo ? { tempo: options.tempo } : {}),
+        previousAnchor: options.previousAnchor ?? null,
+      }),
+    itemFor: (_question, answer) => answer,
+    soundFrom: (question, item) =>
+      scaleSoundFrom(question as ScaleQuestion, item as ScaleCode | ModeCode),
+    comparisonAnchor: (items) => items[0] as string,
+    generationFor: scaleGeneration,
+    defaultRange: DEFAULT_TONIC_RANGE,
+  };
+}
+
 export const FAMILIES: Readonly<Record<FamilyId, Family>> = {
   int: intervals,
   chd: chords,
   inv: inversions,
+  scl: scaleFamily('scl'),
+  mod: scaleFamily('mod'),
 };
 
 export function familyOf(id: FamilyId): Family {
