@@ -1,6 +1,7 @@
 import {
   normalizeSettings,
   type Attempt,
+  type ProgressEvent,
   type SessionRecord,
   type Settings,
 } from '../core/journal';
@@ -27,8 +28,31 @@ export function createJournal(db: OreilleDatabase) {
       await db.attempts.add(attempt);
     },
 
+    async addEvent(event: ProgressEvent): Promise<void> {
+      await db.events.add(event);
+    },
+
     async attemptsOf(sessionId: string): Promise<Attempt[]> {
       return db.attempts.where('sessionId').equals(sessionId).sortBy('at');
+    },
+
+    /** Tous les événements de progression, du plus ancien au plus récent. */
+    async events(): Promise<ProgressEvent[]> {
+      return db.events.orderBy('at').toArray();
+    },
+
+    /** Toutes les réponses, de la plus ancienne à la plus récente. */
+    async attempts(): Promise<Attempt[]> {
+      return db.attempts.orderBy('at').toArray();
+    },
+
+    /** Événements et réponses d'une étape, du plus ancien au plus récent. */
+    async stepJournal(stepId: string): Promise<{ events: ProgressEvent[]; attempts: Attempt[] }> {
+      const [events, attempts] = await Promise.all([
+        db.events.where('stepId').equals(stepId).sortBy('at'),
+        db.attempts.where('stepId').equals(stepId).sortBy('at'),
+      ]);
+      return { events, attempts };
     },
 
     /** Dernières séances commencées, de la plus récente à la plus ancienne. */

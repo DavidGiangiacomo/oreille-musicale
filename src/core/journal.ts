@@ -1,5 +1,6 @@
 // Journal (docs/DESIGN.md §10.5) : la source de vérité, en ajout seul. Les états
 // (progression, révisions, statistiques) en seront des projections recalculables.
+import type { StepPhase, TrackId } from './curriculum';
 import type { CompetenceId } from './exercise/competence';
 import type { InstrumentId, IntervalPresentation, Tempo } from './exercise/rendition';
 import type { SeriesConfig, SeriesEntry } from './session/series';
@@ -10,7 +11,8 @@ export type Presentation = IntervalPresentation;
 
 export interface SessionRecord {
   id: string;
-  kind: 'daily' | 'custom';
+  /** Séance du jour, entraînement libre ou travail sur une étape du parcours. */
+  kind: 'daily' | 'custom' | 'step';
   /** Horodatage en millisecondes. */
   startedAt: number;
   endedAt?: number;
@@ -18,7 +20,27 @@ export interface SessionRecord {
   curriculumVersion: string;
   /** Réglages d'une série d'entraînement libre. */
   config?: { presentation: Presentation; items: string[]; length: number };
+  /** Étape travaillée, pour une séance d'étape. */
+  stepId?: string;
 }
+
+/**
+ * Événements de progression : changements de phase et résultats des tests
+ * d'étape. Avec les réponses, ils suffisent à recalculer toute la progression.
+ */
+export type ProgressEvent =
+  | { id: string; at: number; type: 'phase_started'; stepId: string; phase: StepPhase }
+  | {
+      id: string;
+      at: number;
+      type: 'step_validated';
+      stepId: string;
+      /** Réussite au test, de 0 à 1. */
+      score: number;
+      /** Compétences introduites par l'étape, qui entrent en révision. */
+      competenceIds: CompetenceId[];
+    }
+  | { id: string; at: number; type: 'test_failed'; stepId: string; score: number };
 
 export type Activity = 'contrast' | 'train' | 'test' | 'review' | 'duel' | 'free' | 'placement';
 
@@ -56,7 +78,15 @@ export interface Attempt {
 /** Tentative du journal à partir d'une question répondue d'une série. */
 export function attemptFromEntry(
   entry: SeriesEntry,
-  context: { id: string; sessionId: string; at: number; instrument: InstrumentId },
+  context: {
+    id: string;
+    sessionId: string;
+    at: number;
+    instrument: InstrumentId;
+    /** Activité : entraînement libre par défaut. */
+    activity?: Activity;
+    stepId?: string;
+  },
 ): Attempt {
   const { question, result } = entry;
   if (!result) throw new Error('Question sans réponse : rien à enregistrer');
@@ -64,7 +94,8 @@ export function attemptFromEntry(
     id: context.id,
     sessionId: context.sessionId,
     at: context.at,
-    activity: 'free',
+    activity: context.activity ?? 'free',
+    ...(context.stepId === undefined ? {} : { stepId: context.stepId }),
     competenceId: question.competenceId,
     rendition: {
       midi: [...question.midi],
@@ -95,6 +126,10 @@ export interface Settings {
   volume: number;
   /** Passer seul à la question suivante après une bonne réponse. */
   autoAdvance: boolean;
+  /** Parcours proposés par la séance du jour et l'accueil. */
+  activeTracks: TrackId[];
+  /** Premier lancement terminé (test audio, notation). */
+  onboardingDone: boolean;
 }
 
 export const DEFAULT_SETTINGS: Readonly<Settings> = {
@@ -104,7 +139,11 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = {
   tempo: 'normal',
   volume: 1,
   autoAdvance: true,
+  activeTracks: ['intervals'],
+  onboardingDone: false,
 };
+
+const KNOWN_TRACKS: readonly TrackId[] = ['intervals'];
 
 function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
   return allowed.includes(value as T) ? (value as T) : fallback;
@@ -121,6 +160,9 @@ export function normalizeSettings(stored: unknown): Settings {
   >;
   const d = DEFAULT_SETTINGS;
   const volume = typeof raw.volume === 'number' && raw.volume >= 0 && raw.volume <= 1;
+  const activeTracks = Array.isArray(raw.activeTracks)
+    ? KNOWN_TRACKS.filter((track) => (raw.activeTracks as unknown[]).includes(track))
+    : [];
   return {
     noteNames: oneOf(raw.noteNames, ['fr', 'en'], d.noteNames),
     octaveConvention: oneOf(raw.octaveConvention, ['fr', 'scientific'], d.octaveConvention),
@@ -128,5 +170,7 @@ export function normalizeSettings(stored: unknown): Settings {
     tempo: oneOf(raw.tempo, ['slow', 'normal', 'fast'], d.tempo),
     volume: volume ? (raw.volume as number) : d.volume,
     autoAdvance: typeof raw.autoAdvance === 'boolean' ? raw.autoAdvance : d.autoAdvance,
+    activeTracks: activeTracks.length > 0 ? activeTracks : [...d.activeTracks],
+    onboardingDone: raw.onboardingDone === true,
   };
 }
