@@ -83,17 +83,32 @@ export function answerLabel(family: FamilyId, answer: string): AnswerLabel {
   return INVERSION_LABELS[inversionIndex(answer)] as AnswerLabel;
 }
 
+const tokens = (text: string) =>
+  text
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(Boolean);
+
 /**
- * Nom accessible d'un bouton de réponse : « Tierce majeure (3M) », « Mineure
- * harmonique », « Dorien (mineur, 6M) ».
+ * Le libellé court n'est-il qu'une abréviation du nom (« 1er » → « 1er
+ * renversement », « Penta m » → « Pentatonique mineure », « ° » → « Diminué ») ?
+ * Le lecteur d'écran ne le lit alors pas deux fois.
  */
-export function answerAccessibleName(family: FamilyId, answer: string): string {
-  const { short, name } = answerLabel(family, answer);
-  if (family === 'inv' || family === 'scl') return name;
-  if (family === 'mod') return `${short} (${name})`;
-  return `${name} (${short})`;
+export function shortAbbreviatesName(label: AnswerLabel): boolean {
+  const nameTokens = tokens(label.name);
+  return tokens(label.short).every((short) => nameTokens.some((word) => word.startsWith(short)));
 }
 
+/**
+ * Nom accessible d'un bouton de réponse, tiré de son texte visible (WCAG 2.5.3) :
+ * « 3M Tierce majeure », « Dorien mineur, 6M », « Mineure harmonique ».
+ */
+export function answerAccessibleName(family: FamilyId, answer: string): string {
+  const label = answerLabel(family, answer);
+  return shortAbbreviatesName(label) ? label.name : `${label.short} ${label.name}`;
+}
 /** « Mode dorien », « Gamme mineure harmonique ». */
 function scaleOrModeName(family: 'scl' | 'mod', code: string): string {
   return family === 'scl'
@@ -128,7 +143,7 @@ export function itemShort(family: FamilyId, item: string): string {
 
 /** Nom d'un élément : « Tierce majeure (3M) », « Accord parfait mineur (m) ». */
 export function itemLabel(family: FamilyId, item: string): string {
-  if (family === 'int') return answerAccessibleName('int', item);
+  if (family === 'int') return `${intervalName(item as IntervalCode)} (${itemShort('int', item)})`;
   if (family === 'chd') return `${chordName(item as ChordQuality)} (${itemShort('chd', item)})`;
   if (family === 'scl') return scaleOrModeName('scl', item);
   if (family === 'mod')

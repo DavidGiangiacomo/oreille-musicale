@@ -3,9 +3,9 @@ import { expect, test, type Page } from '@playwright/test';
 // Export puis import de la progression (§10.6) : d'un appareil à l'autre.
 
 const NAMES: Record<string, string> = {
-  M3: 'Tierce majeure (3M)',
-  P5: 'Quinte juste (5J)',
-  P8: 'Octave (8J)',
+  M3: '3M Tierce majeure',
+  P5: '5J Quinte juste',
+  P8: '8J Octave',
 };
 
 declare global {

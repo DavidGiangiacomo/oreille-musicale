@@ -20,7 +20,7 @@ export function ScreenHeader({
       <div className="flex items-center justify-between gap-2">
         <Link
           to={backTo}
-          className="rounded-lg py-1 font-medium underline-offset-4 hover:underline"
+          className="inline-flex min-h-11 items-center rounded-lg font-medium underline-offset-4 hover:underline"
         >
           <span aria-hidden="true">← </span>
           {backLabel}

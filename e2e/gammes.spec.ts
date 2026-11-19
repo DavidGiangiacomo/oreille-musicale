@@ -4,17 +4,17 @@ import { expect, test, type Page } from '@playwright/test';
 // feedback d'un mode avec sa note caractéristique et son mode de référence.
 
 const NAMES: Record<string, string> = {
-  M3: 'Tierce majeure (3M)',
-  P5: 'Quinte juste (5J)',
-  P8: 'Octave (8J)',
-  P4: 'Quarte juste (4J)',
-  m3: 'Tierce mineure (3m)',
+  M3: '3M Tierce majeure',
+  P5: '5J Quinte juste',
+  P8: '8J Octave',
+  P4: '4J Quarte juste',
+  m3: '3m Tierce mineure',
   major: 'Gamme majeure',
   natmin: 'Mineure naturelle',
   harmin: 'Mineure harmonique',
-  ionian: 'Ionien (majeur)',
-  aeolian: 'Éolien (mineur)',
-  mixolydian: 'Mixolydien (majeur, 7m)',
+  ionian: 'Ionien majeur',
+  aeolian: 'Éolien mineur',
+  mixolydian: 'Mixolydien majeur, 7m',
 };
 
 declare global {

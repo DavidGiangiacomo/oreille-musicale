@@ -78,3 +78,8 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* Titre d'écran qui reçoit le focus à la navigation : pas de cadre, il n'est pas cliquable. */
+h1[tabindex='-1']:focus {
+  outline: none;
+}

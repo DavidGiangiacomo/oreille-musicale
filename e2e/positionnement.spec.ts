@@ -3,18 +3,18 @@ import { expect, test, type Page } from '@playwright/test';
 // Test de positionnement (§7.6) : deux paliers réussis, le troisième raté.
 
 const NAMES: Record<string, string> = {
-  m2: 'Seconde mineure (2m)',
-  M2: 'Seconde majeure (2M)',
-  m3: 'Tierce mineure (3m)',
-  M3: 'Tierce majeure (3M)',
-  P4: 'Quarte juste (4J)',
-  TT: 'Triton (4+/5−)',
-  P5: 'Quinte juste (5J)',
-  m6: 'Sixte mineure (6m)',
-  M6: 'Sixte majeure (6M)',
-  m7: 'Septième mineure (7m)',
-  M7: 'Septième majeure (7M)',
-  P8: 'Octave (8J)',
+  m2: '2m Seconde mineure',
+  M2: '2M Seconde majeure',
+  m3: '3m Tierce mineure',
+  M3: '3M Tierce majeure',
+  P4: '4J Quarte juste',
+  TT: '4+/5− Triton',
+  P5: '5J Quinte juste',
+  m6: '6m Sixte mineure',
+  M6: '6M Sixte majeure',
+  m7: '7m Septième mineure',
+  M7: '7M Septième majeure',
+  P8: '8J Octave',
 };
 
 declare global {

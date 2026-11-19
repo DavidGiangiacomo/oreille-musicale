@@ -21,7 +21,7 @@ export function PhaseTracker({
               ? 'bg-amber-500 font-semibold text-slate-950'
               : i < currentIndex
                 ? 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
-                : 'text-slate-500 ring-1 ring-slate-300 dark:ring-slate-700'
+                : 'text-slate-600 ring-1 ring-slate-300 dark:text-slate-400 dark:ring-slate-700'
           }`}
         >
           {i < currentIndex && <span aria-hidden="true">✓ </span>}

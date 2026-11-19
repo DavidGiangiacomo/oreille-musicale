@@ -3,6 +3,7 @@ import { isNativeApp } from '../platform/native';
 import { AppLifecycle } from './AppLifecycle';
 import { UpdatePrompt } from './components/UpdatePrompt';
 import { ReminderScheduler } from './ReminderScheduler';
+import { RouteFocus } from './RouteFocus';
 import { CourseScreen } from './course/CourseScreen';
 import { DailySessionScreen } from './daily/DailySessionScreen';
 import { WelcomeScreen } from './onboarding/WelcomeScreen';
@@ -41,6 +42,7 @@ export function App() {
     <SettingsProvider>
       <RouterProvider router={router} />
       <AppLifecycle router={router} />
+      <RouteFocus router={router} />
       {native && <ReminderScheduler />}
       {withServiceWorker && <UpdatePrompt />}
     </SettingsProvider>

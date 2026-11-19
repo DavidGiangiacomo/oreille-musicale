@@ -4,9 +4,9 @@ import { expect, test, type Page } from '@playwright/test';
 // arpégé », ouverture des Renversements, réponse par le renversement.
 
 const NAMES: Record<string, string> = {
-  maj: 'Majeur (M)',
-  min: 'Mineur (m)',
-  dim: 'Diminué (°)',
+  maj: 'Majeur',
+  min: 'Mineur',
+  dim: 'Diminué',
   inv0: 'État fondamental',
   inv1: '1er renversement',
 };
