@@ -1,6 +1,6 @@
 # ADR 0001 — Jouer le son avec Web Audio, y compris dans l'appli Android
 
-- **Statut** : accepté sous réserve de l'essai sur téléphone (issue #15)
+- **Statut** : accepté (essai sur téléphone réussi, issue #15)
 - **Date** : 18 novembre 2026
 
 ## Contexte
@@ -26,19 +26,11 @@ Dans Chromium (bureau), par rendu hors ligne :
 - un accord de 4 notes plafonne à -1,4 dB : pas de saturation ;
 - le son démarre environ 65 ms après la commande (50 ms d'avance de planification incluses).
 
-## Essai sur téléphone (à faire)
+## Essai sur téléphone
 
-APK de test : onglet *Actions* du dépôt → workflow « Android » → dernière exécution → artefact `oreille-musicale-apk-debug`.
+Réalisé avec succès par le mainteneur le 18 novembre 2026, avec l'APK de test produit par la CI : chargement et justesse du piano, délai entre l'appui et le son, absence de clics, touches de volume, reprise après un passage en arrière-plan. La démonstration a aussi été validée dans Firefox et Safari (issue #14).
 
-| Vérification | Résultat |
-|---|---|
-| Modèle de téléphone et version d'Android | |
-| Le piano se charge et sonne juste | |
-| Délai perçu entre l'appui et le son | |
-| Aucun clic ni craquement (notes, réécoute, enchaînements rapides) | |
-| Les touches de volume règlent le volume de l'appli | |
-| Le son reprend après un passage en arrière-plan | |
-| Le son pur fonctionne | |
+Pour refaire l'essai sur un autre appareil : onglet *Actions* du dépôt → workflow « Android » → dernière exécution → artefact `oreille-musicale-apk-debug`.
 
 ## Conséquences
 

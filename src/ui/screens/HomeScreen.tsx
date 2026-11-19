@@ -1,4 +1,6 @@
-import { IntervalDemo } from '../demo/IntervalDemo';
+import { HistoryList } from '../home/HistoryList';
+import { PreferencesPanel } from '../home/PreferencesPanel';
+import { SeriesLauncher } from '../home/SeriesLauncher';
 
 export function HomeScreen() {
   return (
@@ -6,15 +8,18 @@ export function HomeScreen() {
       <header className="flex flex-col gap-1">
         <h1 className="text-3xl font-bold">Oreille musicale</h1>
         <p className="text-slate-600 dark:text-slate-400">
-          Prototype audio : écoute un intervalle tiré au hasard, avec son nom.
+          Écoute, reconnais l'intervalle, et recommence : l'oreille se forme à force de séries
+          courtes.
         </p>
       </header>
 
-      <IntervalDemo />
+      <SeriesLauncher />
+      <HistoryList />
+      <PreferencesPanel />
 
       <footer className="text-xs text-slate-500 dark:text-slate-400">
         <p>
-          Version de démonstration (jalon J0). Les parcours d'apprentissage arrivent avec les
+          Version {__APP_VERSION__}. Les parcours progressifs et les révisions arrivent avec les
           prochaines versions.
         </p>
         <p className="mt-2">
