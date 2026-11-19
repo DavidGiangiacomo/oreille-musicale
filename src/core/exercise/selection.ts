@@ -6,11 +6,13 @@ export interface AskedItem<T> {
   correct: boolean | null;
 }
 
-export interface SelectionOptions {
+export interface SelectionOptions<T = unknown> {
   /** Nombre maximal de fois la même réponse d'affilée (3 par défaut, §7.5). */
   maxRepeat?: number;
   /** Nombre de réponses récentes prises en compte pour le taux d'erreur (10 par défaut). */
   window?: number;
+  /** Poids supplémentaire par élément, pour renforcer les paires confondues (§8.6). */
+  boost?: ReadonlyMap<T, number>;
 }
 
 /**
@@ -40,7 +42,7 @@ function questionsSince<T>(item: T, history: readonly AskedItem<T>[]): number {
 /**
  * Choisit l'élément de la prochaine question (§7.5) :
  * - poids = 1 + 2 × taux d'erreur récent + 1 s'il n'a pas été entendu depuis
- *   autant de questions qu'il y a d'éléments ;
+ *   autant de questions qu'il y a d'éléments + renfort éventuel (paire confondue) ;
  * - jamais plus de `maxRepeat` fois la même réponse d'affilée ;
  * - un élément absent depuis 2 × (nombre d'éléments) questions est imposé, si
  *   bien qu'aucun ne reste plus de 3 × (nombre d'éléments) questions sans venir.
@@ -49,9 +51,9 @@ export function selectNextItem<T>(
   items: readonly T[],
   history: readonly AskedItem<T>[],
   random: Random,
-  options: SelectionOptions = {},
+  options: SelectionOptions<T> = {},
 ): T {
-  const { maxRepeat = 3, window = 10 } = options;
+  const { maxRepeat = 3, window = 10, boost } = options;
   if (items.length === 0) throw new Error('Aucun élément à proposer');
   if (items.length === 1) return items[0] as T;
 
@@ -77,7 +79,8 @@ export function selectNextItem<T>(
   const weights = items.map((item, i) => {
     if (item === repeated) return 0;
     const staleness = (since[i] as number) >= count ? 1 : 0;
-    return 1 + 2 * smoothedErrorRate(item, history, window) + staleness;
+    const extra = boost?.get(item) ?? 0;
+    return 1 + 2 * smoothedErrorRate(item, history, window) + staleness + extra;
   });
   return weightedPick(random, items, weights);
 }
@@ -94,7 +97,7 @@ export function selectWithFocus<T>(
   share: number,
   history: readonly AskedItem<T>[],
   random: Random,
-  options: SelectionOptions = {},
+  options: SelectionOptions<T> = {},
 ): T {
   const focused = items.filter((item) => focus.includes(item));
   const others = items.filter((item) => !focus.includes(item));

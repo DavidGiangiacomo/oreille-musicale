@@ -3,6 +3,7 @@
 import type { StepPhase, TrackId } from './curriculum';
 import type { CompetenceId } from './exercise/competence';
 import type { InstrumentId, IntervalPresentation, Tempo } from './exercise/rendition';
+import { DAILY_GOAL_CHOICES, DEFAULT_DAILY_GOAL_MINUTES } from './progress/activity';
 import type { SeriesConfig, SeriesEntry } from './session/series';
 import type { NoteNaming, OctaveConvention } from './theory';
 
@@ -128,6 +129,8 @@ export interface Settings {
   autoAdvance: boolean;
   /** Parcours proposés par la séance du jour et l'accueil. */
   activeTracks: TrackId[];
+  /** Objectif quotidien, en minutes de pratique active (§9.4). */
+  dailyGoalMinutes: number;
   /** Premier lancement terminé (test audio, notation). */
   onboardingDone: boolean;
 }
@@ -140,6 +143,7 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = {
   volume: 1,
   autoAdvance: true,
   activeTracks: ['intervals'],
+  dailyGoalMinutes: DEFAULT_DAILY_GOAL_MINUTES,
   onboardingDone: false,
 };
 
@@ -171,6 +175,9 @@ export function normalizeSettings(stored: unknown): Settings {
     volume: volume ? (raw.volume as number) : d.volume,
     autoAdvance: typeof raw.autoAdvance === 'boolean' ? raw.autoAdvance : d.autoAdvance,
     activeTracks: activeTracks.length > 0 ? activeTracks : [...d.activeTracks],
+    dailyGoalMinutes: (DAILY_GOAL_CHOICES as readonly unknown[]).includes(raw.dailyGoalMinutes)
+      ? (raw.dailyGoalMinutes as number)
+      : d.dailyGoalMinutes,
     onboardingDone: raw.onboardingDone === true,
   };
 }

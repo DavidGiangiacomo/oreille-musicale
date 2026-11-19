@@ -15,6 +15,7 @@ import type { IntervalCode } from '../../core/theory';
 import { presentationTitle } from '../format';
 import { newId, newSeed } from '../ids';
 import { useJournalWriter } from '../journalWriter';
+import { useConfusionBoost } from '../progress/useJournalData';
 import { AudioGate } from '../question/AudioGate';
 import { QuestionPlayer } from '../question/QuestionPlayer';
 import { useSettings } from '../settings/settingsContext';
@@ -28,6 +29,7 @@ export function SeriesScreen() {
   const { settings } = useSettings();
   const [run, setRun] = useState(0);
   const config = configFromParams(params, settings.tempo);
+  const boost = useConfusionBoost(config ? `int:${config.presentation}` : '');
   if (!config) {
     return (
       <main className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-8">
@@ -39,10 +41,11 @@ export function SeriesScreen() {
       </main>
     );
   }
+  if (!boost) return null;
   return (
     <SeriesRun
       key={`${params.toString()}#${run}`}
-      config={config}
+      config={{ ...config, boost }}
       onRestart={() => setRun((count) => count + 1)}
     />
   );

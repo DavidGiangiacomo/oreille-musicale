@@ -9,8 +9,11 @@ import {
 } from '../exercise/intervalQuestion';
 import type { Tempo } from '../exercise/rendition';
 import { selectWithFocus, type AskedItem } from '../exercise/selection';
-import { pick, randomInt, weightedPick, type Random } from '../random';
+import type { Random } from '../random';
 import { INTERVALS, type IntervalCode } from '../theory';
+import { arrange, spread } from './plan';
+
+export { longestRun } from './plan';
 
 /** Une réponse donnée pendant une étape. */
 export interface StepResult {
@@ -107,65 +110,6 @@ export function testLength(step: StepDef): number {
   return Math.min(30, Math.max(12, 4 * step.answers.length));
 }
 
-/** Répartit `count` questions aussi équitablement que possible entre `items`. */
-function spread(
-  counts: Map<IntervalCode, number>,
-  items: readonly IntervalCode[],
-  count: number,
-  random: Random,
-) {
-  if (items.length === 0) return;
-  const offset = randomInt(random, 0, items.length - 1);
-  for (let i = 0; i < count; i++) {
-    const item = items[(i + offset) % items.length] as IntervalCode;
-    counts.set(item, (counts.get(item) ?? 0) + 1);
-  }
-}
-
-/** Plus longue suite du même élément dans une liste. */
-export function longestRun<T>(items: readonly T[]): number {
-  let longest = 0;
-  let current = 0;
-  items.forEach((item, i) => {
-    current = i > 0 && item === items[i - 1] ? current + 1 : 1;
-    longest = Math.max(longest, current);
-  });
-  return longest;
-}
-
-/**
- * Ordonne les questions au hasard, sans jamais plus de 3 fois le même élément
- * d'affilée : chaque question est tirée parmi celles qui restent, en écartant
- * l'élément qui vient de sortir 3 fois. S'il reste à la fin un élément bloqué,
- * il est inséré là où il ne crée pas de suite de 4.
- */
-function arrange(counts: Map<IntervalCode, number>, random: Random): IntervalCode[] {
-  const plan: IntervalCode[] = [];
-  for (;;) {
-    const last = plan.slice(-3);
-    const blocked = last.length === 3 && last.every((item) => item === last[0]) ? last[0] : null;
-    const candidates = [...counts].filter(([item, count]) => count > 0 && item !== blocked);
-    if (candidates.length === 0) break;
-    const item = weightedPick(
-      random,
-      candidates.map(([candidate]) => candidate),
-      candidates.map(([, count]) => count),
-    );
-    plan.push(item);
-    counts.set(item, (counts.get(item) ?? 0) - 1);
-  }
-  for (const [item, count] of counts) {
-    for (let k = 0; k < count; k++) {
-      const positions = Array.from({ length: plan.length + 1 }, (_, p) => p).filter(
-        (p) => longestRun([...plan.slice(0, p), item, ...plan.slice(p)]) <= 3,
-      );
-      const position = positions.length > 0 ? pick(random, positions) : plan.length;
-      plan.splice(position, 0, item);
-    }
-  }
-  return plan;
-}
-
 /** Questions du test, dans l'ordre : ≈ 30 % sur les nouveaux éléments, le reste réparti entre les autres. */
 export function createTestPlan(step: StepDef, random: Random): IntervalCode[] {
   const length = testLength(step);
@@ -213,16 +157,19 @@ export interface StepQuestionOptions {
   previousFirstMidi: number | null;
   /** En test : l'élément prévu par le plan. */
   plannedItem?: IntervalCode;
+  /** Renfort des paires confondues dans les tirages (§8.6). */
+  boost?: ReadonlyMap<IntervalCode, number>;
 }
 
 /** Question suivante d'une étape, selon la phase. */
 export function nextStepQuestion(options: StepQuestionOptions): IntervalQuestion {
-  const { step, phase, history, phaseResults, random, previousFirstMidi, plannedItem } = options;
+  const { step, phase, history, phaseResults, random, previousFirstMidi, plannedItem, boost } =
+    options;
   const choices = choicesFor(step, phase);
   const item =
     phase === 'test'
       ? plannedItem
-      : selectWithFocus(choices, step.newItems, FOCUS_SHARE[phase], history, random);
+      : selectWithFocus(choices, step.newItems, FOCUS_SHARE[phase], history, random, { boost });
   if (!item) throw new Error('Test : élément prévu manquant');
   const { range, tempo } =
     phase === 'train' ? generationFor(step, trainingDifficulty(phaseResults)) : step.generation;

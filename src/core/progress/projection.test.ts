@@ -2,6 +2,7 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { stepsOfTrack } from '../curriculum';
 import type { Attempt, ProgressEvent } from '../journal';
+import { applyReview, enterReview } from '../srs';
 import { currentStep, projectCompetences, projectSteps } from './projection';
 
 const steps = stepsOfTrack('intervals');
@@ -176,5 +177,23 @@ describe('projectCompetences', () => {
     const competences = projectCompetences(steps, projectSteps(steps, events), events, answers);
     expect(competences.get('int:P5:asc')?.fragile).toBe(true);
     expect(competences.get('int:P8:asc')?.fragile).toBe(false);
+  });
+
+  it('monte aux niveaux 3 et 4 selon la stabilité, et marque fragile après un oubli', () => {
+    const events = [started('int.asc.01', 1), validated('int.asc.01', 2)];
+    const entered = enterReview('int:M3:asc', 2, 3);
+    const reviews = new Map([
+      ['int:M3:asc', entered],
+      ['int:P5:asc', { ...entered, competenceId: 'int:P5:asc', stability: 12 }],
+      ['int:P8:asc', { ...entered, competenceId: 'int:P8:asc', stability: 45 }],
+    ]);
+    const levels = (map: typeof reviews) => {
+      const competences = projectCompetences(steps, projectSteps(steps, events), events, [], map);
+      return ['int:M3:asc', 'int:P5:asc', 'int:P8:asc'].map((id) => competences.get(id));
+    };
+    expect(levels(reviews).map((c) => c?.level)).toEqual([2, 3, 4]);
+    expect(levels(reviews)[0]?.review).toBe(entered);
+    reviews.set('int:M3:asc', applyReview(entered, 3 * 86_400_000, 1));
+    expect(levels(reviews)[0]?.fragile).toBe(true);
   });
 });

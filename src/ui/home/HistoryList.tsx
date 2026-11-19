@@ -20,6 +20,7 @@ function title(session: SessionRecord): string {
     const row = getTrack(step.track).rows[step.row]?.label.toLowerCase() ?? '';
     return `Étape ${step.column} · ${row} (${columnLabel(step)})`;
   }
+  if (session.kind === 'daily') return 'Séance du jour';
   if (!session.config) return 'Série';
   return `${presentationTitle(session.config.presentation)} · ${itemsLabel(session.config.items)}`;
 }
@@ -42,9 +43,7 @@ export function HistoryList() {
                 <span className="break-words">{title(session)}</span>
                 <span className={`text-sm ${muted}`}>
                   {DATE_FORMAT.format(session.startedAt)}
-                  {session.endedAt === undefined && session.kind === 'custom'
-                    ? ' · interrompue'
-                    : ''}
+                  {session.endedAt === undefined && session.kind !== 'step' ? ' · interrompue' : ''}
                 </span>
               </div>
               <span className="shrink-0 font-semibold tabular-nums">

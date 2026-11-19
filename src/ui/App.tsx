@@ -1,5 +1,6 @@
 import { createHashRouter, Navigate, RouterProvider } from 'react-router';
 import { CourseScreen } from './course/CourseScreen';
+import { DailySessionScreen } from './daily/DailySessionScreen';
 import { WelcomeScreen } from './onboarding/WelcomeScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { SeriesScreen } from './series/SeriesScreen';
@@ -12,6 +13,7 @@ const router = createHashRouter([
   { path: '/', element: <HomeScreen /> },
   { path: '/bienvenue', element: <WelcomeScreen /> },
   { path: '/parcours', element: <CourseScreen /> },
+  { path: '/seance', element: <DailySessionScreen /> },
   { path: '/etape/:stepId', element: <StepScreen /> },
   { path: '/serie', element: <SeriesScreen /> },
   { path: '*', element: <Navigate to="/" replace /> },

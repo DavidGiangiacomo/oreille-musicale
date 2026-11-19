@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router';
 import { ContinueCard } from '../home/ContinueCard';
+import { DailyCard } from '../home/DailyCard';
 import { HistoryList } from '../home/HistoryList';
 import { PreferencesPanel } from '../home/PreferencesPanel';
 import { SeriesLauncher } from '../home/SeriesLauncher';
@@ -17,13 +18,14 @@ export function HomeScreen() {
         </p>
       </header>
 
+      <DailyCard />
       <ContinueCard />
       <SeriesLauncher />
       <HistoryList />
       <PreferencesPanel />
 
       <footer className="text-xs text-slate-500 dark:text-slate-400">
-        <p>Version {__APP_VERSION__}. Les révisions espacées arrivent avec la prochaine version.</p>
+        <p>Version {__APP_VERSION__}.</p>
         <p className="mt-2">
           Sons de piano : <i>Salamander Grand Piano</i>, Alexander Holm, licence{' '}
           <a

@@ -10,8 +10,11 @@ import { muted, primaryButton, secondaryButton } from '../styles';
 interface FeedbackPanelProps {
   question: IntervalQuestion;
   result: QuestionResult;
-  /** Son de la réponse donnée, depuis la même première note (null si elle est juste). */
-  answerSound: IntervalSound | null;
+  /**
+   * Intervalle à comparer, joué depuis la même première note : la réponse donnée
+   * si elle est fausse, l'autre réponse possible en duel, sinon null.
+   */
+  comparison: { item: IntervalCode; isAnswer: boolean; sound: IntervalSound } | null;
   settings: Settings;
   /** Verdict seul, sans mini-clavier ni écoute comparée (test de validation). */
   brief: boolean;
@@ -20,7 +23,7 @@ interface FeedbackPanelProps {
   nextLabel: string;
   nextButtonRef: Ref<HTMLButtonElement>;
   onPlayCorrect: () => void;
-  onPlayAnswer: () => void;
+  onPlayComparison: () => void;
   onNext: () => void;
 }
 
@@ -32,14 +35,14 @@ function withArticle(code: IntervalCode): string {
 export function FeedbackPanel({
   question,
   result,
-  answerSound,
+  comparison,
   settings,
   brief,
   autoAdvancing,
   nextLabel,
   nextButtonRef,
   onPlayCorrect,
-  onPlayAnswer,
+  onPlayComparison,
   onNext,
 }: FeedbackPanelProps) {
   const format = (note: string) =>
@@ -50,18 +53,19 @@ export function FeedbackPanel({
     label: format(note),
     kind: 'played',
   }));
-  if (answerSound) {
+  const { abbreviation } = INTERVALS[question.item];
+  const compared = comparison ? INTERVALS[comparison.item].abbreviation : '';
+  const comparedLabel = comparison?.isAnswer ? 'ta réponse' : compared;
+  if (comparison) {
     marks.push({
-      midi: answerSound.midi[1],
-      label: `${format(answerSound.notes[1])} (ta réponse)`,
+      midi: comparison.sound.midi[1],
+      label: `${format(comparison.sound.notes[1])} (${comparedLabel})`,
       kind: 'answer',
     });
   }
   const keyboardDescription =
     `Clavier : ${question.notes.map(format).join(' et ')} joués` +
-    (answerSound ? ` ; ${format(answerSound.notes[1])} pour ta réponse` : '');
-
-  const { abbreviation } = INTERVALS[question.item];
+    (comparison ? ` ; ${format(comparison.sound.notes[1])} pour ${comparedLabel}` : '');
 
   return (
     <section
@@ -95,14 +99,14 @@ export function FeedbackPanel({
 
       {!brief && <MiniKeyboard marks={marks} description={keyboardDescription} />}
 
-      {!brief && answerSound && (
+      {!brief && comparison && (
         <div className="grid gap-2 sm:grid-cols-2">
           <button type="button" className={secondaryButton} onClick={onPlayCorrect}>
             <span aria-hidden="true">▶ </span>Écouter la bonne réponse ({abbreviation})
           </button>
-          <button type="button" className={secondaryButton} onClick={onPlayAnswer}>
-            <span aria-hidden="true">▶ </span>Écouter ta réponse (
-            {INTERVALS[result.answer].abbreviation})
+          <button type="button" className={secondaryButton} onClick={onPlayComparison}>
+            <span aria-hidden="true">▶ </span>
+            {comparison.isAnswer ? `Écouter ta réponse (${compared})` : `Écouter ${compared}`}
           </button>
         </div>
       )}

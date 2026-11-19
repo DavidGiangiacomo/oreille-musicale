@@ -1,9 +1,9 @@
 # Oreille musicale — Document de conception
 
-> **Statut** : brouillon v0.3, à relire et valider
+> **Statut** : brouillon v0.4, à relire et valider
 > **Date** : 18 novembre 2026
 > **Objet** : application web et Android d'entraînement de l'oreille musicale (intervalles, accords, gammes et modes), avec difficulté progressive, suivi de progression et révisions espacées.
-> **Historique** : v0.1, version initiale ; v0.2, ajout des gammes et modes, et des exercices chantés prévus en v2 ; v0.3, premières décisions (public, framework, hébergement, licence).
+> **Historique** : v0.1, version initiale ; v0.2, ajout des gammes et modes, et des exercices chantés prévus en v2 ; v0.3, premières décisions (public, framework, hébergement, licence) ; v0.4, révisions recalculées depuis le journal (J3).
 
 ## Sommaire
 
@@ -734,6 +734,8 @@ interface ProgressEvent {
   score?: number;
 }
 
+// Non stocké en v1 : les révisions se recalculent en rejouant validations et
+// réponses (voir la décision « Révisions recalculées », §14.1).
 interface ReviewLog {
   id: string;
   at: number;
@@ -968,6 +970,8 @@ On chante sur la syllabe de son choix (« la », noms des notes, numéros de deg
 | Hébergement web | GitHub Pages pour commencer (§10.10) ; avec un compte GitHub gratuit, le dépôt doit être public |
 | Licence et modèle | Logiciel libre sous GNU GPL v3 ou ultérieure, gratuit, avec éventuellement un lien de dons (§10.11) |
 | Dépôt | Public ; branche principale `main`, chaque tâche passe par une pull request |
+| Révisions recalculées | Ni cartes FSRS ni `ReviewLog` stockés : la planification (sans aléa) se déduit du journal en rejouant validations et réponses ; une révision a lieu quand une compétence due reçoit 3 réponses le même jour d'étude, quelle que soit l'activité (§8.3, §8.5). Corriger la notation corrige tout l'historique |
+| Duels | Les réponses de duel n'alimentent pas la matrice de confusion (deux réponses seulement, elles l'exagéreraient) ; un duel compte comme fait après ses 10 questions |
 
 ### 14.2 Questions ouvertes
 

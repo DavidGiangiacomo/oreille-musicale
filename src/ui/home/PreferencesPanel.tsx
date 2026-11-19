@@ -1,3 +1,4 @@
+import { DAILY_GOAL_CHOICES } from '../../core/progress/activity';
 import { OptionGroup } from '../components/OptionGroup';
 import { useSettings } from '../settings/settingsContext';
 import { card, cardTitle } from '../styles';
@@ -9,6 +10,15 @@ export function PreferencesPanel() {
       <h2 id="preferences" className={cardTitle}>
         Préférences
       </h2>
+      <OptionGroup
+        legend="Objectif quotidien"
+        value={String(settings.dailyGoalMinutes)}
+        options={DAILY_GOAL_CHOICES.map((minutes) => ({
+          value: String(minutes),
+          label: `${minutes} min`,
+        }))}
+        onChange={(value) => updateSettings({ dailyGoalMinutes: Number(value) })}
+      />
       <OptionGroup
         legend="Timbre"
         value={settings.instrument}
