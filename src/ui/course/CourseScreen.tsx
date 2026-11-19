@@ -150,6 +150,12 @@ function TrackGrid({ track, states }: { track: TrackDef; states: Map<string, Ste
           ? 'Une étape s’ouvre quand celle du dessus (élément précédent) et celle de gauche (présentation plus facile) sont validées.'
           : 'Chaque étape s’ouvre quand la précédente est validée.'}
       </p>
+      <Link
+        to={`/positionnement/${track.id}`}
+        className="text-sm font-medium underline underline-offset-4"
+      >
+        Test de positionnement : valider d’emblée ce que tu sais déjà
+      </Link>
       <label className="flex items-center gap-3 text-sm">
         <input
           type="checkbox"

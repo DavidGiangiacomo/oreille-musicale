@@ -6,6 +6,7 @@ import { ReminderScheduler } from './ReminderScheduler';
 import { CourseScreen } from './course/CourseScreen';
 import { DailySessionScreen } from './daily/DailySessionScreen';
 import { WelcomeScreen } from './onboarding/WelcomeScreen';
+import { PlacementHub, PlacementScreen } from './placement/PlacementScreen';
 import { AboutScreen } from './screens/AboutScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { SeriesScreen } from './series/SeriesScreen';
@@ -24,6 +25,8 @@ const router = createHashRouter([
   { path: '/serie', element: <SeriesScreen /> },
   { path: '/a-propos', element: <AboutScreen /> },
   { path: '/statistiques', element: <StatsScreen /> },
+  { path: '/positionnement', element: <PlacementHub /> },
+  { path: '/positionnement/:trackId', element: <PlacementScreen /> },
   { path: '*', element: <Navigate to="/" replace /> },
 ]);
 

@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { getStep } from '../../core/curriculum';
+import { getStep, getTrack } from '../../core/curriculum';
 import type { IntervalPresentation } from '../../core/exercise/rendition';
 import type { SessionRecord } from '../../core/journal';
 import { INTERVAL_CODES, INTERVALS, type IntervalCode } from '../../core/theory';
@@ -19,6 +19,9 @@ function title(session: SessionRecord): string {
   const step = session.stepId ? getStep(session.stepId) : undefined;
   if (step) return `${stepTitle(step)} (${columnLabel(step)})`;
   if (session.kind === 'daily') return 'Séance du jour';
+  if (session.kind === 'placement') {
+    return `Test de positionnement${session.trackId ? ` · ${getTrack(session.trackId).name}` : ''}`;
+  }
   if (!session.config) return 'Série';
   return `${presentationTitle(session.config.presentation as IntervalPresentation)} · ${itemsLabel(session.config.items)}`;
 }

@@ -12,8 +12,8 @@ export type { Presentation } from './exercise/rendition';
 
 export interface SessionRecord {
   id: string;
-  /** Séance du jour, entraînement libre ou travail sur une étape du parcours. */
-  kind: 'daily' | 'custom' | 'step';
+  /** Séance du jour, entraînement libre, étape du parcours ou test de positionnement. */
+  kind: 'daily' | 'custom' | 'step' | 'placement';
   /** Horodatage en millisecondes. */
   startedAt: number;
   endedAt?: number;
@@ -23,6 +23,8 @@ export interface SessionRecord {
   config?: { presentation: Presentation; items: string[]; length: number };
   /** Étape travaillée, pour une séance d'étape. */
   stepId?: string;
+  /** Parcours testé, pour un test de positionnement. */
+  trackId?: TrackId;
 }
 
 /**
