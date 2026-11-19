@@ -1,0 +1,142 @@
+name: Publication
+
+# Publication d'une version Android (APK signé) sur la page Releases du dépôt.
+# - Lancement manuel (onglet Actions → Publication → Run workflow, sur main) : publie
+#   la version de package.json sous l'étiquette « v<version> ».
+# - Push sur une autre branche qui touche à Android ou à ce workflow : construit et
+#   vérifie l'APK signé sans rien publier (artefact seulement).
+on:
+  workflow_dispatch:
+  push:
+    branches-ignore: [main]
+    paths:
+      - .github/workflows/release.yml
+      - android/**
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publication-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  apk:
+    name: APK signé
+    runs-on: ubuntu-latest
+    env:
+      PUBLISH: ${{ github.event_name == 'workflow_dispatch' }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Version à publier
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(node -p "require('./package.json').version")
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          echo "Version : $version"
+          if [ "$PUBLISH" = "true" ]; then
+            if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+              echo "::error::On ne publie que depuis main."
+              exit 1
+            fi
+            if gh release view "v$version" > /dev/null 2>&1; then
+              echo "::error::La version v$version existe déjà : augmente la version dans package.json."
+              exit 1
+            fi
+          fi
+
+      - run: npm ci
+      - run: npm run build
+      - run: npx cap sync android
+
+      - name: Clé de signature
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          missing=""
+          for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then missing="$missing $name"; fi
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Secrets manquants :$missing (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+          # Le texte base64 peut contenir des retours à la ligne (copie depuis Windows…).
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | tr -d '\r\n ' | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+
+      - name: Construction de l'APK signé
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Vérification de la signature
+        run: |
+          apk=android/app/build/outputs/apk/release/app-release.apk
+          if [ ! -f "$apk" ]; then
+            echo "::error::APK signé introuvable : la signature a-t-elle échoué ?"
+            ls -R android/app/build/outputs/apk || true
+            exit 1
+          fi
+          build_tools=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)
+          "$ANDROID_HOME/build-tools/$build_tools/apksigner" verify --print-certs "$apk" | tee signature.txt
+          if grep -q "CN=Android Debug" signature.txt; then
+            echo "::error::L'APK est signé avec la clé de debug."
+            exit 1
+          fi
+          mkdir -p publication
+          cp "$apk" "publication/oreille-musicale-$VERSION.apk"
+          (cd publication && sha256sum "oreille-musicale-$VERSION.apk" > SHA256SUMS.txt)
+          cat publication/SHA256SUMS.txt
+
+      - name: Effacement de la clé
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.jks"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: oreille-musicale-${{ env.VERSION }}-apk-signe
+          path: publication/
+          retention-days: 30
+
+      - name: Publication sur la page Releases
+        if: env.PUBLISH == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sha=$(cut -d' ' -f1 publication/SHA256SUMS.txt)
+          cat > notes.md <<EOF
+          Version $VERSION d'Oreille musicale pour Android.
+
+          ## Installer
+          1. Sur le téléphone, télécharge \`oreille-musicale-$VERSION.apk\` ci-dessous.
+          2. Ouvre le fichier. Android demande d'autoriser l'installation depuis le navigateur (ou le gestionnaire de fichiers) : accepte pour cette source.
+          3. Pour une mise à jour, installe simplement le nouvel APK par-dessus l'ancien : ta progression est conservée.
+
+          Si une version de test (APK « debug ») est installée, Android refusera la mise à jour : exporte ta progression (carte « Sauvegarde »), désinstalle la version de test, installe celle-ci, puis importe ta sauvegarde.
+
+          Version web : https://davidgiangiacomo.github.io/oreille-musicale/
+
+          Empreinte SHA-256 de l'APK : \`$sha\`
+          EOF
+          gh release create "v$VERSION" publication/* \
+            --target "$GITHUB_SHA" \
+            --title "Oreille musicale $VERSION" \
+            --notes-file notes.md

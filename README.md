@@ -44,7 +44,16 @@ La version web s'installe sur l'écran d'accueil (« Installer » ou « Ajouter 
 
 ## Android
 
-L'APK de test est construit à chaque push par le workflow « Android ». Pour le récupérer : onglet _Actions_, dernière exécution du workflow, artefact `oreille-musicale-apk-debug`. Il s'installe sur un téléphone après avoir autorisé l'installation d'applications de sources inconnues.
+**Installer l'appli** : télécharger l'APK de la dernière version sur la page [Releases](https://github.com/DavidGiangiacomo/oreille-musicale/releases), l'ouvrir sur le téléphone et autoriser l'installation depuis cette source. Une nouvelle version s'installe par-dessus l'ancienne, sans perdre la progression.
+
+**Publier une version** :
+
+1. Augmenter la version dans `package.json` (par exemple `npm version 0.2.0 --no-git-tag-version`), puis fusionner dans `main`. Le code de version Android s'en déduit (1.2.3 → 10203).
+2. Onglet _Actions_ → workflow « Publication » → _Run workflow_ sur `main`. Il construit l'APK signé, vérifie sa signature et crée la Release `v<version>` avec l'APK et son empreinte SHA-256.
+
+La clé de signature n'est jamais dans le dépôt : le workflow la lit dans quatre secrets du dépôt (`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`). Sans la même clé, une mise à jour ne pourrait pas s'installer par-dessus la version précédente : garder le fichier `.jks` et ses mots de passe en lieu sûr.
+
+**APK de test** : construit à chaque push par le workflow « Android » (onglet _Actions_, artefact `oreille-musicale-apk-debug`). Signé avec une clé de debug, il ne peut pas être mis à jour par une version publiée : exporter sa progression, le désinstaller, installer la version publiée, puis importer la sauvegarde.
 
 Pour construire en local, il faut Java 21 et le SDK Android (ou Android Studio) :
 
