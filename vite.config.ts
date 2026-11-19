@@ -13,6 +13,12 @@ export default defineConfig({
   // GitHub Pages et à la racine dans l'application Android (Capacitor). Le routage
   // par « # » évite d'avoir besoin de réécritures côté serveur.
   base: './',
+  build: {
+    // Le budget du document de conception (§10.10) porte sur la taille compressée :
+    // 250 Ko au plus pour le JavaScript initial. Ce seuil, avant compression, n'est
+    // qu'une alerte précoce.
+    chunkSizeWarningLimit: 700,
+  },
   define: {
     __APP_VERSION__: JSON.stringify(version),
   },

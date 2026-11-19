@@ -5,7 +5,7 @@ import type { IntervalPresentation } from '../../core/exercise/rendition';
 import { DEFAULT_SERIES_LENGTH } from '../../core/session/series';
 import { INTERVAL_CODES, INTERVALS, type IntervalCode } from '../../core/theory';
 import { requestPersistentStorage } from '../../platform/storage';
-import { audioEngine } from '../audio';
+import { prepareAudio } from '../audio';
 import { intervalName } from '../format';
 import { OptionGroup } from '../components/OptionGroup';
 import { seriesPath } from '../series/seriesParams';
@@ -77,12 +77,9 @@ export function SeriesLauncher() {
     setError(null);
     try {
       // Le clic sert de geste utilisateur : il débloque l'audio pour toute la série.
-      await audioEngine.unlock();
       void requestPersistentStorage();
-      if (!audioEngine.isLoaded(settings.instrument)) {
-        setProgress(0);
-        await audioEngine.load(settings.instrument, setProgress);
-      }
+      setProgress(0);
+      await prepareAudio(settings.instrument, setProgress);
       saveLastChoice({ presentation, items });
       void navigate(seriesPath(presentation, items));
     } catch {
@@ -97,8 +94,11 @@ export function SeriesLauncher() {
   return (
     <section className={card} aria-labelledby="nouvelle-serie">
       <h2 id="nouvelle-serie" className={cardTitle}>
-        Nouvelle série
+        Entraînement libre
       </h2>
+      <p className={muted}>
+        Une série de questions sur les intervalles de ton choix, en dehors du parcours.
+      </p>
 
       <OptionGroup
         legend="Intervalles"

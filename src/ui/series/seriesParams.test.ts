@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { answerIndexForCode, keyHint } from './keys';
+import { answerIndexForCode, keyHint } from '../question/keys';
 import { configFromParams, seriesPath } from './seriesParams';
 
 describe('adresse d’une série', () => {

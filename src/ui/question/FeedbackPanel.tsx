@@ -1,18 +1,23 @@
 import type { Ref } from 'react';
 import type { Settings } from '../../core/journal';
-import type { IntervalSound } from '../../core/exercise/intervalQuestion';
-import type { QuestionResult, SeriesEntry } from '../../core/session/series';
+import type { IntervalQuestion, IntervalSound } from '../../core/exercise/intervalQuestion';
+import type { QuestionResult } from '../../core/session/series';
 import { formatNote, INTERVALS, type IntervalCode } from '../../core/theory';
 import { MiniKeyboard, type KeyMark } from '../components/MiniKeyboard';
 import { describeInterval, formatNotes } from '../format';
-import { primaryButton, secondaryButton } from '../styles';
+import { muted, primaryButton, secondaryButton } from '../styles';
 
 interface FeedbackPanelProps {
-  entry: SeriesEntry & { result: QuestionResult };
+  question: IntervalQuestion;
+  result: QuestionResult;
   /** Son de la réponse donnée, depuis la même première note (null si elle est juste). */
   answerSound: IntervalSound | null;
   settings: Settings;
-  isLast: boolean;
+  /** Verdict seul, sans mini-clavier ni écoute comparée (test de validation). */
+  brief: boolean;
+  /** La question suivante va arriver seule. */
+  autoAdvancing: boolean;
+  nextLabel: string;
   nextButtonRef: Ref<HTMLButtonElement>;
   onPlayCorrect: () => void;
   onPlayAnswer: () => void;
@@ -25,16 +30,18 @@ function withArticle(code: IntervalCode): string {
 }
 
 export function FeedbackPanel({
-  entry,
+  question,
+  result,
   answerSound,
   settings,
-  isLast,
+  brief,
+  autoAdvancing,
+  nextLabel,
   nextButtonRef,
   onPlayCorrect,
   onPlayAnswer,
   onNext,
 }: FeedbackPanelProps) {
-  const { question, result } = entry;
   const format = (note: string) =>
     formatNote(note, { naming: settings.noteNames, octave: settings.octaveConvention });
 
@@ -81,12 +88,14 @@ export function FeedbackPanel({
             </p>
           </>
         )}
-        <p className="text-lg">{formatNotes(question.notes, question.presentation, settings)}</p>
+        {!brief && (
+          <p className="text-lg">{formatNotes(question.notes, question.presentation, settings)}</p>
+        )}
       </div>
 
-      <MiniKeyboard marks={marks} description={keyboardDescription} />
+      {!brief && <MiniKeyboard marks={marks} description={keyboardDescription} />}
 
-      {answerSound && (
+      {!brief && answerSound && (
         <div className="grid gap-2 sm:grid-cols-2">
           <button type="button" className={secondaryButton} onClick={onPlayCorrect}>
             <span aria-hidden="true">▶ </span>Écouter la bonne réponse ({abbreviation})
@@ -98,14 +107,10 @@ export function FeedbackPanel({
         </div>
       )}
 
-      {result.correct && settings.autoAdvance && !isLast && (
-        <p className="text-sm text-slate-600 dark:text-slate-400">
-          Question suivante dans un instant…
-        </p>
-      )}
+      {autoAdvancing && <p className={`text-sm ${muted}`}>Question suivante dans un instant…</p>}
 
       <button ref={nextButtonRef} type="button" className={primaryButton} onClick={onNext}>
-        {isLast ? 'Voir le bilan' : 'Question suivante'}
+        {nextLabel}
         <kbd className="ml-2 font-sans text-xs opacity-70">Entrée</kbd>
       </button>
     </section>

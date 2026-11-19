@@ -21,13 +21,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       settings,
+      loaded: local !== null || stored !== undefined,
       updateSettings: (changes: Partial<Settings>) => {
         const next = { ...settings, ...changes };
         setLocal(next);
         void journal.saveSettings(next);
       },
     }),
-    [settings],
+    [settings, local, stored],
   );
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

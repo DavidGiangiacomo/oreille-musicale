@@ -116,8 +116,68 @@ describe('schéma de la base', () => {
     );
     expect(schema).toEqual({
       sessions: 'id, startedAt',
-      attempts: 'id, sessionId, at, competenceId',
+      attempts: 'id, sessionId, at, competenceId, stepId',
       settings: 'id',
+      events: 'id, at, stepId, type',
     });
+  });
+
+  it('migre une base de la version 1 sans perdre de données', async () => {
+    const name = `migration-${++counter}`;
+    const v1 = openDatabase(name, 1);
+    await v1.open();
+    expect(v1.verno).toBe(1);
+    await createJournal(v1).startSession(session('s1', 1));
+    await v1.attempts.add(attempt('a1', 's1', 2, true));
+    await v1.settings.put({ id: 'settings', noteNames: 'en' });
+    v1.close();
+
+    const current = freshDatabase(name);
+    await current.open();
+    expect(current.verno).toBe(SCHEMA_VERSIONS.at(-1)?.version);
+    const journal = createJournal(current);
+    expect(await journal.attemptsOf('s1')).toHaveLength(1);
+    expect((await journal.loadSettings()).noteNames).toBe('en');
+    expect(await journal.events()).toEqual([]);
+  });
+});
+
+describe('événements et étapes', () => {
+  it('retrouve les événements et les réponses d’une étape, dans l’ordre', async () => {
+    const journal = createJournal(freshDatabase());
+    await journal.addEvent({
+      id: 'e2',
+      at: 20,
+      type: 'phase_started',
+      stepId: 'int.asc.01',
+      phase: 'train',
+    });
+    await journal.addEvent({
+      id: 'e1',
+      at: 10,
+      type: 'phase_started',
+      stepId: 'int.asc.01',
+      phase: 'discover',
+    });
+    await journal.addEvent({
+      id: 'e3',
+      at: 15,
+      type: 'phase_started',
+      stepId: 'int.asc.02',
+      phase: 'discover',
+    });
+    await journal.addAttempt({
+      ...attempt('a1', 's1', 30, true),
+      activity: 'train',
+      stepId: 'int.asc.01',
+    });
+    await journal.addAttempt(attempt('a2', 's1', 31, true));
+
+    const { stepId, events, attempts } = await journal.stepJournal('int.asc.01');
+    expect(stepId).toBe('int.asc.01');
+    expect(events.map((event) => event.id)).toEqual(['e1', 'e2']);
+    expect(attempts.map((a) => a.id)).toEqual(['a1']);
+    expect((await journal.events()).map((event) => event.id)).toEqual(['e1', 'e3', 'e2']);
+    expect((await journal.attempts()).map((a) => a.id)).toEqual(['a1', 'a2']);
   });
 });

@@ -37,6 +37,20 @@ describe('attemptFromEntry', () => {
     });
   });
 
+  it('rattache une réponse à son étape et à sa phase', () => {
+    const state = startSeries(createSeriesConfig(['M3'], 'asc'), createRandom(1));
+    const answered = answerCurrent(state, 'M3', { responseTimeMs: 500, replays: 0 });
+    const attempt = attemptFromEntry(currentEntry(answered), {
+      id: 'a',
+      sessionId: 's',
+      at: 1,
+      instrument: 'piano',
+      activity: 'test',
+      stepId: 'int.asc.01',
+    });
+    expect(attempt).toMatchObject({ activity: 'test', stepId: 'int.asc.01', correct: true });
+  });
+
   it('refuse une question sans réponse', () => {
     const state = startSeries(createSeriesConfig(['M3'], 'asc'), createRandom(1));
     expect(() =>
@@ -62,6 +76,17 @@ describe('normalizeSettings', () => {
   it('donne les réglages par défaut sans données', () => {
     expect(normalizeSettings(undefined)).toEqual(DEFAULT_SETTINGS);
     expect(normalizeSettings('n’importe quoi')).toEqual(DEFAULT_SETTINGS);
+  });
+
+  it('garde les parcours actifs connus et l’état du premier lancement', () => {
+    expect(
+      normalizeSettings({ activeTracks: ['intervals', 'inconnu'], onboardingDone: true }),
+    ).toMatchObject({
+      activeTracks: ['intervals'],
+      onboardingDone: true,
+    });
+    expect(normalizeSettings({ activeTracks: [] }).activeTracks).toEqual(['intervals']);
+    expect(normalizeSettings({ onboardingDone: 'oui' }).onboardingDone).toBe(false);
   });
 
   it('garde les valeurs valides et remplace les autres', () => {

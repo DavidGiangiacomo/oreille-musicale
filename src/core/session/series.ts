@@ -95,6 +95,23 @@ export function currentEntry(state: SeriesState): SeriesEntry {
   return entry;
 }
 
+/** Résultat d'une réponse à une question. */
+export function evaluateAnswer(
+  question: IntervalQuestion,
+  answer: IntervalCode,
+  metrics: AnswerMetrics,
+): QuestionResult {
+  if (!question.choices.includes(answer)) {
+    throw new Error(`Réponse « ${answer} » hors des choix proposés`);
+  }
+  return {
+    answer,
+    correct: answer === question.item,
+    responseTimeMs: Math.max(0, Math.round(metrics.responseTimeMs)),
+    replays: metrics.replays,
+  };
+}
+
 /** Enregistre la réponse à la question en cours et passe au feedback. */
 export function answerCurrent(
   state: SeriesState,
@@ -103,15 +120,7 @@ export function answerCurrent(
 ): SeriesState {
   if (state.status !== 'asking') throw new Error('Aucune question en attente de réponse');
   const entry = currentEntry(state);
-  if (!entry.question.choices.includes(answer)) {
-    throw new Error(`Réponse « ${answer} » hors des choix proposés`);
-  }
-  const result: QuestionResult = {
-    answer,
-    correct: answer === entry.question.item,
-    responseTimeMs: Math.max(0, Math.round(metrics.responseTimeMs)),
-    replays: metrics.replays,
-  };
+  const result = evaluateAnswer(entry.question, answer, metrics);
   return {
     ...state,
     entries: [...state.entries.slice(0, -1), { ...entry, result }],
