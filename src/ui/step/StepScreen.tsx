@@ -2,8 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { CURRICULUM_VERSION, getStep, type StepDef, type StepPhase } from '../../core/curriculum';
-import { intervalCompetenceId, parseIntervalCompetence } from '../../core/exercise/competence';
-import type { IntervalQuestion } from '../../core/exercise/intervalQuestion';
+import { competenceId, parseCompetence, type Question } from '../../core/exercise/families';
 import type { AskedItem } from '../../core/exercise/selection';
 import {
   attemptFromEntry,
@@ -23,11 +22,11 @@ import {
   type StepResult,
   type TestEvaluation,
 } from '../../core/session/step';
-import { INTERVALS, type IntervalCode } from '../../core/theory';
 import { journal } from '../data';
 import { newId, newSeed } from '../ids';
 import { useJournalWriter } from '../journalWriter';
-import { columnLabel, newItemsLabel, stepTitle } from '../progress/labels';
+import { answersList } from '../items';
+import { stepSubtitle, stepTitle } from '../progress/labels';
 import { useConfusionBoost } from '../progress/useJournalData';
 import { useProgress, type Progress } from '../progress/useProgress';
 import { AudioGate } from '../question/AudioGate';
@@ -55,12 +54,12 @@ type Stage =
   | {
       kind: 'questions';
       phase: QuestionPhase;
-      question: IntervalQuestion;
+      question: Question;
       result: QuestionResult | null;
       /** Réponses de la phase en cours (depuis son dernier début). */
       phaseResults: StepResult[];
       /** Plan du test, ou null. */
-      plan: IntervalCode[] | null;
+      plan: string[] | null;
       notice: string | null;
     }
   | { kind: 'result'; evaluation: TestEvaluation };
@@ -114,8 +113,8 @@ function Message({ title, text }: { title: string; text: string }) {
   );
 }
 
-function toAsked(attempt: Attempt): AskedItem<IntervalCode> | null {
-  const parsed = parseIntervalCompetence(attempt.competenceId);
+function toAsked(attempt: Attempt): AskedItem<string> | null {
+  const parsed = parseCompetence(attempt.competenceId);
   return parsed ? { item: parsed.item, correct: attempt.correct } : null;
 }
 
@@ -137,7 +136,7 @@ function StepRun({
   validated: boolean;
   progress: Progress;
   /** Renfort des paires confondues dans les tirages (§8.6). */
-  boost: ReadonlyMap<IntervalCode, number>;
+  boost: ReadonlyMap<string, number>;
 }) {
   const navigate = useNavigate();
   const { settings } = useSettings();
@@ -151,7 +150,7 @@ function StepRun({
     curriculumVersion: CURRICULUM_VERSION,
   }));
   const writer = useJournalWriter(session);
-  const [history, setHistory] = useState<AskedItem<IntervalCode>[]>(() =>
+  const [history, setHistory] = useState<AskedItem<string>[]>(() =>
     initial.attempts.map(toAsked).filter((asked) => asked !== null),
   );
   const [opened, setOpened] = useState(() => initial.events.length > 0);
@@ -159,10 +158,10 @@ function StepRun({
   function questionStage(
     phase: QuestionPhase,
     phaseResults: StepResult[],
-    plan: IntervalCode[] | null,
-    previousFirstMidi: number | null,
+    plan: string[] | null,
+    previousAnchor: number | null,
     notice: string | null,
-    knownHistory: readonly AskedItem<IntervalCode>[] = history,
+    knownHistory: readonly AskedItem<string>[] = history,
   ): Stage {
     const question = nextStepQuestion({
       step,
@@ -170,7 +169,7 @@ function StepRun({
       history: knownHistory,
       phaseResults,
       random,
-      previousFirstMidi,
+      previousAnchor,
       boost,
       ...(plan ? { plannedItem: plan[phaseResults.length] } : {}),
     });
@@ -202,8 +201,8 @@ function StepRun({
     setOpened(true);
   }
 
-  function previousFirstMidi(): number | null {
-    return stage.kind === 'questions' ? stage.question.midi[0] : null;
+  function previousAnchor(): number | null {
+    return stage.kind === 'questions' ? stage.question.anchor : null;
   }
 
   function startPhase(phase: StepPhase, notice: string | null = null) {
@@ -213,10 +212,10 @@ function StepRun({
       return;
     }
     const plan = phase === 'test' ? createTestPlan(step, random) : null;
-    setStage(questionStage(phase, [], plan, previousFirstMidi(), notice));
+    setStage(questionStage(phase, [], plan, previousAnchor(), notice));
   }
 
-  function answer(item: IntervalCode, metrics: AnswerMetrics) {
+  function answer(item: string, metrics: AnswerMetrics) {
     if (stage.kind !== 'questions' || stage.result) return;
     const { question } = stage;
     const result = evaluateAnswer(question, item, metrics);
@@ -247,7 +246,9 @@ function StepRun({
       record({
         type: 'step_validated',
         score: evaluation.accuracy,
-        competenceIds: step.newItems.map((item) => intervalCompetenceId(item, step.presentation)),
+        competenceIds: step.newItems.map((item) =>
+          competenceId(step.family, item, step.presentation),
+        ),
       });
     } else {
       record({ type: 'test_failed', score: evaluation.accuracy });
@@ -268,7 +269,7 @@ function StepRun({
       finishTest(phaseResults);
       return;
     }
-    setStage(questionStage(phase, phaseResults, plan, stage.question.midi[0], null));
+    setStage(questionStage(phase, phaseResults, plan, stage.question.anchor, null));
   }
 
   function goToNextStep() {
@@ -287,7 +288,7 @@ function StepRun({
         backTo="/parcours"
         backLabel="Parcours"
         title={stepTitle(step)}
-        subtitle={`${step.column === 1 ? 'Premiers repères' : 'Nouveau'} : ${newItemsLabel(step)} (${columnLabel(step).replace('+ ', '')})`}
+        subtitle={stepSubtitle(step)}
       />
       <PhaseTracker phases={phasesOf(step)} current={currentPhase} />
 
@@ -310,7 +311,19 @@ function StepRun({
         </section>
       )}
 
-      {stage.kind === 'discover' && (
+      {stage.kind === 'discover' && step.newItems.length === 0 && (
+        <section className={card}>
+          <p>
+            Pas de nouvel élément ici : tout ce que tu as appris est mêlé. Entraîne-toi, puis passe
+            le test.
+          </p>
+          <button type="button" className={primaryButton} onClick={() => startPhase('train')}>
+            Commencer l'entraînement
+          </button>
+        </section>
+      )}
+
+      {stage.kind === 'discover' && step.newItems.length > 0 && (
         <AudioGate label="Activer le son et découvrir">
           <DiscoveryPanel
             step={step}
@@ -395,7 +408,7 @@ function StepRun({
       )}
 
       <p className={`text-xs ${muted}`}>
-        Réponses possibles : {step.answers.map((item) => INTERVALS[item].abbreviation).join(', ')}
+        Réponses possibles : {answersList(step.family, step.answers)}
       </p>
       {writer.saveFailed && <SaveFailedAlert />}
     </main>

@@ -8,10 +8,11 @@ export const INTERVALS_TRACK: TrackDef = {
   id: 'intervals',
   prefix: 'int',
   name: 'Intervalles',
+  family: 'int',
   rows: [
-    { presentation: 'asc', label: 'Ascendant' },
-    { presentation: 'desc', label: 'Descendant' },
-    { presentation: 'harm', label: 'Harmonique' },
+    { presentation: 'asc', label: 'Ascendant', title: 'Intervalles ascendants' },
+    { presentation: 'desc', label: 'Descendant', title: 'Intervalles descendants' },
+    { presentation: 'harm', label: 'Harmonique', title: 'Intervalles harmoniques' },
   ],
   range: ['F3', 'F5'],
   columns: [

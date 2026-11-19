@@ -1,16 +1,16 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router';
-import { intervalCompetenceId, parseIntervalCompetence } from '../../core/exercise/competence';
+import { competenceId, parseCompetence } from '../../core/exercise/families';
 import { activeTimeByDay, currentStreak } from '../../core/progress/activity';
 import type { DailyPlan } from '../../core/session/daily';
 import { daysUntilDue, GRADE_LABELS, projectReviews, studyDay } from '../../core/srs';
-import { describeInterval } from '../format';
+import { itemDescription } from '../items';
 import { stepTitle } from '../progress/labels';
 import { useJournalData } from '../progress/useJournalData';
 import { useSettings } from '../settings/settingsContext';
 import { card, cardTitle, muted, primaryButton, secondaryButton } from '../styles';
 import { DailyGoal } from './DailyGoal';
-import { blockTitle, inDays } from './labels';
+import { inDays, pairLabel } from './labels';
 
 export interface BlockOutcome {
   answered: number;
@@ -20,7 +20,7 @@ export interface BlockOutcome {
 /** Compétences révisées, dans l'ordre des blocs puis des boutons. */
 function reviewedIds(plan: DailyPlan): string[] {
   return plan.review.blocks.flatMap((block) =>
-    block.focus.map((item) => intervalCompetenceId(item, block.presentation)),
+    block.focus.map((item) => competenceId(block.family, item, block.presentation)),
   );
 }
 
@@ -80,11 +80,11 @@ export function DailySummary({
           </h2>
           <ul className="flex flex-col divide-y divide-slate-200 dark:divide-slate-800">
             {summary?.reviewed.map(({ id, grade, days }) => {
-              const parsed = parseIntervalCompetence(id);
+              const parsed = parseCompetence(id);
               return (
                 <li key={id} className="flex flex-wrap items-baseline justify-between gap-x-3 py-2">
                   <span className="font-medium">
-                    {parsed ? describeInterval(parsed.item, parsed.presentation) : id}
+                    {parsed ? itemDescription(parsed.family, parsed.item, parsed.presentation) : id}
                   </span>
                   <span className="text-sm">
                     {grade === null ? (
@@ -119,7 +119,7 @@ export function DailySummary({
           <ul className="flex flex-col gap-1">
             {duels.map(({ block, outcome }) => (
               <li key={block.context + block.choices.join()}>
-                {blockTitle(block).replace('Duel · ', '')} :{' '}
+                {pairLabel(block)} :{' '}
                 <span className="font-semibold tabular-nums">
                   {outcome!.correct} / {outcome!.answered}
                 </span>

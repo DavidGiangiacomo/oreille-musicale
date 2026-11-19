@@ -1,27 +1,24 @@
 import { useEffect, useEffectEvent, useRef } from 'react';
-import {
-  intervalSoundFrom,
-  sequenceEvents,
-  type IntervalQuestion,
-} from '../../core/exercise/intervalQuestion';
+import { arpeggiatedEvents } from '../../core/exercise/chordQuestion';
+import { FAMILIES, type Question } from '../../core/exercise/families';
+import { sequenceEvents } from '../../core/exercise/intervalQuestion';
 import type { NoteEvent } from '../../core/exercise/rendition';
 import type { AnswerMetrics, QuestionResult } from '../../core/session/series';
-import type { IntervalCode } from '../../core/theory';
 import { audioEngine } from '../audio';
 import { useSettings } from '../settings/settingsContext';
-import { secondaryButton } from '../styles';
+import { muted, secondaryButton } from '../styles';
 import { AnswerGrid } from './AnswerGrid';
-import { FeedbackPanel } from './FeedbackPanel';
+import { FeedbackPanel, type Comparison } from './FeedbackPanel';
 import { answerIndexForCode } from './keys';
 
 /** Délai avant la question suivante après une bonne réponse (passage automatique). */
 const AUTO_ADVANCE_DELAY_MS = 900;
 
 export interface QuestionPlayerProps {
-  question: IntervalQuestion;
+  question: Question;
   /** Résultat une fois la réponse donnée ; null tant qu'on attend la réponse. */
   result: QuestionResult | null;
-  onAnswer: (item: IntervalCode, metrics: AnswerMetrics) => void;
+  onAnswer: (answer: string, metrics: AnswerMetrics) => void;
   onNext: () => void;
   /** Annonce pour les lecteurs d'écran : « Question 3 sur 20 ». */
   announcement: string;
@@ -63,25 +60,24 @@ export function QuestionPlayer({
   const systematic = compare === 'always';
   const autoAdvancing =
     !asking && result.correct && settings.autoAdvance && allowAutoAdvance && !systematic;
-  const comparedItem = !result
+  const comparedAnswer = !result
     ? null
     : !result.correct
       ? result.answer
       : systematic
-        ? (question.choices.find((choice) => choice !== question.item) ?? null)
+        ? (question.choices.find((choice) => choice !== question.answer) ?? null)
         : null;
-  const comparison = comparedItem
+  const family = FAMILIES[question.family];
+  const comparison: Comparison | null = comparedAnswer
     ? {
-        item: comparedItem,
-        isAnswer: comparedItem === result?.answer,
-        sound: intervalSoundFrom(
-          question.notes[0],
-          comparedItem,
-          question.presentation,
-          question.tempo,
-        ),
+        answer: comparedAnswer,
+        isAnswer: comparedAnswer === result?.answer,
+        sound: family.soundFrom(question, family.itemFor(question, comparedAnswer)),
       }
     : null;
+  // Aide « écouter arpégé » : pour un accord plaqué, comptée dans la note de révision.
+  const canArpeggiate = question.family !== 'int' && question.presentation !== 'arp';
+  const helpUsed = useRef(false);
 
   function play(events: NoteEvent[]) {
     return audioEngine.play(events, { instrument: settings.instrument });
@@ -92,13 +88,20 @@ export function QuestionPlayer({
     if (asking) replays.current += 1;
   }
 
-  function answer(item: IntervalCode) {
+  function arpeggiate() {
+    if (question.family === 'int') return;
+    play(arpeggiatedEvents(question));
+    if (asking) helpUsed.current = true;
+  }
+
+  function answer(item: string) {
     if (!asking) return;
     const end = firstPlaybackEnd.current;
     onAnswer(item, {
       // Répondre avant la fin du son compte pour un temps nul.
       responseTimeMs: end === null ? 0 : Math.max(0, performance.now() - end),
       replays: replays.current,
+      helpUsed: helpUsed.current,
     });
   }
 
@@ -106,6 +109,7 @@ export function QuestionPlayer({
   const playQuestion = useEffectEvent(() => {
     firstPlaybackEnd.current = play(question.events).notesEndAt;
     replays.current = 0;
+    helpUsed.current = false;
     replayButton.current?.focus({ preventScroll: true });
   });
   useEffect(() => {
@@ -116,7 +120,7 @@ export function QuestionPlayer({
   useEffect(() => {
     if (import.meta.env.DEV) {
       const debug = window as unknown as { __oreilleReponse?: string; __oreilleNumero?: number };
-      debug.__oreilleReponse = question.item;
+      debug.__oreilleReponse = question.answer;
       debug.__oreilleNumero = (debug.__oreilleNumero ?? 0) + 1;
     }
   }, [question]);
@@ -181,22 +185,35 @@ export function QuestionPlayer({
 
   return (
     <>
-      <button
-        ref={replayButton}
-        type="button"
-        onClick={replay}
-        aria-keyshortcuts="Space"
-        className={`${secondaryButton} min-h-14 text-lg`}
-      >
-        <span aria-hidden="true">↻ </span>Réécouter
-        <kbd className="ml-2 font-sans text-xs opacity-60">Espace</kbd>
-      </button>
+      <div className={canArpeggiate ? 'grid grid-cols-[3fr_2fr] gap-2' : 'flex flex-col'}>
+        <button
+          ref={replayButton}
+          type="button"
+          onClick={replay}
+          aria-keyshortcuts="Space"
+          className={`${secondaryButton} min-h-14 text-lg`}
+        >
+          <span aria-hidden="true">↻ </span>Réécouter
+          <kbd className="ml-2 font-sans text-xs opacity-60">Espace</kbd>
+        </button>
+        {canArpeggiate && (
+          <button
+            type="button"
+            onClick={arpeggiate}
+            className={`${secondaryButton} min-h-14 px-2 text-sm leading-tight`}
+          >
+            Écouter arpégé
+            {asking && <span className={`block text-xs ${muted}`}>(aide)</span>}
+          </button>
+        )}
+      </div>
       <p className="sr-only" aria-live="polite">
         {asking ? announcement : ''}
       </p>
       <AnswerGrid
+        family={question.family}
         choices={question.choices}
-        correctItem={question.item}
+        correctAnswer={question.answer}
         result={result}
         disabled={!asking}
         onAnswer={answer}

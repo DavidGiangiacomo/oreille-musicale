@@ -156,7 +156,7 @@ describe('nextStepQuestion', () => {
       history: [],
       phaseResults: [],
       random,
-      previousFirstMidi: null,
+      previousAnchor: null,
     });
     expect(contrast.choices).toEqual(['m3', 'M3']);
     expect(contrast.presentation).toBe('desc');
@@ -166,7 +166,7 @@ describe('nextStepQuestion', () => {
       history: [],
       phaseResults: [],
       random,
-      previousFirstMidi: contrast.midi[0],
+      previousAnchor: contrast.anchor,
       plannedItem: 'P8',
     });
     expect(test.item).toBe('P8');
@@ -177,10 +177,12 @@ describe('nextStepQuestion', () => {
       history: [],
       phaseResults: results('0000000000'),
       random,
-      previousFirstMidi: null,
+      previousAnchor: null,
     });
     expect(easy.tempo).toBe('slow');
-    expect(Math.abs(easy.midi[0] - easy.midi[1])).toBe(INTERVALS[easy.item].semitones);
+    expect(Math.abs((easy.midi[0] as number) - (easy.midi[1] as number))).toBe(
+      INTERVALS[easy.item as IntervalCode].semitones,
+    );
   });
 });
 
@@ -189,7 +191,9 @@ describe('exemples de découverte', () => {
     const s = step('int.desc.02');
     const examples = discoveryExamples(s, 'P4', createRandom(3));
     expect(examples).toHaveLength(4);
-    for (const example of examples) expect(example.midi[0] - example.midi[1]).toBe(5);
+    for (const example of examples) {
+      expect((example.midi[0] as number) - (example.midi[1] as number)).toBe(5);
+    }
     for (let i = 1; i < examples.length; i++) {
       expect(examples[i]?.midi[0]).not.toBe(examples[i - 1]?.midi[0]);
     }
@@ -199,7 +203,9 @@ describe('exemples de découverte', () => {
     const s = step('int.asc.01');
     const sounds = comparisonExamples(s, ['M3', 'P5', 'P8'], createRandom(8));
     expect(sounds).toHaveLength(6);
-    expect(sounds.slice(0, 3).map((sound) => sound.midi[1] - sound.midi[0])).toEqual([4, 7, 12]);
+    expect(
+      sounds.slice(0, 3).map((sound) => (sound.midi[1] as number) - (sound.midi[0] as number)),
+    ).toEqual([4, 7, 12]);
     expect(new Set(sounds.slice(0, 3).map((sound) => sound.midi[0])).size).toBe(1);
     for (const sound of sounds) expect(Math.max(...sound.midi)).toBeLessThanOrEqual(77);
   });
@@ -208,5 +214,60 @@ describe('exemples de découverte', () => {
     const sounds = discoveryExamples(step('int.asc.01'), 'M3', createRandom(1), 2);
     const events = sequenceEvents(sounds, 0.5);
     expect(events.map((event) => event.start)).toEqual([0, 1, 2.4, 3.4]);
+  });
+});
+
+describe('étapes d’accords et de renversements', () => {
+  it('se limite à l’entraînement et au test sans nouvel élément (R4)', () => {
+    expect(phasesOf(step('inv.block.04'))).toEqual(['train', 'test']);
+    expect(phasesOf(step('inv.block.01'))).toEqual(['discover', 'train', 'test']);
+    expect(phasesOf(step('inv.block.02'))).toEqual(['discover', 'contrast', 'train', 'test']);
+    expect(phasesOf(step('tri.arp.02'))).toEqual(['discover', 'contrast', 'train', 'test']);
+  });
+
+  it('propose les renversements comme réponses', () => {
+    const s = step('inv.block.02');
+    expect(choicesFor(s, 'contrast')).toEqual(['inv1', 'inv2']);
+    expect(choicesFor(s, 'train')).toEqual(['inv0', 'inv1', 'inv2']);
+    const question = nextStepQuestion({
+      step: s,
+      phase: 'train',
+      history: [],
+      phaseResults: [],
+      random: createRandom(4),
+      previousAnchor: null,
+    });
+    expect(question.choices).toEqual(['inv0', 'inv1', 'inv2']);
+    expect(question.answer).toBe(`inv${question.item.split('.')[1]}`);
+  });
+
+  it('pose au moins deux questions par nouvel élément au test', () => {
+    fc.assert(
+      fc.property(fc.integer(), (seed) => {
+        for (const id of ['inv.block.06', 'tri.arp.01', 'sev.inv.05', 'inv.block.04']) {
+          const s = step(id);
+          const plan = createTestPlan(s, createRandom(seed));
+          expect(plan).toHaveLength(testLength(s));
+          for (const item of s.newItems) {
+            expect(plan.filter((p) => p === item).length).toBeGreaterThanOrEqual(2);
+          }
+          for (const item of plan) expect(s.items).toContain(item);
+          expect(longestRun(plan)).toBeLessThanOrEqual(3);
+        }
+      }),
+      { numRuns: 30 },
+    );
+    expect(testLength(step('inv.block.06'))).toBe(30);
+  });
+
+  it('découvre un accord sur des basses différentes, et compare sur la même fondamentale', () => {
+    const s = step('tri.block.02');
+    const examples = discoveryExamples(s, 'dim', createRandom(2));
+    for (let i = 1; i < examples.length; i++) {
+      expect(examples[i]?.anchor).not.toBe(examples[i - 1]?.anchor);
+    }
+    const sounds = comparisonExamples(s, ['min', 'dim'], createRandom(5));
+    expect(sounds).toHaveLength(4);
+    expect(sounds[0]?.midi[0]).toBe(sounds[1]?.midi[0]);
   });
 });

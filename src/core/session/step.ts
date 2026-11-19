@@ -1,31 +1,30 @@
 // Déroulé d'une étape (docs/DESIGN.md §7.3 et §7.5) : découverte, comparaison,
 // entraînement, validation. Fonctions pures ; l'interface enchaîne les phases.
 import { contrastItems, type StepDef, type StepPhase } from '../curriculum';
-import {
-  createIntervalQuestion,
-  intervalSoundFrom,
-  type IntervalQuestion,
-  type IntervalSound,
-} from '../exercise/intervalQuestion';
-import type { Tempo } from '../exercise/rendition';
+import { answersFor, createQuestion, FAMILIES, type Question } from '../exercise/families';
+import type { Difficulty, Generation, Sound } from '../exercise/question';
 import { selectWithFocus, type AskedItem } from '../exercise/selection';
 import type { Random } from '../random';
-import { INTERVALS, type IntervalCode } from '../theory';
 import { arrange, spread } from './plan';
 
 export { longestRun } from './plan';
+export type { Difficulty } from '../exercise/question';
 
-/** Une réponse donnée pendant une étape. */
+/** Une réponse donnée pendant une étape : l'élément joué et la réussite. */
 export interface StepResult {
-  item: IntervalCode;
+  item: string;
   correct: boolean;
 }
 
 /** Part des questions consacrée aux nouveaux éléments, selon la phase. */
 export const FOCUS_SHARE = { contrast: 0.5, train: 0.4, test: 0.3 } as const;
 
-/** Phases dans l'ordre ; la comparaison n'existe que si l'étape a des voisins. */
+/**
+ * Phases dans l'ordre : la comparaison n'existe que si l'étape a des voisins ; une
+ * étape sans nouvel élément (R4) se limite à l'entraînement et au test.
+ */
 export function phasesOf(step: StepDef): StepPhase[] {
+  if (step.newItems.length === 0) return ['train', 'test'];
   return contrastItems(step).length > 0
     ? ['discover', 'contrast', 'train', 'test']
     : ['discover', 'train', 'test'];
@@ -37,11 +36,16 @@ export function phaseAfter(step: StepDef, phase: StepPhase): StepPhase {
   return phases[phases.indexOf(phase) + 1] ?? 'test';
 }
 
-/** Réponses proposées : le nouvel élément et ses voisins en comparaison, tout l'ensemble sinon. */
-export function choicesFor(step: StepDef, phase: StepPhase): IntervalCode[] {
-  if (phase !== 'contrast') return [...step.answers];
+/** Éléments joués : le nouvel élément et ses voisins en comparaison, tout l'ensemble sinon. */
+export function itemsFor(step: StepDef, phase: StepPhase): string[] {
+  if (phase !== 'contrast') return [...step.items];
   const allowed = new Set([...step.newItems, ...contrastItems(step)]);
-  return step.answers.filter((item) => allowed.has(item));
+  return step.items.filter((item) => allowed.has(item));
+}
+
+/** Réponses proposées pendant une phase, dans l'ordre des boutons. */
+export function choicesFor(step: StepDef, phase: StepPhase): string[] {
+  return answersFor(step.family, itemsFor(step, phase));
 }
 
 /** La comparaison s'arrête après 8 bonnes réponses sur les 10 dernières, ou 20 questions. */
@@ -54,7 +58,7 @@ export interface TrainingReadiness {
   /** Réussite sur les 20 dernières réponses (null avant 20 réponses). */
   recentAccuracy: number | null;
   /** Passages de chaque nouvel élément depuis le début de l'entraînement. */
-  newItemCounts: Partial<Record<IntervalCode, number>>;
+  newItemCounts: Partial<Record<string, number>>;
   ready: boolean;
 }
 
@@ -72,15 +76,13 @@ export function trainingReadiness(
       : recent.filter((result) => result.correct).length / recent.length;
   const newItemCounts = Object.fromEntries(
     step.newItems.map((item) => [item, results.filter((result) => result.item === item).length]),
-  ) as Partial<Record<IntervalCode, number>>;
+  );
   const ready =
     recentAccuracy !== null &&
     recentAccuracy >= READINESS.minAccuracy &&
     step.newItems.every((item) => (newItemCounts[item] ?? 0) >= READINESS.minNewItemCount);
   return { recentAccuracy, newItemCounts, ready };
 }
-
-export type Difficulty = 'easier' | 'normal' | 'harder';
 
 /**
  * Ajustement en entraînement (§7.5), sur les 10 dernières réponses : moins de 65 %,
@@ -95,36 +97,40 @@ export function trainingDifficulty(results: readonly StepResult[]): Difficulty {
   return 'normal';
 }
 
-/** Registre et tempo selon la difficulté : resserré et lent, ou élargi (C3–C6) et rapide. */
-export function generationFor(
-  step: StepDef,
-  difficulty: Difficulty,
-): { range: readonly [number, number]; tempo: Tempo } {
-  if (difficulty === 'easier') return { range: [55, 74], tempo: 'slow' };
-  if (difficulty === 'harder') return { range: [48, 84], tempo: 'fast' };
-  return step.generation;
+/** Registre et tempo selon la difficulté : resserré et lent, ou élargi et rapide. */
+export function generationFor(step: StepDef, difficulty: Difficulty): Generation {
+  return FAMILIES[step.family].generationFor(step.generation, difficulty);
 }
 
-/** Longueur du test : 4 questions par réponse possible, entre 12 et 30. */
+/** Longueur du test : 4 questions par élément, entre 12 et 30. */
 export function testLength(step: StepDef): number {
-  return Math.min(30, Math.max(12, 4 * step.answers.length));
+  return Math.min(30, Math.max(12, 4 * step.items.length));
 }
 
-/** Questions du test, dans l'ordre : ≈ 30 % sur les nouveaux éléments, le reste réparti entre les autres. */
-export function createTestPlan(step: StepDef, random: Random): IntervalCode[] {
+/**
+ * Questions du test, dans l'ordre : ≈ 30 % sur les nouveaux éléments (au moins 2
+ * chacun), le reste réparti entre les autres.
+ */
+export function createTestPlan(step: StepDef, random: Random): string[] {
   const length = testLength(step);
-  const others = step.answers.filter((item) => !step.newItems.includes(item));
-  const focusCount = others.length === 0 ? length : Math.round(length * FOCUS_SHARE.test);
-  const counts = new Map<IntervalCode, number>();
+  const others = step.items.filter((item) => !step.newItems.includes(item));
+  const focusCount =
+    others.length === 0
+      ? length
+      : Math.min(
+          length - others.length,
+          Math.max(Math.round(length * FOCUS_SHARE.test), 2 * step.newItems.length),
+        );
+  const counts = new Map<string, number>();
   spread(counts, step.newItems, focusCount, random);
-  spread(counts, others, length - focusCount, random);
+  spread(counts, others, length - (step.newItems.length > 0 ? focusCount : 0), random);
   return arrange(counts, random);
 }
 
 export interface TestEvaluation {
   accuracy: number;
   /** Réussite par nouvel élément. */
-  newItemAccuracy: Partial<Record<IntervalCode, number>>;
+  newItemAccuracy: Partial<Record<string, number>>;
   passed: boolean;
 }
 
@@ -137,7 +143,7 @@ export function evaluateTest(step: StepDef, results: readonly StepResult[]): Tes
       const asked = results.filter((result) => result.item === item);
       return [item, asked.length === 0 ? 0 : asked.filter((r) => r.correct).length / asked.length];
     }),
-  ) as Partial<Record<IntervalCode, number>>;
+  );
   const passed =
     accuracy >= step.validation.minAccuracy &&
     step.newItems.every(
@@ -149,92 +155,91 @@ export function evaluateTest(step: StepDef, results: readonly StepResult[]): Tes
 export interface StepQuestionOptions {
   step: StepDef;
   phase: Exclude<StepPhase, 'discover'>;
-  /** Réponses déjà données dans cette étape (toutes phases), de la plus ancienne à la plus récente. */
-  history: readonly AskedItem<IntervalCode>[];
+  /** Éléments déjà joués dans cette étape (toutes phases), du plus ancien au plus récent. */
+  history: readonly AskedItem<string>[];
   /** Réponses de la phase en cours, pour l'ajustement de difficulté. */
   phaseResults: readonly StepResult[];
   random: Random;
-  previousFirstMidi: number | null;
+  /** Note de référence de la question précédente. */
+  previousAnchor: number | null;
   /** En test : l'élément prévu par le plan. */
-  plannedItem?: IntervalCode;
-  /** Renfort des paires confondues dans les tirages (§8.6). */
-  boost?: ReadonlyMap<IntervalCode, number>;
+  plannedItem?: string;
+  /** Renfort des paires confondues dans les tirages (§8.6), par élément. */
+  boost?: ReadonlyMap<string, number>;
 }
 
 /** Question suivante d'une étape, selon la phase. */
-export function nextStepQuestion(options: StepQuestionOptions): IntervalQuestion {
-  const { step, phase, history, phaseResults, random, previousFirstMidi, plannedItem, boost } =
+export function nextStepQuestion(options: StepQuestionOptions): Question {
+  const { step, phase, history, phaseResults, random, previousAnchor, plannedItem, boost } =
     options;
-  const choices = choicesFor(step, phase);
+  const items = itemsFor(step, phase);
   const item =
     phase === 'test'
       ? plannedItem
-      : selectWithFocus(choices, step.newItems, FOCUS_SHARE[phase], history, random, { boost });
+      : selectWithFocus(items, step.newItems, FOCUS_SHARE[phase], history, random, { boost });
   if (!item) throw new Error('Test : élément prévu manquant');
   const { range, tempo } =
     phase === 'train' ? generationFor(step, trainingDifficulty(phaseResults)) : step.generation;
-  return createIntervalQuestion({
+  return createQuestion(step.family, {
     item,
     presentation: step.presentation,
-    choices,
+    choices: answersFor(step.family, items),
     range,
     tempo,
-    previousFirstMidi,
+    previousAnchor,
     random,
   });
 }
 
-/** Découverte : l'élément joué sur `count` notes de départ différentes. */
+/** Découverte : l'élément joué sur `count` notes de référence différentes. */
 export function discoveryExamples(
   step: StepDef,
-  item: IntervalCode,
+  item: string,
   random: Random,
   count = 4,
-): IntervalSound[] {
-  const sounds: IntervalSound[] = [];
+): Question[] {
+  const examples: Question[] = [];
   let previous: number | null = null;
   for (let i = 0; i < count; i++) {
-    const question = createIntervalQuestion({
+    const question = createQuestion(step.family, {
       item,
       presentation: step.presentation,
-      choices: [item],
+      choices: answersFor(step.family, [item]),
       range: step.generation.range,
-      previousFirstMidi: previous,
+      previousAnchor: previous,
       random,
     });
-    previous = question.midi[0];
-    sounds.push(question);
+    previous = question.anchor;
+    examples.push(question);
   }
-  return sounds;
+  return examples;
 }
 
 /**
- * Découverte : plusieurs éléments joués l'un après l'autre depuis la même note
- * de départ (le nouvel élément et son voisin, ou les trois premiers repères),
- * deux fois sur deux notes de départ différentes.
+ * Découverte : plusieurs éléments joués l'un après l'autre depuis la même note de
+ * référence (le nouvel élément et son voisin, ou les premiers repères), deux fois
+ * sur deux notes différentes.
  */
 export function comparisonExamples(
   step: StepDef,
-  items: readonly IntervalCode[],
+  items: readonly string[],
   random: Random,
-): IntervalSound[] {
-  const sounds: IntervalSound[] = [];
-  const widest = items.reduce((a, b) => (INTERVALS[a].semitones >= INTERVALS[b].semitones ? a : b));
+): Sound[] {
+  const family = FAMILIES[step.family];
+  const anchorItem = family.comparisonAnchor(items);
+  const sounds: Sound[] = [];
   let previous: number | null = null;
   for (let round = 0; round < 2; round++) {
-    // La note de départ est choisie pour que l'intervalle le plus grand tienne dans le registre.
-    const anchor = createIntervalQuestion({
-      item: widest,
+    const anchor = createQuestion(step.family, {
+      item: anchorItem,
       presentation: step.presentation,
-      choices: [widest],
+      choices: answersFor(step.family, [anchorItem]),
       range: step.generation.range,
-      previousFirstMidi: previous,
+      previousAnchor: previous,
       random,
     });
-    previous = anchor.midi[0];
-    for (const item of items) {
-      sounds.push(intervalSoundFrom(anchor.notes[0], item, step.presentation));
-    }
+    previous = anchor.anchor;
+    for (const item of items) sounds.push(family.soundFrom(anchor, item));
   }
   return sounds;
 }

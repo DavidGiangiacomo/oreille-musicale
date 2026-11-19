@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { INTERVALS } from '../../core/theory';
 import { prepareAudio } from '../audio';
-import { newItemsLabel, PHASE_LABELS, stepTitle } from '../progress/labels';
+import { PHASE_LABELS, stepSubtitle, stepTitle } from '../progress/labels';
 import { useProgress } from '../progress/useProgress';
 import { useSettings } from '../settings/settingsContext';
 import { card, cardTitle, muted, primaryButton } from '../styles';
@@ -40,10 +39,7 @@ export function ContinueCard() {
         <>
           <div className="flex flex-col gap-1">
             <p className="text-lg font-semibold">{stepTitle(step)}</p>
-            <p>
-              {step.column === 1 ? 'Premiers repères' : 'Nouveau'} : {newItemsLabel(step)} (
-              {step.newItems.map((item) => INTERVALS[item].abbreviation).join(', ')})
-            </p>
+            <p>{stepSubtitle(step)}</p>
             <p className={`text-sm ${muted}`}>
               {progress.states.get(step.id)?.phase
                 ? `Phase en cours : ${PHASE_LABELS[progress.states.get(step.id)!.phase!].toLowerCase()}`

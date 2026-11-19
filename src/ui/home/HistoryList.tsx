@@ -1,10 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { getStep, getTrack } from '../../core/curriculum';
+import { getStep } from '../../core/curriculum';
+import type { IntervalPresentation } from '../../core/exercise/rendition';
 import type { SessionRecord } from '../../core/journal';
 import { INTERVAL_CODES, INTERVALS, type IntervalCode } from '../../core/theory';
 import { journal } from '../data';
 import { presentationTitle } from '../format';
-import { columnLabel } from '../progress/labels';
+import { columnLabel, stepTitle } from '../progress/labels';
 import { card, cardTitle, muted } from '../styles';
 
 const DATE_FORMAT = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' });
@@ -16,13 +17,10 @@ function itemsLabel(items: readonly string[]): string {
 
 function title(session: SessionRecord): string {
   const step = session.stepId ? getStep(session.stepId) : undefined;
-  if (step) {
-    const row = getTrack(step.track).rows[step.row]?.label.toLowerCase() ?? '';
-    return `Étape ${step.column} · ${row} (${columnLabel(step)})`;
-  }
+  if (step) return `${stepTitle(step)} (${columnLabel(step)})`;
   if (session.kind === 'daily') return 'Séance du jour';
   if (!session.config) return 'Série';
-  return `${presentationTitle(session.config.presentation)} · ${itemsLabel(session.config.items)}`;
+  return `${presentationTitle(session.config.presentation as IntervalPresentation)} · ${itemsLabel(session.config.items)}`;
 }
 
 /** Dernières séries, relues dans la base (elles survivent au rechargement de la page). */

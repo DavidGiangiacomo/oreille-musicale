@@ -85,7 +85,7 @@ describe('normalizeSettings', () => {
       activeTracks: ['intervals'],
       onboardingDone: true,
     });
-    expect(normalizeSettings({ activeTracks: [] }).activeTracks).toEqual(['intervals']);
+    expect(normalizeSettings({ activeTracks: [] }).activeTracks).toEqual(['intervals', 'triads']);
     expect(normalizeSettings({ onboardingDone: 'oui' }).onboardingDone).toBe(false);
   });
 

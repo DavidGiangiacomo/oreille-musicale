@@ -1,9 +1,9 @@
 # Oreille musicale — Document de conception
 
-> **Statut** : brouillon v0.4, à relire et valider
+> **Statut** : brouillon v0.5, à relire et valider
 > **Date** : 18 novembre 2026
 > **Objet** : application web et Android d'entraînement de l'oreille musicale (intervalles, accords, gammes et modes), avec difficulté progressive, suivi de progression et révisions espacées.
-> **Historique** : v0.1, version initiale ; v0.2, ajout des gammes et modes, et des exercices chantés prévus en v2 ; v0.3, premières décisions (public, framework, hébergement, licence) ; v0.4, révisions recalculées depuis le journal (J3).
+> **Historique** : v0.1, version initiale ; v0.2, ajout des gammes et modes, et des exercices chantés prévus en v2 ; v0.3, premières décisions (public, framework, hébergement, licence) ; v0.4, révisions recalculées depuis le journal (J3) ; v0.5, accords et renversements (J4).
 
 ## Sommaire
 
@@ -687,8 +687,8 @@ interface NoteEvent {
 Un **journal d'événements en ajout seul** est la source de vérité ; les états (cartes FSRS, maîtrise, déblocages, matrice de confusion) sont des **projections** recalculables. On peut ainsi corriger une règle de notation et tout recalculer, migrer sans perte, et préparer la synchronisation par simple fusion de journaux.
 
 ```ts
-type CompetenceId = string; // 'int:m3:asc', 'chd:m7b5:block', 'inv:maj:1', 'scl:harmin:updown', 'mod:dorian:drone'
-type StepId = string;       // 'int.asc.04', 'tri.block.02', 'sev.inv.03', 'inv.R2', 'scl.asc.03', 'mod.drone.02'
+type CompetenceId = string; // 'int:m3:asc', 'chd:m7b5:block', 'inv:maj.1:block', 'scl:harmin:updown', 'mod:dorian:drone'
+type StepId = string;       // 'int.asc.04', 'tri.block.02', 'sev.inv.03', 'inv.block.02' (R2), 'scl.asc.03', 'mod.drone.02'
 
 // ——— Journal (source de vérité) ———
 
@@ -972,6 +972,11 @@ On chante sur la syllabe de son choix (« la », noms des notes, numéros de deg
 | Dépôt | Public ; branche principale `main`, chaque tâche passe par une pull request |
 | Révisions recalculées | Ni cartes FSRS ni `ReviewLog` stockés : la planification (sans aléa) se déduit du journal en rejouant validations et réponses ; une révision a lieu quand une compétence due reçoit 3 réponses le même jour d'étude, quelle que soit l'activité (§8.3, §8.5). Corriger la notation corrige tout l'historique |
 | Duels | Les réponses de duel n'alimentent pas la matrice de confusion (deux réponses seulement, elles l'exagéreraient) ; un duel compte comme fait après ses 10 questions |
+| Familles d'éléments | Intervalles, accords (qualité) et renversements partagent un même modèle de question : l'élément joué (« maj.1 », accord majeur au 1er renversement) se distingue de la réponse attendue (« 1er renversement »). Compétences `famille:élément:présentation` (`inv:maj.1:block`) |
+| Boutons d'accords | Libellé court et nom : M Majeur, m Mineur, ° Diminué, + Augmenté, sus4, sus2, 7, 7M, m7, ø, °7, m7M, 7sus4 ; le feedback donne le nom complet et les symboles français et internationaux (Rém · Dm, Do/Mi · C/E) |
+| Accords en révision | Le contexte de réponse est la famille et la présentation : triades et septièmes acquises dans une même présentation partagent les boutons d'une révision. Pas de duel de renversements |
+| Test d'étape | Au moins deux questions par nouvel élément (R6 en introduit huit) ; une étape sans nouvel élément (R4) commence directement à l'entraînement |
+| Parcours actifs par défaut | Intervalles et Triades ; Septièmes et Renversements s'ajoutent depuis l'écran Parcours |
 
 ### 14.2 Questions ouvertes
 

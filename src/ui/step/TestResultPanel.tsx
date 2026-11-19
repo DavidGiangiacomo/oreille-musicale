@@ -1,6 +1,6 @@
 import type { StepDef } from '../../core/curriculum';
 import type { TestEvaluation } from '../../core/session/step';
-import { intervalName } from '../format';
+import { itemName } from '../items';
 import { card, muted, primaryButton, secondaryButton } from '../styles';
 
 const percent = (value: number) => `${Math.round(value * 100)} %`;
@@ -41,7 +41,7 @@ export function TestResultPanel({
       <ul className={muted}>
         {step.newItems.map((item) => (
           <li key={item}>
-            {intervalName(item)} : {percent(evaluation.newItemAccuracy[item] ?? 0)}
+            {itemName(step.family, item)} : {percent(evaluation.newItemAccuracy[item] ?? 0)}
             {!evaluation.passed && ` (il faut ${percent(step.validation.minNewItemAccuracy)})`}
           </li>
         ))}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, Navigate } from 'react-router';
 import { CURRICULUM_VERSION, STEPS } from '../../core/curriculum';
-import type { IntervalQuestion } from '../../core/exercise/intervalQuestion';
+import type { Question } from '../../core/exercise/families';
 import { attemptFromEntry, type SessionRecord } from '../../core/journal';
 import { projectSteps } from '../../core/progress/projection';
 import { createRandom, type Random } from '../../core/random';
@@ -9,7 +9,6 @@ import { planDailySession, type DailyPlan } from '../../core/session/daily';
 import { blockQuestion } from '../../core/session/review';
 import { evaluateAnswer, type AnswerMetrics, type QuestionResult } from '../../core/session/series';
 import { projectReviews } from '../../core/srs';
-import type { IntervalCode } from '../../core/theory';
 import { ProgressBar, SaveFailedAlert, ScreenHeader } from '../components/ScreenParts';
 import { newId, newSeed } from '../ids';
 import { useJournalWriter } from '../journalWriter';
@@ -43,7 +42,7 @@ function planFrom(data: JournalData, activeTracks: readonly string[], random: Ra
 interface Current {
   block: number;
   index: number;
-  question: IntervalQuestion;
+  question: Question;
   result: QuestionResult | null;
 }
 
@@ -93,7 +92,7 @@ function DailyRun({ data }: { data: JournalData }) {
   const isLastQuestion =
     current.block === plan.blocks.length - 1 && current.index === block.plan.length - 1;
 
-  function answer(item: IntervalCode, metrics: AnswerMetrics) {
+  function answer(item: string, metrics: AnswerMetrics) {
     if (!current || current.result) return;
     const result = evaluateAnswer(current.question, item, metrics);
     setCurrent({ ...current, result });
@@ -127,7 +126,7 @@ function DailyRun({ data }: { data: JournalData }) {
       setCurrent({
         block: current.block,
         index: current.index + 1,
-        question: blockQuestion(block, item, random, current.question.midi[0]),
+        question: blockQuestion(block, item, random, current.question.anchor),
         result: null,
       });
       return;

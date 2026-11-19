@@ -8,7 +8,8 @@ import {
   type IntervalCode,
   type NoteName,
 } from '../theory';
-import { intervalCompetenceId, type CompetenceId } from './competence';
+import { intervalCompetenceId } from './competence';
+import type { QuestionBase, Sound } from './question';
 import {
   intervalEvents,
   renditionDuration,
@@ -17,32 +18,25 @@ import {
   type Tempo,
 } from './rendition';
 
-/**
- * Manière de répondre : boutons en v1. Le chant (`sung`) s'ajoutera en v2 sans
- * toucher à l'évaluation des questions (§11.7).
- */
-export type AnswerType = 'choice';
-
 /** Registre des premières étapes : F3 à F5 (§6.5). */
 export const DEFAULT_INTERVAL_RANGE: readonly [number, number] = [53, 77];
 
 /** Sons d'un intervalle : notes orthographiées, hauteurs MIDI et événements à jouer. */
-export interface IntervalSound {
+export interface IntervalSound extends Sound {
   /** Dans l'ordre d'écoute ; en harmonique, la plus grave d'abord. */
   notes: [NoteName, NoteName];
   midi: [number, number];
-  events: NoteEvent[];
 }
 
-export interface IntervalQuestion extends IntervalSound {
-  kind: 'interval';
-  competenceId: CompetenceId;
+export interface IntervalQuestion extends QuestionBase {
+  family: 'int';
   item: IntervalCode;
+  answer: IntervalCode;
   presentation: IntervalPresentation;
-  tempo: Tempo;
+  notes: [NoteName, NoteName];
+  midi: [number, number];
   /** Réponses proposées, dans l'ordre fixe des boutons (du plus petit au plus grand). */
   choices: IntervalCode[];
-  answerType: AnswerType;
 }
 
 export interface IntervalQuestionOptions {
@@ -114,13 +108,15 @@ export function createIntervalQuestion(options: IntervalQuestionOptions): Interv
 
   const notes = spellInterval(first, item, presentation === 'desc' ? 'down' : 'up');
   return {
-    kind: 'interval',
+    family: 'int',
     competenceId: intervalCompetenceId(item, presentation),
     item,
+    answer: item,
     presentation,
     tempo,
     choices,
     answerType: 'choice',
+    anchor: midiOf(notes[0]),
     ...soundOf(notes, presentation, tempo),
   };
 }
@@ -129,10 +125,7 @@ export function createIntervalQuestion(options: IntervalQuestionOptions): Interv
 export const SEQUENCE_GAP = 0.7;
 
 /** Enchaîne plusieurs sons en une seule réalisation, séparés par une pause. */
-export function sequenceEvents(
-  sounds: readonly IntervalSound[],
-  gap: number = SEQUENCE_GAP,
-): NoteEvent[] {
+export function sequenceEvents(sounds: readonly Sound[], gap: number = SEQUENCE_GAP): NoteEvent[] {
   const events: NoteEvent[] = [];
   let offset = 0;
   for (const sound of sounds) {

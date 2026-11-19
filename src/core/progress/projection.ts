@@ -2,7 +2,8 @@
 // et des compétences, recalculé à partir du seul journal. Rejouer le même journal
 // donne toujours le même état ; corriger une règle suffit à tout recalculer.
 import type { StepDef, StepPhase } from '../curriculum';
-import { intervalCompetenceId, type CompetenceId } from '../exercise/competence';
+import type { CompetenceId } from '../exercise/competence';
+import { competenceId } from '../exercise/families';
 import type { Attempt, ProgressEvent } from '../journal';
 import { isLapsed, type ReviewState } from '../srs';
 
@@ -156,7 +157,7 @@ export function projectCompetences(
     const stepState = stepStates.get(step.id);
     const validated = stepState?.status === 'validated';
     for (const item of step.newItems) {
-      const id = intervalCompetenceId(item, step.presentation);
+      const id = competenceId(step.family, item, step.presentation);
       const review = reviews.get(id);
       const level: MasteryLevel = validated
         ? reviewedLevel(review)

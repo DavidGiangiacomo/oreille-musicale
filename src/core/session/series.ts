@@ -9,6 +9,7 @@ import {
 } from '../exercise/intervalQuestion';
 import type { IntervalPresentation, Tempo } from '../exercise/rendition';
 import { selectNextItem } from '../exercise/selection';
+import type { Question } from '../exercise/families';
 import type { Random } from '../random';
 import type { IntervalCode } from '../theory';
 
@@ -31,11 +32,20 @@ export interface AnswerMetrics {
   responseTimeMs: number;
   /** Nombre de réécoutes avant de répondre. */
   replays: number;
+  /** Aide utilisée avant de répondre (« écouter arpégé »). */
+  helpUsed?: boolean;
 }
 
 export interface QuestionResult extends AnswerMetrics {
-  answer: IntervalCode;
+  answer: string;
   correct: boolean;
+  helpUsed: boolean;
+}
+
+/** Une question et sa réponse, quelle que soit la famille. */
+export interface AnsweredQuestion {
+  question: Question;
+  result: QuestionResult | null;
 }
 
 export interface SeriesEntry {
@@ -100,25 +110,26 @@ export function currentEntry(state: SeriesState): SeriesEntry {
 
 /** Résultat d'une réponse à une question. */
 export function evaluateAnswer(
-  question: IntervalQuestion,
-  answer: IntervalCode,
+  question: Question,
+  answer: string,
   metrics: AnswerMetrics,
 ): QuestionResult {
-  if (!question.choices.includes(answer)) {
+  if (!(question.choices as readonly string[]).includes(answer)) {
     throw new Error(`Réponse « ${answer} » hors des choix proposés`);
   }
   return {
     answer,
-    correct: answer === question.item,
+    correct: answer === question.answer,
     responseTimeMs: Math.max(0, Math.round(metrics.responseTimeMs)),
     replays: metrics.replays,
+    helpUsed: metrics.helpUsed ?? false,
   };
 }
 
 /** Enregistre la réponse à la question en cours et passe au feedback. */
 export function answerCurrent(
   state: SeriesState,
-  answer: IntervalCode,
+  answer: string,
   metrics: AnswerMetrics,
 ): SeriesState {
   if (state.status !== 'asking') throw new Error('Aucune question en attente de réponse');

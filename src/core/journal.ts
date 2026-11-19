@@ -2,13 +2,12 @@
 // (progression, révisions, statistiques) en seront des projections recalculables.
 import type { StepPhase, TrackId } from './curriculum';
 import type { CompetenceId } from './exercise/competence';
-import type { InstrumentId, IntervalPresentation, Tempo } from './exercise/rendition';
+import type { InstrumentId, Presentation, Tempo } from './exercise/rendition';
 import { DAILY_GOAL_CHOICES, DEFAULT_DAILY_GOAL_MINUTES } from './progress/activity';
-import type { SeriesConfig, SeriesEntry } from './session/series';
+import type { AnsweredQuestion, SeriesConfig } from './session/series';
 import type { NoteNaming, OctaveConvention } from './theory';
 
-/** Présentation d'une question ; s'étendra aux accords, gammes et modes. */
-export type Presentation = IntervalPresentation;
+export type { Presentation } from './exercise/rendition';
 
 export interface SessionRecord {
   id: string;
@@ -76,9 +75,9 @@ export interface Attempt {
   helpUsed: boolean;
 }
 
-/** Tentative du journal à partir d'une question répondue d'une série. */
+/** Tentative du journal à partir d'une question répondue (série, étape, séance). */
 export function attemptFromEntry(
-  entry: SeriesEntry,
+  entry: AnsweredQuestion,
   context: {
     id: string;
     sessionId: string;
@@ -110,7 +109,7 @@ export function attemptFromEntry(
     correct: result.correct,
     responseTimeMs: result.responseTimeMs,
     replays: result.replays,
-    helpUsed: false,
+    helpUsed: result.helpUsed,
   };
 }
 
@@ -142,12 +141,12 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = {
   tempo: 'normal',
   volume: 1,
   autoAdvance: true,
-  activeTracks: ['intervals'],
+  activeTracks: ['intervals', 'triads'],
   dailyGoalMinutes: DEFAULT_DAILY_GOAL_MINUTES,
   onboardingDone: false,
 };
 
-const KNOWN_TRACKS: readonly TrackId[] = ['intervals'];
+const KNOWN_TRACKS: readonly TrackId[] = ['intervals', 'triads', 'sevenths', 'inversions'];
 
 function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
   return allowed.includes(value as T) ? (value as T) : fallback;

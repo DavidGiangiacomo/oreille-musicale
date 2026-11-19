@@ -56,6 +56,7 @@ describe('déroulé d’une série', () => {
       correct: true,
       responseTimeMs: 951,
       replays: 1,
+      helpUsed: false,
     });
 
     state = advance(state, random);

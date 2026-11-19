@@ -5,7 +5,7 @@ import {
   trainingReadiness,
   type StepResult,
 } from '../../core/session/step';
-import { intervalName } from '../format';
+import { itemName } from '../items';
 import { muted, primaryButton, secondaryButton } from '../styles';
 
 const percent = (value: number) => `${Math.round(value * 100)} %`;
@@ -60,7 +60,7 @@ export function TrainingStatus({
       <ul className={muted}>
         {step.newItems.map((item) => (
           <li key={item}>
-            {intervalName(item)} : entendu{' '}
+            {itemName(step.family, item)} : entendu{' '}
             {Math.min(readiness.newItemCounts[item] ?? 0, READINESS.minNewItemCount)} /{' '}
             {READINESS.minNewItemCount} fois
           </li>
