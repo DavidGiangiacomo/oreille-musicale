@@ -1,6 +1,8 @@
 import { createHashRouter, Navigate, RouterProvider } from 'react-router';
 import { isNativeApp } from '../platform/native';
+import { AppLifecycle } from './AppLifecycle';
 import { UpdatePrompt } from './components/UpdatePrompt';
+import { ReminderScheduler } from './ReminderScheduler';
 import { CourseScreen } from './course/CourseScreen';
 import { DailySessionScreen } from './daily/DailySessionScreen';
 import { WelcomeScreen } from './onboarding/WelcomeScreen';
@@ -21,13 +23,16 @@ const router = createHashRouter([
   { path: '*', element: <Navigate to="/" replace /> },
 ]);
 
-// Le service worker ne sert qu'à la version web publiée.
-const withServiceWorker = import.meta.env.PROD && !isNativeApp();
+// Le service worker ne sert qu'à la version web publiée ; les rappels, qu'à Android.
+const native = isNativeApp();
+const withServiceWorker = import.meta.env.PROD && !native;
 
 export function App() {
   return (
     <SettingsProvider>
       <RouterProvider router={router} />
+      <AppLifecycle router={router} />
+      {native && <ReminderScheduler />}
       {withServiceWorker && <UpdatePrompt />}
     </SettingsProvider>
   );

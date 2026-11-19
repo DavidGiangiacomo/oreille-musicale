@@ -4,6 +4,7 @@ import type { StepPhase, TrackId } from './curriculum';
 import type { CompetenceId } from './exercise/competence';
 import type { InstrumentId, Presentation, Tempo } from './exercise/rendition';
 import { DAILY_GOAL_CHOICES, DEFAULT_DAILY_GOAL_MINUTES } from './progress/activity';
+import { DEFAULT_REMINDER, parseTime, type ReminderSettings } from './progress/reminder';
 import type { AnsweredQuestion, SeriesConfig } from './session/series';
 import type { NoteNaming, OctaveConvention } from './theory';
 
@@ -130,6 +131,8 @@ export interface Settings {
   activeTracks: TrackId[];
   /** Objectif quotidien, en minutes de pratique active (§9.4). */
   dailyGoalMinutes: number;
+  /** Rappel quotidien, sur Android (§10.7). */
+  reminder: ReminderSettings;
   /** Premier lancement terminé (test audio, notation). */
   onboardingDone: boolean;
 }
@@ -143,6 +146,7 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = {
   autoAdvance: true,
   activeTracks: ['intervals', 'triads'],
   dailyGoalMinutes: DEFAULT_DAILY_GOAL_MINUTES,
+  reminder: { ...DEFAULT_REMINDER },
   onboardingDone: false,
 };
 
@@ -154,6 +158,17 @@ const KNOWN_TRACKS: readonly TrackId[] = [
   'scales',
   'modes',
 ];
+
+function normalizeReminder(stored: unknown): ReminderSettings {
+  const raw = (typeof stored === 'object' && stored !== null ? stored : {}) as Record<
+    string,
+    unknown
+  >;
+  return {
+    enabled: raw.enabled === true,
+    time: typeof raw.time === 'string' && parseTime(raw.time) ? raw.time : DEFAULT_REMINDER.time,
+  };
+}
 
 function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
   return allowed.includes(value as T) ? (value as T) : fallback;
@@ -184,6 +199,7 @@ export function normalizeSettings(stored: unknown): Settings {
     dailyGoalMinutes: (DAILY_GOAL_CHOICES as readonly unknown[]).includes(raw.dailyGoalMinutes)
       ? (raw.dailyGoalMinutes as number)
       : d.dailyGoalMinutes,
+    reminder: normalizeReminder(raw.reminder),
     onboardingDone: raw.onboardingDone === true,
   };
 }

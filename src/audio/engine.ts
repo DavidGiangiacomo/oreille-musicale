@@ -35,6 +35,8 @@ export interface AudioEngine {
   /** Joue une réalisation complète ; coupe d'abord ce qui joue encore. */
   play(notes: readonly NoteEvent[], options?: PlayOptions): PlaybackHandle;
   stopAll(): void;
+  /** Coupe le son et met la sortie en veille (appli en arrière-plan). */
+  suspend(): Promise<void>;
   /** Volume général, de 0 à 1. */
   setVolume(volume: number): void;
 }
@@ -186,6 +188,15 @@ export class WebAudioEngine implements AudioEngine {
 
   stopAll(): void {
     this.#voices.forEach((voice) => this.#fadeOut(voice));
+  }
+
+  async suspend(): Promise<void> {
+    if (!this.#context) return;
+    this.stopAll();
+    const context = this.#context;
+    if (typeof AudioContext !== 'undefined' && context instanceof AudioContext) {
+      if (context.state === 'running') await context.suspend();
+    }
   }
 
   setVolume(volume: number): void {
