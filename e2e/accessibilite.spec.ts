@@ -4,7 +4,7 @@ import { expect, test, type Page } from '@playwright/test';
 // Audit d'accessibilité (WCAG 2.1 AA, §9.6) des écrans principaux, en clair et en sombre.
 
 const SCREENS: { name: string; path: string; ready: RegExp | string }[] = [
-  { name: 'accueil', path: './', ready: 'Séance du jour' },
+  { name: 'accueil', path: './#/', ready: 'Séance du jour' },
   { name: 'parcours', path: './#/parcours', ready: 'Parcours' },
   { name: 'étape', path: './#/etape/int.asc.01', ready: 'Intervalles ascendants · étape 1' },
   { name: 'statistiques', path: './#/statistiques', ready: 'Statistiques' },
@@ -44,9 +44,13 @@ for (const theme of ['light', 'dark'] as const) {
     }
 
     // La découverte, puis une question et son feedback (erreur), avec le mini-clavier.
-    // (Le premier écran a rechargé la page : le son est à réactiver.)
+    // Sans rechargement depuis l'accueil, le son est normalement resté actif.
     await page.goto('./#/etape/int.asc.01');
-    await page.getByRole('button', { name: 'Activer le son et découvrir' }).click();
+    await expect(
+      page.getByRole('heading', { name: 'Intervalles ascendants · étape 1' }),
+    ).toBeVisible();
+    const gate = page.getByRole('button', { name: 'Activer le son et découvrir' });
+    if (await gate.isVisible()) await gate.click();
     await expect(page.getByRole('heading', { name: 'Découverte' })).toBeVisible();
     await test.step('découverte', () => audit(page));
     await page.getByRole('button', { name: /Continuer : entraînement/ }).click();
