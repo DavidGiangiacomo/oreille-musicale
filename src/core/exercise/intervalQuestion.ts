@@ -9,7 +9,13 @@ import {
   type NoteName,
 } from '../theory';
 import { intervalCompetenceId, type CompetenceId } from './competence';
-import { intervalEvents, type IntervalPresentation, type NoteEvent, type Tempo } from './rendition';
+import {
+  intervalEvents,
+  renditionDuration,
+  type IntervalPresentation,
+  type NoteEvent,
+  type Tempo,
+} from './rendition';
 
 /**
  * Manière de répondre : boutons en v1. Le chant (`sung`) s'ajoutera en v2 sans
@@ -117,4 +123,21 @@ export function createIntervalQuestion(options: IntervalQuestionOptions): Interv
     answerType: 'choice',
     ...soundOf(notes, presentation, tempo),
   };
+}
+
+/** Pause entre deux sons d'une suite d'écoute. */
+export const SEQUENCE_GAP = 0.7;
+
+/** Enchaîne plusieurs sons en une seule réalisation, séparés par une pause. */
+export function sequenceEvents(
+  sounds: readonly IntervalSound[],
+  gap: number = SEQUENCE_GAP,
+): NoteEvent[] {
+  const events: NoteEvent[] = [];
+  let offset = 0;
+  for (const sound of sounds) {
+    for (const event of sound.events) events.push({ ...event, start: event.start + offset });
+    offset += renditionDuration(sound.events) + gap;
+  }
+  return events;
 }

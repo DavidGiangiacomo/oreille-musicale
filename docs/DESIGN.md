@@ -399,11 +399,11 @@ const step: StepDef = {
 | Phase | Contenu | Passage à la suite |
 |---|---|---|
 | 1 · Découverte | Le nouvel élément est joué 4 fois sur des fondamentales différentes, avec son nom (et sa chanson repère ou sa note caractéristique), puis alterné avec son voisin. Non noté. | Quand l'utilisateur le souhaite (phase facultative) |
-| 2 · Comparaison | « Duel » à deux réponses : le nouvel élément contre son voisin. | 8 bonnes réponses sur les 10 dernières, ou 20 questions au plus |
+| 2 · Comparaison | Le nouvel élément contre son ou ses voisins (2 ou 3 réponses), ≈ 50 % des questions sur le nouvel élément. | 8 bonnes réponses sur les 10 dernières, ou 20 questions au plus |
 | 3 · Entraînement | Tout l'ensemble de l'étape ; ≈ 40 % des questions sur le nouvel élément ; feedback complet ; difficulté ajustée (§7.5). | Dès 85 % de réussite sur les 20 dernières questions et 5 passages du nouvel élément, le test est proposé |
 | 4 · Validation | Test de 4 questions par réponse possible (entre 12 et 30), dont ≈ 30 % sur le nouvel élément ; feedback bref. | Réussi avec au moins 90 % au total et 75 % sur le nouvel élément |
 
-- Une étape peut s'étaler sur plusieurs séances : la phase en cours est sauvegardée.
+- Une étape peut s'étaler sur plusieurs séances : la phase en cours est sauvegardée. Un test interrompu recommence du début.
 - **« Je connais déjà »** : le test est accessible à tout moment, pour avancer vite.
 - En cas d'échec, retour à l'entraînement avec les éléments ratés surpondérés.
 - En colonne 1, tous les éléments sont nouveaux (pas de comparaison) ; une étape sans nouvel élément (R4) se limite à l'entraînement et au test.

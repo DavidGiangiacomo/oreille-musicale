@@ -1,13 +1,16 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { getStep, stepsOfTrack, type StepDef } from '../curriculum';
+import { sequenceEvents } from '../exercise/intervalQuestion';
 import { selectWithFocus, type AskedItem } from '../exercise/selection';
 import { createRandom } from '../random';
 import { INTERVALS, type IntervalCode } from '../theory';
 import {
   choicesFor,
+  comparisonExamples,
   contrastComplete,
   createTestPlan,
+  discoveryExamples,
   evaluateTest,
   generationFor,
   longestRun,
@@ -178,5 +181,32 @@ describe('nextStepQuestion', () => {
     });
     expect(easy.tempo).toBe('slow');
     expect(Math.abs(easy.midi[0] - easy.midi[1])).toBe(INTERVALS[easy.item].semitones);
+  });
+});
+
+describe('exemples de découverte', () => {
+  it('joue l’élément sur des notes de départ toutes différentes', () => {
+    const s = step('int.desc.02');
+    const examples = discoveryExamples(s, 'P4', createRandom(3));
+    expect(examples).toHaveLength(4);
+    for (const example of examples) expect(example.midi[0] - example.midi[1]).toBe(5);
+    for (let i = 1; i < examples.length; i++) {
+      expect(examples[i]?.midi[0]).not.toBe(examples[i - 1]?.midi[0]);
+    }
+  });
+
+  it('compare des éléments depuis la même note, dans le registre', () => {
+    const s = step('int.asc.01');
+    const sounds = comparisonExamples(s, ['M3', 'P5', 'P8'], createRandom(8));
+    expect(sounds).toHaveLength(6);
+    expect(sounds.slice(0, 3).map((sound) => sound.midi[1] - sound.midi[0])).toEqual([4, 7, 12]);
+    expect(new Set(sounds.slice(0, 3).map((sound) => sound.midi[0])).size).toBe(1);
+    for (const sound of sounds) expect(Math.max(...sound.midi)).toBeLessThanOrEqual(77);
+  });
+
+  it('enchaîne les sons avec une pause', () => {
+    const sounds = discoveryExamples(step('int.asc.01'), 'M3', createRandom(1), 2);
+    const events = sequenceEvents(sounds, 0.5);
+    expect(events.map((event) => event.start)).toEqual([0, 1, 2.4, 3.4]);
   });
 });

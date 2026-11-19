@@ -1,11 +1,16 @@
 // Déroulé d'une étape (docs/DESIGN.md §7.3 et §7.5) : découverte, comparaison,
 // entraînement, validation. Fonctions pures ; l'interface enchaîne les phases.
 import { contrastItems, type StepDef, type StepPhase } from '../curriculum';
-import { createIntervalQuestion, type IntervalQuestion } from '../exercise/intervalQuestion';
+import {
+  createIntervalQuestion,
+  intervalSoundFrom,
+  type IntervalQuestion,
+  type IntervalSound,
+} from '../exercise/intervalQuestion';
 import type { Tempo } from '../exercise/rendition';
 import { selectWithFocus, type AskedItem } from '../exercise/selection';
 import { pick, randomInt, weightedPick, type Random } from '../random';
-import type { IntervalCode } from '../theory';
+import { INTERVALS, type IntervalCode } from '../theory';
 
 /** Une réponse donnée pendant une étape. */
 export interface StepResult {
@@ -230,4 +235,59 @@ export function nextStepQuestion(options: StepQuestionOptions): IntervalQuestion
     previousFirstMidi,
     random,
   });
+}
+
+/** Découverte : l'élément joué sur `count` notes de départ différentes. */
+export function discoveryExamples(
+  step: StepDef,
+  item: IntervalCode,
+  random: Random,
+  count = 4,
+): IntervalSound[] {
+  const sounds: IntervalSound[] = [];
+  let previous: number | null = null;
+  for (let i = 0; i < count; i++) {
+    const question = createIntervalQuestion({
+      item,
+      presentation: step.presentation,
+      choices: [item],
+      range: step.generation.range,
+      previousFirstMidi: previous,
+      random,
+    });
+    previous = question.midi[0];
+    sounds.push(question);
+  }
+  return sounds;
+}
+
+/**
+ * Découverte : plusieurs éléments joués l'un après l'autre depuis la même note
+ * de départ (le nouvel élément et son voisin, ou les trois premiers repères),
+ * deux fois sur deux notes de départ différentes.
+ */
+export function comparisonExamples(
+  step: StepDef,
+  items: readonly IntervalCode[],
+  random: Random,
+): IntervalSound[] {
+  const sounds: IntervalSound[] = [];
+  const widest = items.reduce((a, b) => (INTERVALS[a].semitones >= INTERVALS[b].semitones ? a : b));
+  let previous: number | null = null;
+  for (let round = 0; round < 2; round++) {
+    // La note de départ est choisie pour que l'intervalle le plus grand tienne dans le registre.
+    const anchor = createIntervalQuestion({
+      item: widest,
+      presentation: step.presentation,
+      choices: [widest],
+      range: step.generation.range,
+      previousFirstMidi: previous,
+      random,
+    });
+    previous = anchor.midi[0];
+    for (const item of items) {
+      sounds.push(intervalSoundFrom(anchor.notes[0], item, step.presentation));
+    }
+  }
+  return sounds;
 }

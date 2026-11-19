@@ -1,8 +1,10 @@
 import { useLiveQuery } from 'dexie-react-hooks';
+import { getStep, getTrack } from '../../core/curriculum';
 import type { SessionRecord } from '../../core/journal';
 import { INTERVAL_CODES, INTERVALS, type IntervalCode } from '../../core/theory';
 import { journal } from '../data';
 import { presentationTitle } from '../format';
+import { columnLabel } from '../progress/labels';
 import { card, cardTitle, muted } from '../styles';
 
 const DATE_FORMAT = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' });
@@ -13,6 +15,11 @@ function itemsLabel(items: readonly string[]): string {
 }
 
 function title(session: SessionRecord): string {
+  const step = session.stepId ? getStep(session.stepId) : undefined;
+  if (step) {
+    const row = getTrack(step.track).rows[step.row]?.label.toLowerCase() ?? '';
+    return `Étape ${step.column} · ${row} (${columnLabel(step)})`;
+  }
   if (!session.config) return 'Série';
   return `${presentationTitle(session.config.presentation)} · ${itemsLabel(session.config.items)}`;
 }
@@ -32,10 +39,12 @@ export function HistoryList() {
           {summaries.map(({ session, correct, total }) => (
             <li key={session.id} className="flex items-center justify-between gap-3 py-2">
               <div className="flex min-w-0 flex-col">
-                <span className="truncate">{title(session)}</span>
+                <span className="break-words">{title(session)}</span>
                 <span className={`text-sm ${muted}`}>
                   {DATE_FORMAT.format(session.startedAt)}
-                  {session.endedAt === undefined ? ' · interrompue' : ''}
+                  {session.endedAt === undefined && session.kind === 'custom'
+                    ? ' · interrompue'
+                    : ''}
                 </span>
               </div>
               <span className="shrink-0 font-semibold tabular-nums">

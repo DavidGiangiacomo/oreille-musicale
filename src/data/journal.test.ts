@@ -173,7 +173,8 @@ describe('événements et étapes', () => {
     });
     await journal.addAttempt(attempt('a2', 's1', 31, true));
 
-    const { events, attempts } = await journal.stepJournal('int.asc.01');
+    const { stepId, events, attempts } = await journal.stepJournal('int.asc.01');
+    expect(stepId).toBe('int.asc.01');
     expect(events.map((event) => event.id)).toEqual(['e1', 'e2']);
     expect(attempts.map((a) => a.id)).toEqual(['a1']);
     expect((await journal.events()).map((event) => event.id)).toEqual(['e1', 'e3', 'e2']);

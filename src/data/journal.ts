@@ -46,13 +46,19 @@ export function createJournal(db: OreilleDatabase) {
       return db.attempts.orderBy('at').toArray();
     },
 
-    /** Événements et réponses d'une étape, du plus ancien au plus récent. */
-    async stepJournal(stepId: string): Promise<{ events: ProgressEvent[]; attempts: Attempt[] }> {
+    /**
+     * Événements et réponses d'une étape, du plus ancien au plus récent. L'identifiant
+     * de l'étape est renvoyé avec : une requête en direct peut encore rendre le résultat
+     * d'une étape précédente pendant qu'elle relit la nouvelle.
+     */
+    async stepJournal(
+      stepId: string,
+    ): Promise<{ stepId: string; events: ProgressEvent[]; attempts: Attempt[] }> {
       const [events, attempts] = await Promise.all([
         db.events.where('stepId').equals(stepId).sortBy('at'),
         db.attempts.where('stepId').equals(stepId).sortBy('at'),
       ]);
-      return { events, attempts };
+      return { stepId, events, attempts };
     },
 
     /** Dernières séances commencées, de la plus récente à la plus ancienne. */
