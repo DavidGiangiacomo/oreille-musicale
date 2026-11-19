@@ -1,5 +1,9 @@
 import { useEffect, useEffectEvent, useRef } from 'react';
-import { intervalSoundFrom, type IntervalQuestion } from '../../core/exercise/intervalQuestion';
+import {
+  intervalSoundFrom,
+  sequenceEvents,
+  type IntervalQuestion,
+} from '../../core/exercise/intervalQuestion';
 import type { NoteEvent } from '../../core/exercise/rendition';
 import type { AnswerMetrics, QuestionResult } from '../../core/session/series';
 import type { IntervalCode } from '../../core/theory';
@@ -26,6 +30,11 @@ export interface QuestionPlayerProps {
   /** Passage automatique après une bonne réponse (si le réglage l'autorise). */
   allowAutoAdvance?: boolean;
   nextLabel?: string;
+  /**
+   * Écoute comparée : après une erreur seulement (par défaut), ou après chaque
+   * réponse avec l'autre réponse possible (duel) ; elle est alors jouée d'office.
+   */
+  compare?: 'errors' | 'always';
 }
 
 /**
@@ -43,6 +52,7 @@ export function QuestionPlayer({
   brief = false,
   allowAutoAdvance = true,
   nextLabel = 'Question suivante',
+  compare = 'errors',
 }: QuestionPlayerProps) {
   const { settings } = useSettings();
   const firstPlaybackEnd = useRef<number | null>(null);
@@ -50,11 +60,28 @@ export function QuestionPlayer({
   const replayButton = useRef<HTMLButtonElement>(null);
   const nextButton = useRef<HTMLButtonElement>(null);
   const asking = result === null;
-  const autoAdvancing = !asking && result.correct && settings.autoAdvance && allowAutoAdvance;
-  const answerSound =
-    result && !result.correct
-      ? intervalSoundFrom(question.notes[0], result.answer, question.presentation, question.tempo)
-      : null;
+  const systematic = compare === 'always';
+  const autoAdvancing =
+    !asking && result.correct && settings.autoAdvance && allowAutoAdvance && !systematic;
+  const comparedItem = !result
+    ? null
+    : !result.correct
+      ? result.answer
+      : systematic
+        ? (question.choices.find((choice) => choice !== question.item) ?? null)
+        : null;
+  const comparison = comparedItem
+    ? {
+        item: comparedItem,
+        isAnswer: comparedItem === result?.answer,
+        sound: intervalSoundFrom(
+          question.notes[0],
+          comparedItem,
+          question.presentation,
+          question.tempo,
+        ),
+      }
+    : null;
 
   function play(events: NoteEvent[]) {
     return audioEngine.play(events, { instrument: settings.instrument });
@@ -69,7 +96,8 @@ export function QuestionPlayer({
     if (!asking) return;
     const end = firstPlaybackEnd.current;
     onAnswer(item, {
-      responseTimeMs: end === null ? 0 : performance.now() - end,
+      // Répondre avant la fin du son compte pour un temps nul.
+      responseTimeMs: end === null ? 0 : Math.max(0, performance.now() - end),
       replays: replays.current,
     });
   }
@@ -97,6 +125,14 @@ export function QuestionPlayer({
   useEffect(() => {
     if (!asking) nextButton.current?.focus({ preventScroll: true });
   }, [asking]);
+
+  // Duel : la bonne réponse puis l'autre, jouées d'office après chaque réponse.
+  const playComparison = useEffectEvent(() => {
+    if (comparison) play(sequenceEvents([question, comparison.sound]));
+  });
+  useEffect(() => {
+    if (!asking && systematic) playComparison();
+  }, [asking, systematic]);
 
   // Passage automatique après une bonne réponse.
   const advance = useEffectEvent(() => onNext());
@@ -169,14 +205,14 @@ export function QuestionPlayer({
         <FeedbackPanel
           question={question}
           result={result}
-          answerSound={answerSound}
+          comparison={comparison}
           settings={settings}
           brief={brief}
           autoAdvancing={autoAdvancing}
           nextLabel={nextLabel}
           nextButtonRef={nextButton}
           onPlayCorrect={() => play(question.events)}
-          onPlayAnswer={() => answerSound && play(answerSound.events)}
+          onPlayComparison={() => comparison && play(comparison.sound.events)}
           onNext={onNext}
         />
       )}

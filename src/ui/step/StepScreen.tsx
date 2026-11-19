@@ -28,6 +28,7 @@ import { journal } from '../data';
 import { newId, newSeed } from '../ids';
 import { useJournalWriter } from '../journalWriter';
 import { columnLabel, newItemsLabel, stepTitle } from '../progress/labels';
+import { useConfusionBoost } from '../progress/useJournalData';
 import { useProgress, type Progress } from '../progress/useProgress';
 import { AudioGate } from '../question/AudioGate';
 import { QuestionPlayer } from '../question/QuestionPlayer';
@@ -68,6 +69,7 @@ export function StepScreen() {
   const { stepId = '' } = useParams();
   const step = getStep(stepId);
   const progress = useProgress();
+  const boost = useConfusionBoost(step ? `int:${step.presentation}` : '');
   const data = useLiveQuery(
     () => (step ? journal.stepJournal(step.id) : Promise.resolve(null)),
     [stepId],
@@ -76,7 +78,7 @@ export function StepScreen() {
   if (!step) return <Message title="Étape introuvable" text="Cette étape n'existe pas." />;
   // Tant que les données lues sont celles d'une autre étape (navigation d'une étape à
   // la suivante), on attend : l'étape doit démarrer avec son propre journal.
-  if (!progress || !data || data.stepId !== step.id) {
+  if (!progress || !boost || !data || data.stepId !== step.id) {
     return <main className="mx-auto max-w-xl px-4 py-8">Chargement…</main>;
   }
   const state = progress.states.get(step.id);
@@ -95,6 +97,7 @@ export function StepScreen() {
       initial={data}
       validated={state.status === 'validated'}
       progress={progress}
+      boost={boost}
     />
   );
 }
@@ -127,11 +130,14 @@ function StepRun({
   initial,
   validated,
   progress,
+  boost,
 }: {
   step: StepDef;
   initial: { events: ProgressEvent[]; attempts: Attempt[] };
   validated: boolean;
   progress: Progress;
+  /** Renfort des paires confondues dans les tirages (§8.6). */
+  boost: ReadonlyMap<IntervalCode, number>;
 }) {
   const navigate = useNavigate();
   const { settings } = useSettings();
@@ -165,6 +171,7 @@ function StepRun({
       phaseResults,
       random,
       previousFirstMidi,
+      boost,
       ...(plan ? { plannedItem: plan[phaseResults.length] } : {}),
     });
     return { kind: 'questions', phase, question, result: null, phaseResults, plan, notice };

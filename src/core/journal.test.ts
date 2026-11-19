@@ -89,6 +89,12 @@ describe('normalizeSettings', () => {
     expect(normalizeSettings({ onboardingDone: 'oui' }).onboardingDone).toBe(false);
   });
 
+  it('accepte un objectif quotidien parmi les durées proposées', () => {
+    expect(normalizeSettings({ dailyGoalMinutes: 20 }).dailyGoalMinutes).toBe(20);
+    expect(normalizeSettings({ dailyGoalMinutes: 7 }).dailyGoalMinutes).toBe(10);
+    expect(normalizeSettings({ dailyGoalMinutes: '15' }).dailyGoalMinutes).toBe(10);
+  });
+
   it('garde les valeurs valides et remplace les autres', () => {
     expect(
       normalizeSettings({

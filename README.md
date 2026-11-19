@@ -21,12 +21,13 @@ npm run dev       # serveur de développement sur http://localhost:5173
 | `npm run format`       | Met en forme le code                                 |
 | `npm run typecheck`    | Vérifie les types                                    |
 | `npm test`             | Lance les tests (Vitest)                             |
+| `npm run e2e`          | Tests de bout en bout (Playwright, son coupé)        |
 | `npm run build`        | Construit l'appli dans `dist/`                       |
 | `npm run android:sync` | Construit l'appli et la copie dans le projet Android |
 
 Le code est organisé en couches (§10.3 du document de conception) :
 
-- `src/core` : cœur métier en TypeScript pur, sans DOM, sans audio ni React. Il contient la théorie musicale et, plus tard, la génération des questions, la progression et les révisions.
+- `src/core` : cœur métier en TypeScript pur, sans DOM, sans audio ni React : théorie musicale, génération des questions, curriculum, progression, révisions espacées (FSRS) et séance du jour.
 - `src/audio` : moteur audio Web Audio et échantillons.
 - `src/data` : journal des réponses et réglages, enregistrés dans le navigateur (IndexedDB, via Dexie).
 - `src/platform` : fonctions propres au web ou à Android (stockage persistant…).
@@ -34,6 +35,8 @@ Le code est organisé en couches (§10.3 du document de conception) :
 - `android/` : projet Android généré par Capacitor.
 
 Les règles d'isolation de `src/core` sont vérifiées par ESLint et par `tsconfig.core.json`.
+
+Les tests de bout en bout (`e2e/`) lancent le serveur de développement avec un moteur audio silencieux (`VITE_FAKE_AUDIO=1`) et simulent l'horloge pour enchaîner plusieurs jours de révisions. Avant la première exécution : `npx playwright install chromium`.
 
 ## Android
 
