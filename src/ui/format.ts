@@ -1,5 +1,5 @@
 import type { Settings } from '../core/journal';
-import type { IntervalPresentation } from '../core/exercise/rendition';
+import type { IntervalPresentation, Presentation } from '../core/exercise/rendition';
 import { formatNote, INTERVALS, type IntervalCode, type NoteName } from '../core/theory';
 
 export function capitalize(text: string): string {
@@ -31,17 +31,22 @@ export function describeInterval(code: IntervalCode, presentation: IntervalPrese
   return `${intervalName(code)} ${qualifier}`;
 }
 
-/** Notes selon les préférences : « Ré3 → Fa♯3 » (mélodique) ou « Ré3 + Fa♯3 » (harmonique). */
+/**
+ * Notes selon les préférences : « Ré3 → Fa♯3 » (mélodique, arpégé) ou « Ré3 + Fa♯3 »
+ * (harmonique, plaqué).
+ */
 export function formatNotes(
   notes: readonly NoteName[],
-  presentation: IntervalPresentation,
+  presentation: Presentation,
   settings: Pick<Settings, 'noteNames' | 'octaveConvention'>,
 ): string {
   return notes
     .map((note) =>
       formatNote(note, { naming: settings.noteNames, octave: settings.octaveConvention }),
     )
-    .join(presentation === 'harm' ? ' + ' : ' → ');
+    .join(
+      presentation === 'asc' || presentation === 'desc' || presentation === 'arp' ? ' → ' : ' + ',
+    );
 }
 
 export function formatSeconds(ms: number): string {

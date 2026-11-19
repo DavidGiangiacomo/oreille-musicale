@@ -45,7 +45,7 @@ export function SeriesScreen() {
   return (
     <SeriesRun
       key={`${params.toString()}#${run}`}
-      config={{ ...config, boost }}
+      config={{ ...config, boost: boost as Map<IntervalCode, number> }}
       onRestart={() => setRun((count) => count + 1)}
     />
   );
@@ -69,7 +69,7 @@ function SeriesRun({ config, onRestart }: { config: SeriesConfig; onRestart: () 
   const isLast = state.entries.length >= state.config.length;
   const answeredCount = state.entries.filter((e) => e.result !== null).length;
 
-  function answer(item: IntervalCode, metrics: AnswerMetrics) {
+  function answer(item: string, metrics: AnswerMetrics) {
     if (state.status !== 'asking') return;
     const answered = answerCurrent(state, item, metrics);
     setState(answered);

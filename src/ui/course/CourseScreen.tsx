@@ -1,8 +1,14 @@
 import { Link } from 'react-router';
-import { stepsOfTrack, TRACKS, type StepDef, type TrackDef } from '../../core/curriculum';
+import { getStep, stepsOfTrack, TRACKS, type StepDef, type TrackDef } from '../../core/curriculum';
 import type { StepState, StepStatus } from '../../core/progress/projection';
 import { ProgressBar, ScreenHeader } from '../components/ScreenParts';
-import { columnLabel, newItemsLabel, PHASE_LABELS, STATUS_LABELS } from '../progress/labels';
+import {
+  columnLabel,
+  newItemsLabel,
+  PHASE_LABELS,
+  STATUS_LABELS,
+  stepTitle,
+} from '../progress/labels';
 import { useProgress } from '../progress/useProgress';
 import { useSettings } from '../settings/settingsContext';
 import { card, cardTitle, muted } from '../styles';
@@ -72,6 +78,11 @@ function TrackGrid({ track, states }: { track: TrackDef; states: Map<string, Ste
   const validated = steps.filter((step) => states.get(step.id)?.status === 'validated').length;
   const active = settings.activeTracks.includes(track.id);
   const onlyActive = active && settings.activeTracks.length === 1;
+  // Prérequis dans d'autres parcours, tant qu'ils ne sont pas validés.
+  const opensAfter = (track.unlockedBy ?? [])
+    .map((id) => getStep(id))
+    .filter((step): step is StepDef => step !== undefined)
+    .filter((step) => states.get(step.id)?.status !== 'validated');
 
   return (
     <section className={card} aria-labelledby={`parcours-${track.id}`}>
@@ -84,11 +95,16 @@ function TrackGrid({ track, states }: { track: TrackDef; states: Map<string, Ste
         </span>
       </div>
       <ProgressBar label={`Progression : ${track.name}`} value={validated} max={steps.length} />
+      {opensAfter.length > 0 && (
+        <p className={`text-sm ${muted}`}>
+          S'ouvre après{' '}
+          {opensAfter.map((step) => stepTitle(step).replace(' · ', ', ')).join(' et ')}.
+        </p>
+      )}
 
       <table className="w-full table-fixed border-separate border-spacing-1.5">
         <caption className="sr-only">
-          Étapes du parcours {track.name} : une ligne par intervalle ajouté, une colonne par
-          présentation.
+          Étapes du parcours {track.name} : une ligne par étape, une colonne par présentation.
         </caption>
         <thead>
           <tr>
@@ -129,8 +145,10 @@ function TrackGrid({ track, states }: { track: TrackDef; states: Map<string, Ste
         </tbody>
       </table>
       <p className={`text-xs ${muted}`}>
-        ✓ validée · ● en cours · ▶ à faire · 🔒 verrouillée. Une étape s'ouvre quand celle du dessus
-        (intervalle précédent) et celle de gauche (présentation plus facile) sont validées.
+        ✓ validée · ● en cours · ▶ à faire · 🔒 verrouillée.{' '}
+        {track.rows.length > 1
+          ? 'Une étape s’ouvre quand celle du dessus (élément précédent) et celle de gauche (présentation plus facile) sont validées.'
+          : 'Chaque étape s’ouvre quand la précédente est validée.'}
       </p>
       <label className="flex items-center gap-3 text-sm">
         <input
@@ -146,7 +164,7 @@ function TrackGrid({ track, states }: { track: TrackDef; states: Map<string, Ste
             })
           }
         />
-        Proposer ce parcours dans « Continuer »
+        Proposer ce parcours dans la séance du jour
         {onlyActive && <span className={muted}>(au moins un parcours reste actif)</span>}
       </label>
     </section>

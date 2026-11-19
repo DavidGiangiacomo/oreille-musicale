@@ -14,7 +14,8 @@ export function HomeScreen() {
       <header className="flex flex-col gap-1">
         <h1 className="text-3xl font-bold">Oreille musicale</h1>
         <p className="text-slate-600 dark:text-slate-400">
-          Écoute, reconnais l'intervalle, et recommence : l'oreille se forme un peu chaque jour.
+          Écoute, reconnais l'intervalle ou l'accord, et recommence : l'oreille se forme un peu
+          chaque jour.
         </p>
       </header>
 

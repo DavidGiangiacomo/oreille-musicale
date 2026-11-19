@@ -12,7 +12,6 @@ import {
   studyDay,
   type ReviewState,
 } from '../../core/srs';
-import type { IntervalCode } from '../../core/theory';
 import { journal } from '../data';
 import { useSettings } from '../settings/settingsContext';
 
@@ -80,11 +79,10 @@ export function useDailyStatus(): DailyStatus | undefined {
  * Renfort des paires confondues pour un contexte (« int:asc »), ou undefined
  * pendant le chargement.
  */
-export function useConfusionBoost(context: string): Map<IntervalCode, number> | undefined {
+export function useConfusionBoost(context: string): Map<string, number> | undefined {
   const data = useJournalData();
   return useMemo(() => {
     if (!data) return undefined;
-    const boost = confusionBoost(activeConfusions(data.attempts, data.readAt), context);
-    return boost as Map<IntervalCode, number>;
+    return confusionBoost(activeConfusions(data.attempts, data.readAt), context);
   }, [data, context]);
 }

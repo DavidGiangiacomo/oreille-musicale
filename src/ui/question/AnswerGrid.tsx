@@ -1,19 +1,27 @@
+import type { FamilyId } from '../../core/exercise/question';
 import type { QuestionResult } from '../../core/session/series';
-import { INTERVALS, type IntervalCode } from '../../core/theory';
-import { intervalName } from '../format';
+import { answerAccessibleName, answerLabel } from '../items';
 import { keyHint } from './keys';
 
 interface AnswerGridProps {
-  choices: readonly IntervalCode[];
+  family: FamilyId;
+  choices: readonly string[];
   /** Bonne réponse et réponse donnée, pendant le feedback. */
-  correctItem: IntervalCode;
+  correctAnswer: string;
   result: QuestionResult | null;
   disabled: boolean;
-  onAnswer: (item: IntervalCode) => void;
+  onAnswer: (answer: string) => void;
 }
 
-/** Boutons de réponse, dans l'ordre fixe des intervalles, avec leur touche du clavier. */
-export function AnswerGrid({ choices, correctItem, result, disabled, onAnswer }: AnswerGridProps) {
+/** Boutons de réponse, dans l'ordre fixe de la famille, avec leur touche du clavier. */
+export function AnswerGrid({
+  family,
+  choices,
+  correctAnswer,
+  result,
+  disabled,
+  onAnswer,
+}: AnswerGridProps) {
   return (
     <div
       className={`grid gap-2 ${
@@ -28,7 +36,8 @@ export function AnswerGrid({ choices, correctItem, result, disabled, onAnswer }:
     >
       {choices.map((item, index) => {
         const hint = keyHint(index);
-        const isCorrect = result !== null && item === correctItem;
+        const isCorrect = result !== null && item === correctAnswer;
+        const label = answerLabel(family, item);
         const isWrongChoice = result !== null && !result.correct && item === result.answer;
         const state = isCorrect
           ? 'border-emerald-500 bg-emerald-50 text-emerald-950 dark:bg-emerald-950 dark:text-emerald-50'
@@ -41,16 +50,16 @@ export function AnswerGrid({ choices, correctItem, result, disabled, onAnswer }:
             type="button"
             disabled={disabled}
             onClick={() => onAnswer(item)}
-            aria-label={`${intervalName(item)} (${INTERVALS[item].abbreviation})`}
+            aria-label={answerAccessibleName(family, item)}
             aria-keyshortcuts={hint ?? undefined}
             className={`relative flex min-h-16 flex-col items-center justify-center rounded-xl border-2 px-2 py-2 transition-colors enabled:hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 disabled:cursor-default dark:enabled:hover:bg-slate-800 ${state} ${result !== null && !isCorrect && !isWrongChoice ? 'opacity-50' : ''}`}
           >
             <span className="text-xl font-bold">
               {isCorrect && <span aria-hidden="true">✓ </span>}
               {isWrongChoice && <span aria-hidden="true">✗ </span>}
-              {INTERVALS[item].abbreviation}
+              {label.short}
             </span>
-            <span className="text-xs leading-tight">{intervalName(item)}</span>
+            <span className="text-xs leading-tight">{label.name}</span>
             {hint && (
               <kbd className="absolute top-1 right-1.5 font-sans text-[10px] text-slate-400">
                 {hint}

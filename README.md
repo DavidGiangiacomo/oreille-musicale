@@ -2,7 +2,7 @@
 
 Application web et Android pour entraîner son oreille musicale : reconnaissance d'intervalles, d'accords, de gammes et de modes, difficulté progressive, suivi de progression et révisions espacées.
 
-**Essayer** : <https://davidgiangiacomo.github.io/oreille-musicale/> (parcours Intervalles en 30 étapes et entraînement libre).
+**Essayer** : <https://davidgiangiacomo.github.io/oreille-musicale/> (parcours Intervalles, Triades, Septièmes et Renversements, séance du jour avec révisions espacées, entraînement libre).
 
 Le projet avance jalon par jalon. La conception est décrite dans le [document de conception](docs/DESIGN.md), et le plan de réalisation suit les [issues](https://github.com/DavidGiangiacomo/oreille-musicale/issues).
 
