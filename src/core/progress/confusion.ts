@@ -1,7 +1,8 @@
 // Matrice de confusion et duels (docs/DESIGN.md §8.6), recalculés depuis le journal.
 import type { Attempt } from '../journal';
 import { contextOf, isLapsed, type ReviewState } from '../srs';
-import { INTERVALS, type IntervalCode } from '../theory';
+import { FAMILIES, parseCompetence } from '../exercise/families';
+import type { FamilyId } from '../exercise/question';
 import { DAY } from '../srs/time';
 
 export const CONFUSION = {
@@ -18,7 +19,23 @@ export const CONFUSION = {
 /** Un duel : deux réponses possibles, 10 questions, écoute comparée systématique. */
 export const DUEL_LENGTH = 10;
 
-const itemOf = (competenceId: string) => competenceId.split(':')[1] as string;
+/**
+ * Réponse attendue pour une compétence : l'élément joué (intervalle, accord), ou le
+ * renversement. La matrice compare réponses attendues et réponses données.
+ */
+function itemOf(competenceId: string): string {
+  const parsed = parseCompetence(competenceId);
+  if (!parsed) return competenceId.split(':')[1] ?? competenceId;
+  return FAMILIES[parsed.family].answerOf(parsed.item);
+}
+
+const familyOfContext = (context: string) => FAMILIES[context.split(':')[0] as FamilyId];
+
+/** Les duels ne concernent que les familles où l'on répond par l'élément joué. */
+const duelable = (context: string) => {
+  const family = familyOfContext(context);
+  return family !== undefined && family.id !== 'inv';
+};
 
 /**
  * Réponses prises en compte : celles des 60 derniers jours, hors duels (avec deux
@@ -105,12 +122,10 @@ export interface Duel {
   errors: number;
 }
 
-function sizeOf(item: string): number {
-  return INTERVALS[item as IntervalCode]?.semitones ?? 0;
-}
-
-function orderedPair(a: string, b: string): [string, string] {
-  return sizeOf(a) <= sizeOf(b) ? [a, b] : [b, a];
+/** Les deux réponses dans l'ordre des boutons. */
+function orderedPair(context: string, a: string, b: string): [string, string] {
+  const order = familyOfContext(context)?.answerOrder ?? [];
+  return order.indexOf(a) <= order.indexOf(b) ? [a, b] : [b, a];
 }
 
 const pairKey = (context: string, [a, b]: readonly [string, string]) => `${context}|${a}|${b}`;
@@ -123,8 +138,9 @@ function completedDuels(attempts: readonly Attempt[]): Map<string, number> {
   const progress = new Map<string, { count: number; last: number }>();
   for (const attempt of attempts) {
     if (attempt.activity !== 'duel' || attempt.choices?.length !== 2) continue;
-    const pair = orderedPair(attempt.choices[0] as string, attempt.choices[1] as string);
-    const key = `${attempt.sessionId}#${pairKey(contextOf(attempt.competenceId), pair)}`;
+    const context = contextOf(attempt.competenceId);
+    const pair = orderedPair(context, attempt.choices[0] as string, attempt.choices[1] as string);
+    const key = `${attempt.sessionId}#${pairKey(context, pair)}`;
     const current = progress.get(key) ?? { count: 0, last: 0 };
     progress.set(key, { count: current.count + 1, last: Math.max(current.last, attempt.at) });
   }
@@ -149,11 +165,13 @@ function lapsePartner(
     .filter(([answered]) => answered !== item)
     .sort((a, b) => b[1] - a[1])[0];
   if (confused) return confused[0];
+  const family = familyOfContext(context);
+  if (!family) return null;
   const others = candidates.filter((candidate) => candidate !== item);
   others.sort(
     (a, b) =>
-      Math.abs(sizeOf(a) - sizeOf(item)) - Math.abs(sizeOf(b) - sizeOf(item)) ||
-      sizeOf(a) - sizeOf(b),
+      family.distance(a, item) - family.distance(b, item) ||
+      family.answerOrder.indexOf(a) - family.answerOrder.indexOf(b),
   );
   return others[0] ?? null;
 }
@@ -181,12 +199,14 @@ export function pendingDuels(
   const lastError = new Map<string, number>();
   for (const attempt of observed(attempts, at)) {
     if (attempt.correct) continue;
-    const pair = orderedPair(itemOf(attempt.competenceId), attempt.answer.value);
-    lastError.set(pairKey(contextOf(attempt.competenceId), pair), attempt.at);
+    const context = contextOf(attempt.competenceId);
+    const pair = orderedPair(context, itemOf(attempt.competenceId), attempt.answer.value);
+    lastError.set(pairKey(context, pair), attempt.at);
   }
 
   for (const confusion of activeConfusions(attempts, at)) {
-    const pair = orderedPair(confusion.played, confusion.answered);
+    if (!duelable(confusion.context)) continue;
+    const pair = orderedPair(confusion.context, confusion.played, confusion.answered);
     const key = pairKey(confusion.context, pair);
     if ((done.get(key) ?? 0) > (lastError.get(key) ?? 0) || duels.has(key)) continue;
     duels.set(key, {
@@ -205,6 +225,7 @@ export function pendingDuels(
   for (const state of reviews.values()) {
     if (!isLapsed(state)) continue;
     const context = contextOf(state.competenceId);
+    if (!duelable(context)) continue;
     const item = itemOf(state.competenceId);
     const treated = [...done].some(([key, time]) => {
       const [doneContext, a, b] = key.split('|');
@@ -213,7 +234,7 @@ export function pendingDuels(
     if (treated) continue;
     const partner = lapsePartner(context, item, matrix, acquired.get(context) ?? []);
     if (!partner) continue;
-    const pair = orderedPair(item, partner);
+    const pair = orderedPair(context, item, partner);
     const key = pairKey(context, pair);
     if (!duels.has(key)) {
       duels.set(key, { context, pair, reason: 'lapse', errors: errorsBetween(context, pair) });

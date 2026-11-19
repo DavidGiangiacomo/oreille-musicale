@@ -1,21 +1,29 @@
-import { sortIntervals } from '../exercise/intervalQuestion';
-import { midiOf, type IntervalCode } from '../theory';
+import { answersFor, FAMILIES } from '../exercise/families';
+import { midiOf } from '../theory';
+import { INVERSIONS_TRACK, SEVENTHS_TRACK, TRIADS_TRACK } from './chords';
 import { INTERVALS_TRACK } from './intervals';
 import type { StepDef, TrackDef, TrackId } from './types';
 
-export type { StepDef, StepPhase, TrackColumn, TrackDef, TrackId } from './types';
+export type { StepDef, StepPhase, TrackColumn, TrackDef, TrackId, TrackRow } from './types';
 export { INTERVALS_TRACK } from './intervals';
+export { INVERSIONS_TRACK, SEVENTHS_TRACK, TRIADS_TRACK } from './chords';
 
 /**
  * Version du curriculum, enregistrée avec chaque séance. À incrémenter dès qu'une
  * étape change (réponses, ordre, seuils) : le journal garde ainsi le contexte.
+ * 2 : parcours Triades, Septièmes et Renversements.
  */
-export const CURRICULUM_VERSION = '1';
+export const CURRICULUM_VERSION = '2';
 
 /** Seuils de validation d'une étape (§7.3). */
 export const VALIDATION = { minAccuracy: 0.9, minNewItemAccuracy: 0.75 } as const;
 
-export const TRACKS: readonly TrackDef[] = [INTERVALS_TRACK];
+export const TRACKS: readonly TrackDef[] = [
+  INTERVALS_TRACK,
+  TRIADS_TRACK,
+  SEVENTHS_TRACK,
+  INVERSIONS_TRACK,
+];
 
 export function stepId(track: TrackDef, row: number, column: number): string {
   const presentation = track.rows[row]?.presentation;
@@ -25,26 +33,50 @@ export function stepId(track: TrackDef, row: number, column: number): string {
   return `${track.prefix}.${presentation}.${String(column).padStart(2, '0')}`;
 }
 
+/** Une colonne existe-t-elle dans une ligne ? (Les suspendus n'ont pas de ligne renversée.) */
+function exists(track: TrackDef, row: number, column: number): boolean {
+  const presentation = track.rows[row]?.presentation;
+  const columnDef = track.columns[column - 1];
+  if (!presentation || !columnDef) return false;
+  return !columnDef.rows || columnDef.rows.includes(presentation);
+}
+
+/** Éléments dans l'ordre des réponses (puis dans leur ordre d'origine). */
+function sortItems(track: TrackDef, items: readonly string[]): string[] {
+  const family = FAMILIES[track.family];
+  const rank = (item: string) => family.answerOrder.indexOf(family.answerOf(item));
+  return [...new Set(items)].sort((a, b) => rank(a) - rank(b));
+}
+
 /** Étapes d'un parcours, ligne par ligne, de gauche à droite. */
 export function buildSteps(track: TrackDef): StepDef[] {
   const range: [number, number] = [midiOf(track.range[0]), midiOf(track.range[1])];
   const steps: StepDef[] = [];
   track.rows.forEach(({ presentation }, row) => {
-    const answers: IntervalCode[] = [];
+    const accumulated: string[] = [];
     track.columns.forEach((columnDef, index) => {
       const column = index + 1;
-      answers.push(...columnDef.add);
+      if (!exists(track, row, column)) return;
+      accumulated.push(...(columnDef.add ?? []));
+      const items = sortItems(track, columnDef.items ?? accumulated);
+      const newItems = columnDef.items
+        ? [...(columnDef.newItems ?? [])]
+        : [...(columnDef.add ?? [])];
       const requires: string[] = [];
       if (column > 1) requires.push(stepId(track, row, column - 1));
-      if (row > 0) requires.push(stepId(track, row - 1, column));
+      if (row > 0 && exists(track, row - 1, column)) requires.push(stepId(track, row - 1, column));
+      if (row === 0 && column === 1) requires.push(...(track.unlockedBy ?? []));
+      requires.push(...(columnDef.requires ?? []));
       steps.push({
         id: stepId(track, row, column),
         track: track.id,
+        family: track.family,
         row,
         column,
         presentation,
-        answers: sortIntervals(answers),
-        newItems: [...columnDef.add],
+        items,
+        answers: answersFor(track.family, items),
+        newItems,
         contrast: { ...columnDef.contrast },
         generation: { range, tempo: 'normal' },
         validation: { ...VALIDATION },
@@ -73,8 +105,8 @@ export function stepsOfTrack(id: TrackId): StepDef[] {
   return STEPS.filter((step) => step.track === id);
 }
 
-/** Voisins à comparer aux nouveaux éléments d'une étape (sans doublon). */
-export function contrastItems(step: StepDef): IntervalCode[] {
-  const neighbors = step.newItems.flatMap((item) => step.contrast[item] ?? []);
-  return sortIntervals(neighbors.filter((item) => !step.newItems.includes(item)));
+/** Voisins à comparer aux nouveaux éléments d'une étape (sans doublon, dans l'ordre des éléments). */
+export function contrastItems(step: StepDef): string[] {
+  const neighbors = new Set(step.newItems.flatMap((item) => step.contrast[item] ?? []));
+  return step.items.filter((item) => neighbors.has(item) && !step.newItems.includes(item));
 }

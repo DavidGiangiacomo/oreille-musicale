@@ -82,3 +82,75 @@ describe('parcours Intervalles', () => {
     expect(contrastItems(getStep('int.asc.01')!)).toEqual([]);
   });
 });
+
+describe('parcours d’accords', () => {
+  it('compte 13 triades, 17 septièmes et 6 renversements, 66 étapes au total', () => {
+    expect(stepsOfTrack('triads')).toHaveLength(13);
+    expect(stepsOfTrack('sevenths')).toHaveLength(17);
+    expect(stepsOfTrack('inversions')).toHaveLength(6);
+    expect(STEPS).toHaveLength(66);
+  });
+
+  it('écarte les suspendus de la ligne renversée', () => {
+    expect(getStep('tri.inv.03')?.answers).toEqual(['maj', 'min', 'dim', 'aug']);
+    expect(getStep('tri.inv.04')).toBeUndefined();
+    expect(getStep('tri.block.05')?.answers).toEqual(['maj', 'min', 'dim', 'aug', 'sus4', 'sus2']);
+    expect(getStep('sev.inv.06')).toBeUndefined();
+    expect(getStep('sev.block.06')?.answers).toEqual([
+      'dom7',
+      'maj7',
+      'm7',
+      'm7b5',
+      'dim7',
+      'mmaj7',
+      '7sus4',
+    ]);
+    for (const step of [...stepsOfTrack('triads'), ...stepsOfTrack('sevenths')]) {
+      if (step.presentation === 'inv') {
+        expect(step.items.some((item) => item.includes('sus'))).toBe(false);
+      }
+    }
+  });
+
+  it('a des voisins de comparaison déjà connus', () => {
+    expect(getStep('tri.arp.02')?.contrast).toEqual({ dim: ['min'] });
+    expect(contrastItems(getStep('tri.block.05')!)).toEqual(['sus4']);
+    expect(contrastItems(getStep('sev.arp.04')!)).toEqual(['m7b5']);
+    for (const step of [...stepsOfTrack('triads'), ...stepsOfTrack('sevenths')]) {
+      for (const neighbors of Object.values(step.contrast)) {
+        for (const neighbor of neighbors ?? []) expect(step.items).toContain(neighbor);
+      }
+    }
+  });
+
+  it('débloque les septièmes et les renversements par les triades plaquées', () => {
+    expect(getStep('tri.arp.01')?.requires).toEqual([]);
+    expect(getStep('tri.inv.05')).toBeUndefined();
+    expect(getStep('tri.block.04')?.requires).toEqual(['tri.block.03', 'tri.arp.04']);
+    expect(getStep('tri.inv.03')?.requires).toEqual(['tri.inv.02', 'tri.block.03']);
+    expect(getStep('sev.arp.01')?.requires).toEqual(['tri.block.02']);
+    expect(getStep('inv.block.01')?.requires).toEqual(['tri.block.01']);
+    expect(getStep('inv.block.05')?.requires).toEqual(['inv.block.04', 'sev.block.01']);
+    expect(getStep('inv.block.06')?.requires).toEqual(['inv.block.05', 'sev.block.02']);
+  });
+
+  it('pose les renversements par étapes non cumulées', () => {
+    const r = (column: number) => getStep(`inv.block.0${column}`)!;
+    expect(r(1)).toMatchObject({ items: ['maj.0', 'maj.1'], answers: ['inv0', 'inv1'] });
+    expect(r(2)).toMatchObject({ newItems: ['maj.2'], answers: ['inv0', 'inv1', 'inv2'] });
+    expect(r(3).items).toEqual(['min.0', 'min.1', 'min.2']);
+    expect(r(4)).toMatchObject({ newItems: [], answers: ['inv0', 'inv1', 'inv2'] });
+    expect(r(4).items).toHaveLength(6);
+    expect(r(5).answers).toEqual(['inv0', 'inv1', 'inv2', 'inv3']);
+    expect(r(6).items).toHaveLength(12);
+    expect(r(6).newItems).toHaveLength(8);
+    for (const step of stepsOfTrack('inversions')) {
+      expect(step.family).toBe('inv');
+      for (const item of step.newItems) expect(step.items).toContain(item);
+    }
+  });
+
+  it('a des prérequis qui existent tous', () => {
+    for (const step of STEPS) for (const id of step.requires) expect(getStep(id), id).toBeDefined();
+  });
+});

@@ -131,4 +131,26 @@ describe('pendingDuels', () => {
       ['m7', 1],
     ]);
   });
+
+  it('ne programme pas de duel de renversements', () => {
+    const reviews = new Map(
+      ['maj.0', 'maj.1', 'maj.2'].map((item) => {
+        const id = `inv:${item}:block`;
+        return [id, enterReview(id, T0 - 5 * DAY, 3)];
+      }),
+    );
+    reviews.set('inv:maj.1:block', applyReview(reviews.get('inv:maj.1:block')!, T0, 1));
+    expect(pendingDuels([], reviews, T0 + 1)).toEqual([]);
+  });
+
+  it('compare la réponse attendue d’un renversement à la réponse donnée', () => {
+    const attempt = {
+      ...answer('M3', 'M3', T0),
+      competenceId: 'inv:min.1:block',
+      answer: { type: 'choice' as const, value: 'inv2' },
+      correct: false,
+    };
+    const matrix = confusionMatrix([attempt], T0 + 1);
+    expect(matrix.get('inv:block')?.get('inv1')?.get('inv2')).toBe(1);
+  });
 });

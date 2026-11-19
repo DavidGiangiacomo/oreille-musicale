@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { STEPS } from '../curriculum';
+import { STEPS, stepsOfTrack } from '../curriculum';
 import type { Attempt, ProgressEvent } from '../journal';
 import { projectSteps } from '../progress/projection';
 import { createRandom } from '../random';
@@ -54,7 +54,7 @@ describe('planDailySession', () => {
     const plan = planDailySession({
       reviews,
       attempts,
-      steps: STEPS,
+      steps: stepsOfTrack('intervals'),
       stepStates,
       at: T0 + 3 * DAY,
       random: createRandom(1),
@@ -70,7 +70,7 @@ describe('planDailySession', () => {
     const plan = planDailySession({
       reviews,
       attempts: [],
-      steps: STEPS,
+      steps: stepsOfTrack('intervals'),
       stepStates,
       at: T0 + DAY,
       random: createRandom(2),

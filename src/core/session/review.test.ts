@@ -114,3 +114,37 @@ describe('planDuel', () => {
     expect(longestRun(block.plan)).toBeLessThanOrEqual(3);
   });
 });
+
+describe('révisions d’accords et de renversements', () => {
+  it('fait un bloc par contexte, intervalles puis accords puis renversements', () => {
+    const reviews = reviewsOf([
+      'int:M3:asc',
+      'chd:maj:block',
+      'chd:min:block',
+      'chd:dim:block',
+      'chd:maj:arp',
+      'inv:maj.0:block',
+      'inv:maj.1:block',
+    ]);
+    const plan = planReview(reviews, T0 + 3 * DAY, createRandom(9));
+    expect(plan.blocks.map((b) => b.context)).toEqual([
+      'int:asc',
+      'chd:arp',
+      'chd:block',
+      'inv:block',
+    ]);
+    const chords = plan.blocks[2]!;
+    expect(chords.choices).toEqual(['maj', 'min', 'dim']);
+    const inversions = plan.blocks[3]!;
+    expect(inversions.choices).toEqual(['inv0', 'inv1']);
+    expect(inversions.focus).toEqual(['maj.0', 'maj.1']);
+    const random = createRandom(1);
+    for (const block of plan.blocks) {
+      for (const item of block.plan) {
+        const question = blockQuestion(block, item, random, null);
+        expect(question.choices).toEqual(block.choices);
+        expect(block.choices).toContain(question.answer);
+      }
+    }
+  });
+});
