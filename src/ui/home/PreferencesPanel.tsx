@@ -1,5 +1,6 @@
 import { DAILY_GOAL_CHOICES } from '../../core/progress/activity';
 import { OptionGroup } from '../components/OptionGroup';
+import { ReminderPreference } from './ReminderPreference';
 import { useSettings } from '../settings/settingsContext';
 import { card, cardTitle } from '../styles';
 
@@ -19,6 +20,7 @@ export function PreferencesPanel() {
         }))}
         onChange={(value) => updateSettings({ dailyGoalMinutes: Number(value) })}
       />
+      <ReminderPreference />
       <OptionGroup
         legend="Timbre"
         value={settings.instrument}

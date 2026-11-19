@@ -45,5 +45,10 @@ export class FakeAudioEngine implements AudioEngine {
 
   stopAll(): void {}
 
+  suspend(): Promise<void> {
+    this.#running = false;
+    return Promise.resolve();
+  }
+
   setVolume(): void {}
 }

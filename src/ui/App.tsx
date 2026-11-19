@@ -1,7 +1,12 @@
 import { createHashRouter, Navigate, RouterProvider } from 'react-router';
+import { isNativeApp } from '../platform/native';
+import { AppLifecycle } from './AppLifecycle';
+import { UpdatePrompt } from './components/UpdatePrompt';
+import { ReminderScheduler } from './ReminderScheduler';
 import { CourseScreen } from './course/CourseScreen';
 import { DailySessionScreen } from './daily/DailySessionScreen';
 import { WelcomeScreen } from './onboarding/WelcomeScreen';
+import { AboutScreen } from './screens/AboutScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { SeriesScreen } from './series/SeriesScreen';
 import { SettingsProvider } from './settings/SettingsProvider';
@@ -16,13 +21,21 @@ const router = createHashRouter([
   { path: '/seance', element: <DailySessionScreen /> },
   { path: '/etape/:stepId', element: <StepScreen /> },
   { path: '/serie', element: <SeriesScreen /> },
+  { path: '/a-propos', element: <AboutScreen /> },
   { path: '*', element: <Navigate to="/" replace /> },
 ]);
+
+// Le service worker ne sert qu'à la version web publiée ; les rappels, qu'à Android.
+const native = isNativeApp();
+const withServiceWorker = import.meta.env.PROD && !native;
 
 export function App() {
   return (
     <SettingsProvider>
       <RouterProvider router={router} />
+      <AppLifecycle router={router} />
+      {native && <ReminderScheduler />}
+      {withServiceWorker && <UpdatePrompt />}
     </SettingsProvider>
   );
 }

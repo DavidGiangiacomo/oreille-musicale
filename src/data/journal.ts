@@ -5,6 +5,7 @@ import {
   type SessionRecord,
   type Settings,
 } from '../core/journal';
+import type { BackupData } from '../core/backup';
 import type { OreilleDatabase } from './database';
 
 export interface SessionSummary {
@@ -82,6 +83,38 @@ export function createJournal(db: OreilleDatabase) {
 
     async saveSettings(settings: Settings): Promise<void> {
       await db.settings.put({ ...settings, id: 'settings' });
+    },
+
+    /** Tout le journal et les réglages, pour une sauvegarde (§10.6). */
+    async exportAll(): Promise<BackupData> {
+      return db.transaction('r', [db.sessions, db.attempts, db.events, db.settings], async () => {
+        const [sessions, attempts, events, settings] = await Promise.all([
+          db.sessions.orderBy('startedAt').toArray(),
+          db.attempts.orderBy('at').toArray(),
+          db.events.orderBy('at').toArray(),
+          db.settings.get('settings'),
+        ]);
+        return { sessions, attempts, events, settings: normalizeSettings(settings) };
+      });
+    },
+
+    /**
+     * Remplace toutes les données par celles d'une sauvegarde, en une seule
+     * transaction : en cas d'erreur, rien n'est modifié.
+     */
+    async replaceAll(data: BackupData): Promise<void> {
+      await db.transaction('rw', [db.sessions, db.attempts, db.events, db.settings], async () => {
+        await Promise.all([
+          db.sessions.clear(),
+          db.attempts.clear(),
+          db.events.clear(),
+          db.settings.clear(),
+        ]);
+        await db.sessions.bulkAdd(data.sessions);
+        await db.attempts.bulkAdd(data.attempts);
+        await db.events.bulkAdd(data.events);
+        await db.settings.put({ ...data.settings, id: 'settings' });
+      });
     },
   };
 }

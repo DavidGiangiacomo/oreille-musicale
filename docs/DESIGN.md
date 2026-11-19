@@ -1,9 +1,9 @@
 # Oreille musicale — Document de conception
 
-> **Statut** : brouillon v0.6, à relire et valider
+> **Statut** : brouillon v0.7, à relire et valider
 > **Date** : 18 novembre 2026
 > **Objet** : application web et Android d'entraînement de l'oreille musicale (intervalles, accords, gammes et modes), avec difficulté progressive, suivi de progression et révisions espacées.
-> **Historique** : v0.1, version initiale ; v0.2, ajout des gammes et modes, et des exercices chantés prévus en v2 ; v0.3, premières décisions (public, framework, hébergement, licence) ; v0.4, révisions recalculées depuis le journal (J3) ; v0.5, accords et renversements (J4) ; v0.6, gammes et modes (J5), décisions de #10.
+> **Historique** : v0.1, version initiale ; v0.2, ajout des gammes et modes, et des exercices chantés prévus en v2 ; v0.3, premières décisions (public, framework, hébergement, licence) ; v0.4, révisions recalculées depuis le journal (J3) ; v0.5, accords et renversements (J4) ; v0.6, gammes et modes (J5), décisions de #10 ; v0.7, Android et hors-ligne (J6).
 
 ## Sommaire
 
@@ -986,12 +986,17 @@ On chante sur la syllabe de son choix (« la », noms des notes, numéros de deg
 | Mélodies modales | 8 à 12 notes entre la tonique et son octave, surtout par degrés conjoints, sauts d'une quinte au plus, finale sur la tonique. Notes à faire entendre au moins deux fois : la note caractéristique, ou pour l'ionien 4J et 7M, pour l'éolien 2M et 6m (ce qui les distingue de leurs voisins). L'écoute comparée rejoue la même mélodie dans l'autre mode |
 | Feedback des modes | Note caractéristique en couleur sur le mini-clavier, avec son intervalle (« Do♯ (6M) ») ; bouton « Comparer avec le mode de référence » sur la même tonique |
 | Boutons des gammes et modes | Gammes : Majeure, Mineure, Harmonique, Mélodique, Penta M, Penta m, Blues. Modes : nom et famille avec la note caractéristique (« Dorien — mineur, 6M »), du lydien au locrien |
+| Hors-ligne (web) | Service worker généré par vite-plugin-pwa : l'appli est précachée à la première visite, les échantillons à leur première écoute ; une nouvelle version attend l'accord de l'utilisateur (« Mettre à jour » / « Plus tard »). Pas de service worker dans l'application Android |
+| Sauvegarde | Fichier JSON versionné (journal, réglages, versions de schéma, d'appli et de curriculum) ; un fichier douteux est refusé en entier ; l'import remplace tout en une transaction, après confirmation. Web : téléchargement ; Android : partage du fichier |
+| Rappel quotidien | Un seul rappel programmé, recalculé à chaque réponse : aujourd'hui à l'heure choisie s'il reste des révisions ou du temps de pratique, sinon le lendemain. Heure approximative : pas d'alarme exacte (permission retirée, réservée aux réveils et agendas par le Play Store) |
+| Android | Bouton retour : navigation interne, sortie depuis l'accueil, confirmation pour quitter une séance. Arrière-plan : son coupé, sortie audio en veille. Portrait sur téléphone, rotation libre sur tablette (largeur ≥ 600 dp) |
+| Confidentialité | Politique dans `PRIVACY.md` et dans l'écran « À propos » : aucune donnée collectée ni transmise |
+| Distribution Android | APK signé publié directement (page Releases de GitHub) pour commencer ; le Play Store pourra venir plus tard |
 
 ### 14.2 Questions ouvertes
 
-1. **Distribution Android** : Play Store ou APK installé directement ? (avant J6)
-2. **Exercices chantés** : les utiliserais-tu plutôt au casque ? Faut-il aussi prévoir de répondre en jouant d'un instrument ? (v2)
-3. **Timbres** souhaités après le piano (guitare, cordes, voix…) ?
+1. **Exercices chantés** : les utiliserais-tu plutôt au casque ? Faut-il aussi prévoir de répondre en jouant d'un instrument ? (v2)
+2. **Timbres** souhaités après le piano (guitare, cordes, voix…) ?
 
 ---
 
