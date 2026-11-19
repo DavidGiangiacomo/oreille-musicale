@@ -6,6 +6,7 @@ import { ReminderScheduler } from './ReminderScheduler';
 import { CourseScreen } from './course/CourseScreen';
 import { DailySessionScreen } from './daily/DailySessionScreen';
 import { WelcomeScreen } from './onboarding/WelcomeScreen';
+import { AboutScreen } from './screens/AboutScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { SeriesScreen } from './series/SeriesScreen';
 import { SettingsProvider } from './settings/SettingsProvider';
@@ -20,6 +21,7 @@ const router = createHashRouter([
   { path: '/seance', element: <DailySessionScreen /> },
   { path: '/etape/:stepId', element: <StepScreen /> },
   { path: '/serie', element: <SeriesScreen /> },
+  { path: '/a-propos', element: <AboutScreen /> },
   { path: '*', element: <Navigate to="/" replace /> },
 ]);
 

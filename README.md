@@ -38,6 +38,10 @@ Les règles d'isolation de `src/core` sont vérifiées par ESLint et par `tsconf
 
 Les tests de bout en bout (`e2e/`) lancent le serveur de développement avec un moteur audio silencieux (`VITE_FAKE_AUDIO=1`) et simulent l'horloge pour enchaîner plusieurs jours de révisions. Avant la première exécution : `npx playwright install chromium`.
 
+## Hors-ligne et sauvegarde
+
+La version web s'installe sur l'écran d'accueil (« Installer » ou « Ajouter à l'écran d'accueil ») et fonctionne ensuite sans connexion : l'appli est mise en cache à la première visite, les sons de piano à leur première écoute. La progression reste sur l'appareil ; la carte « Sauvegarde » de l'accueil permet de l'exporter dans un fichier et de l'importer sur un autre appareil. Voir aussi la [politique de confidentialité](PRIVACY.md).
+
 ## Android
 
 L'APK de test est construit à chaque push par le workflow « Android ». Pour le récupérer : onglet _Actions_, dernière exécution du workflow, artefact `oreille-musicale-apk-debug`. Il s'installe sur un téléphone après avoir autorisé l'installation d'applications de sources inconnues.

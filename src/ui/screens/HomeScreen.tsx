@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router';
+import { Link, Navigate } from 'react-router';
 import { BackupPanel } from '../home/BackupPanel';
 import { ContinueCard } from '../home/ContinueCard';
 import { DailyCard } from '../home/DailyCard';
@@ -27,28 +27,13 @@ export function HomeScreen() {
       <PreferencesPanel />
       <BackupPanel />
 
-      <footer className="text-xs text-slate-500 dark:text-slate-400">
-        <p>Version {__APP_VERSION__}.</p>
-        <p className="mt-2">
-          Sons de piano : <i>Salamander Grand Piano</i>, Alexander Holm, licence{' '}
-          <a
-            className="underline"
-            href="https://creativecommons.org/licenses/by/3.0/deed.fr"
-            target="_blank"
-            rel="noreferrer"
-          >
-            CC BY 3.0
-          </a>
-          . Logiciel libre sous licence{' '}
-          <a
-            className="underline"
-            href="https://github.com/DavidGiangiacomo/oreille-musicale"
-            target="_blank"
-            rel="noreferrer"
-          >
-            GNU GPL v3
-          </a>
-          .
+      <footer className="flex flex-col gap-1 text-xs text-slate-500 dark:text-slate-400">
+        <Link to="/a-propos" className="text-sm font-medium underline underline-offset-4">
+          À propos, confidentialité et crédits
+        </Link>
+        <p>
+          Version {__APP_VERSION__}. Logiciel libre sous licence GNU GPL v3 ; sons de piano{' '}
+          <i>Salamander Grand Piano</i> (Alexander Holm, CC BY 3.0).
         </p>
       </footer>
     </main>
