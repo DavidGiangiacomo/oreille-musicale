@@ -991,12 +991,12 @@ On chante sur la syllabe de son choix (« la », noms des notes, numéros de deg
 | Rappel quotidien | Un seul rappel programmé, recalculé à chaque réponse : aujourd'hui à l'heure choisie s'il reste des révisions ou du temps de pratique, sinon le lendemain. Heure approximative : pas d'alarme exacte (permission retirée, réservée aux réveils et agendas par le Play Store) |
 | Android | Bouton retour : navigation interne, sortie depuis l'accueil, confirmation pour quitter une séance. Arrière-plan : son coupé, sortie audio en veille. Portrait sur téléphone, rotation libre sur tablette (largeur ≥ 600 dp) |
 | Confidentialité | Politique dans `PRIVACY.md` et dans l'écran « À propos » : aucune donnée collectée ni transmise |
+| Distribution Android | APK signé publié directement (page Releases de GitHub) pour commencer ; le Play Store pourra venir plus tard |
 
 ### 14.2 Questions ouvertes
 
-1. **Distribution Android** : Play Store ou APK installé directement ? (avant J6)
-2. **Exercices chantés** : les utiliserais-tu plutôt au casque ? Faut-il aussi prévoir de répondre en jouant d'un instrument ? (v2)
-3. **Timbres** souhaités après le piano (guitare, cordes, voix…) ?
+1. **Exercices chantés** : les utiliserais-tu plutôt au casque ? Faut-il aussi prévoir de répondre en jouant d'un instrument ? (v2)
+2. **Timbres** souhaités après le piano (guitare, cordes, voix…) ?
 
 ---
 
