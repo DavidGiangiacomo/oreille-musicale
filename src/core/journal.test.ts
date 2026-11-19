@@ -89,6 +89,15 @@ describe('normalizeSettings', () => {
     expect(normalizeSettings({ onboardingDone: 'oui' }).onboardingDone).toBe(false);
   });
 
+  it('garde les repères personnels valides', () => {
+    expect(
+      normalizeSettings({
+        landmarks: { 'M3:asc': '  Kumbaya ', 'X:asc': 'non', 'P5:desc': '', 'm2:desc': 42 },
+      }).landmarks,
+    ).toEqual({ 'M3:asc': 'Kumbaya' });
+    expect(normalizeSettings({ showLandmarks: false }).showLandmarks).toBe(false);
+  });
+
   it('accepte un objectif quotidien parmi les durées proposées', () => {
     expect(normalizeSettings({ dailyGoalMinutes: 20 }).dailyGoalMinutes).toBe(20);
     expect(normalizeSettings({ dailyGoalMinutes: 7 }).dailyGoalMinutes).toBe(10);

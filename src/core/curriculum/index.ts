@@ -9,6 +9,7 @@ export type { StepDef, StepPhase, TrackColumn, TrackDef, TrackId, TrackRow } fro
 export { INTERVALS_TRACK } from './intervals';
 export { INVERSIONS_TRACK, SEVENTHS_TRACK, TRIADS_TRACK } from './chords';
 export { MODES_TRACK, SCALES_TRACK } from './scales';
+export { INTERVAL_LANDMARKS, landmarkFor, landmarkKey, type LandmarkDirection } from './landmarks';
 
 /**
  * Version du curriculum, enregistrée avec chaque séance. À incrémenter dès qu'une
