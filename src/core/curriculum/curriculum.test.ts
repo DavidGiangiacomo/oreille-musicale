@@ -84,11 +84,10 @@ describe('parcours Intervalles', () => {
 });
 
 describe('parcours d’accords', () => {
-  it('compte 13 triades, 17 septièmes et 6 renversements, 66 étapes au total', () => {
+  it('compte 13 triades, 17 septièmes et 6 renversements', () => {
     expect(stepsOfTrack('triads')).toHaveLength(13);
     expect(stepsOfTrack('sevenths')).toHaveLength(17);
     expect(stepsOfTrack('inversions')).toHaveLength(6);
-    expect(STEPS).toHaveLength(66);
   });
 
   it('écarte les suspendus de la ligne renversée', () => {
@@ -152,5 +151,52 @@ describe('parcours d’accords', () => {
 
   it('a des prérequis qui existent tous', () => {
     for (const step of STEPS) for (const id of step.requires) expect(getStep(id), id).toBeDefined();
+  });
+});
+
+describe('parcours Gammes et Modes', () => {
+  it('compte 17 gammes et 18 modes, 101 étapes au total (§7.2)', () => {
+    expect(stepsOfTrack('scales')).toHaveLength(17);
+    expect(stepsOfTrack('modes')).toHaveLength(18);
+    expect(STEPS).toHaveLength(101);
+  });
+
+  it('écarte la mineure mélodique de la ligne descendante', () => {
+    expect(getStep('scl.desc.06')).toBeUndefined();
+    expect(getStep('scl.asc.06')?.answers).toEqual([
+      'major',
+      'natmin',
+      'harmin',
+      'melmin',
+      'pentmaj',
+      'pentmin',
+      'blues',
+    ]);
+    expect(getStep('scl.desc.05')?.answers).not.toContain('melmin');
+  });
+
+  it('ordonne les modes du plus lumineux au plus sombre', () => {
+    expect(getStep('mod.drone.06')?.answers).toEqual([
+      'lydian',
+      'ionian',
+      'mixolydian',
+      'dorian',
+      'aeolian',
+      'phrygian',
+      'locrian',
+    ]);
+    expect(getStep('mod.melody.03')?.answers).toEqual([
+      'ionian',
+      'mixolydian',
+      'dorian',
+      'aeolian',
+    ]);
+  });
+
+  it('ouvre les Gammes par les tierces ascendantes, et les Modes par les Gammes', () => {
+    expect(getStep('scl.updown.01')?.requires).toEqual(['int.asc.03']);
+    expect(getStep('mod.drone.01')?.requires).toEqual(['scl.updown.02']);
+    expect(contrastItems(getStep('scl.updown.06')!)).toEqual(['major', 'harmin']);
+    expect(contrastItems(getStep('mod.plain.06')!)).toEqual(['phrygian']);
   });
 });
