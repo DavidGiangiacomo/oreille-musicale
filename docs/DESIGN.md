@@ -128,8 +128,8 @@ Chaque fonctionnalité doit pouvoir se rattacher à l'un de ces principes.
 | Tests de positionnement | Valider d'emblée les étapes déjà maîtrisées (§7.6) | Important |
 | Rappels | Une notification quotidienne (Android) | Souhaitable |
 | Chansons repères | Mnémotechniques par intervalle, personnalisables | Souhaitable |
-| Timbres supplémentaires | Son pur d'abord, puis guitare, cordes, orgue… | Souhaitable |
-| Dons | Lien discret vers une page de dons (§10.11) | Souhaitable |
+| Timbres supplémentaires | Son pur, puis vibraphone et cordes (v1.0) ; guitare, orgue… ensuite | Souhaitable |
+| Dons | Lien discret vers la page Ko-fi du projet (§10.11) | Souhaitable |
 
 ### 5.2 Pistes pour la suite
 
@@ -675,6 +675,7 @@ interface NoteEvent {
 - Le cœur produit des `NoteEvent` ; le moteur se contente de les jouer. La logique musicale se teste donc sans audio.
 - **Échantillonneur** : un échantillon tous les 3 demi-tons ; les autres notes sont obtenues en variant la vitesse de lecture (`playbackRate = 2^(écart/12)`, un demi-ton d'écart au plus). Échantillons normalisés en volume ; enveloppe (attaque ≈ 5 ms, relâchement ≈ 250 ms) contre les clics ; compresseur-limiteur en sortie pour les accords.
 - **Piano** : échantillons *Salamander Grand Piano* (licence CC BY 3.0), une ou deux couches de vélocité, de A1 à C7, en MP3 (décodable partout, Safari compris) : 1 à 2 Mo.
+- **Vibraphone** (mailloches douces, *Versilian Community Sample Library*) et **cordes** (pupitres de violoncelles puis d'altos, notes tenues, *VS Chamber Orchestra 2: Community Edition*) : domaine public (CC0), un échantillon toutes les tierces environ (transposition de 2 demi-tons au plus dans la tessiture), sonie égalisée sur celle du piano, en MP3 : 0,3 et 1 Mo.
 - **Son pur** (oscillateur avec enveloppe) : aucun téléchargement, sert de repli.
 - **Bourdon** : instrument synthétique tenu (oscillateurs et filtre passe-bas, attaque et relâchement lents), sans téléchargement.
 - **Planification** : tous les événements d'une réalisation sont programmés d'un coup sur l'horloge audio ; une nouvelle lecture coupe la précédente par un fondu court.
@@ -826,7 +827,7 @@ oreille-musicale/
 │   │   └── i18n/
 │   └── main.tsx
 ├── public/
-│   └── samples/piano/       ← échantillons et leur licence
+│   └── samples/<timbre>/    ← échantillons et leur licence (piano, vibraphone, cordes)
 ├── android/                 ← projet natif généré par Capacitor
 ├── e2e/                     ← tests Playwright
 ├── capacitor.config.ts
@@ -851,7 +852,7 @@ oreille-musicale/
 - En-têtes de sécurité (CSP) sur l'hébergement web ; dépendances surveillées (Dependabot).
 - Crédits des échantillons et des bibliothèques dans l'appli et dans un fichier dédié.
 - **Code sous licence GNU GPL v3 ou ultérieure** (fichier `LICENSE`) ; échantillons et contenus sous licences compatibles (CC0, CC BY), crédités.
-- **Dons** : un lien discret (GitHub Sponsors, Ko-fi ou Liberapay) dans l'écran « À propos », jamais pendant les exercices. Avant une publication sur le Play Store, vérifier ses règles de paiement ; au besoin, n'afficher le lien que dans la version web.
+- **Dons** : un lien discret vers la page Ko-fi du projet, dans l'écran « À propos » seulement, jamais pendant les exercices ; aussi en bouton « Sponsor » sur le dépôt (`.github/FUNDING.yml`). L'APK étant distribué directement, le même lien sert sur le web et sur Android. Avant une éventuelle publication sur le Play Store, vérifier ses règles de paiement ; au besoin, n'afficher le lien que dans la version web.
 
 ---
 
@@ -992,11 +993,13 @@ On chante sur la syllabe de son choix (« la », noms des notes, numéros de deg
 | Android | Bouton retour : navigation interne, sortie depuis l'accueil, confirmation pour quitter une séance. Arrière-plan : son coupé, sortie audio en veille. Portrait sur téléphone, rotation libre sur tablette (largeur ≥ 600 dp) |
 | Confidentialité | Politique dans `PRIVACY.md` et dans l'écran « À propos » : aucune donnée collectée ni transmise |
 | Distribution Android | APK signé publié directement (page Releases de GitHub) pour commencer ; le Play Store pourra venir plus tard |
+| Timbres (v1.0) | Piano, vibraphone, cordes et son pur, au choix dans les préférences (le timbre choisi se fait entendre aussitôt). Banques libres de droits (CC0) de Versilian Studios ; la guitare attend une banque sous licence libre. Les timbres variés viendront avec le chapitre Expert |
+| Dons | Ko-fi : connu du grand public, don ponctuel sans abonnement, sans frais de plateforme sur les dons ponctuels. Lien dans « À propos » seulement (web et Android) et bouton « Sponsor » du dépôt |
 
 ### 14.2 Questions ouvertes
 
 1. **Exercices chantés** : les utiliserais-tu plutôt au casque ? Faut-il aussi prévoir de répondre en jouant d'un instrument ? (v2)
-2. **Timbres** souhaités après le piano (guitare, cordes, voix…) ?
+2. **Timbres** à ajouter après le vibraphone et les cordes (guitare, orgue, voix…) ?
 
 ---
 

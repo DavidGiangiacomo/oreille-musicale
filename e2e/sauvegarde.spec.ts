@@ -35,6 +35,12 @@ test('transfère la progression d’un appareil à l’autre', async ({ page, br
     await page.getByRole('button', { name: NAMES[expected], exact: true }).click();
     await page.keyboard.press('Enter');
   }
+  // L'étape validée est enregistrée en arrière-plan : la voir dans le parcours avant
+  // de recharger la page, sinon l'écriture pourrait être interrompue.
+  await page.goto('./#/parcours');
+  await expect(
+    page.getByRole('region', { name: 'Intervalles' }).getByText('1 / 30 étapes validées'),
+  ).toBeVisible();
 
   await page.goto('./');
   const backup = page.getByRole('region', { name: 'Sauvegarde' });

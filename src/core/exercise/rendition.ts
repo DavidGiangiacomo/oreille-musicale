@@ -1,8 +1,20 @@
 // Réalisation d'une question : la liste des notes à jouer, produite par le cœur
 // métier et jouée telle quelle par le moteur audio (docs/DESIGN.md §6.5 et §10.4).
 
-/** Piano, son pur, et le son synthétique tenu du bourdon (jamais choisi par l'utilisateur). */
-export type InstrumentId = 'piano' | 'pure' | 'drone';
+/** Instruments enregistrés, joués à partir d'échantillons chargés à la demande. */
+export type SampledInstrument = 'piano' | 'vibraphone' | 'strings';
+
+/** Timbres au choix de l'utilisateur : les instruments enregistrés et le son pur. */
+export type TimbreId = SampledInstrument | 'pure';
+
+/** Les timbres, et le son synthétique tenu du bourdon (jamais choisi par l'utilisateur). */
+export type InstrumentId = TimbreId | 'drone';
+
+export const TIMBRES: readonly TimbreId[] = ['piano', 'vibraphone', 'strings', 'pure'];
+
+export function isSampled(instrument: InstrumentId): instrument is SampledInstrument {
+  return instrument === 'piano' || instrument === 'vibraphone' || instrument === 'strings';
+}
 
 export type Tempo = 'slow' | 'normal' | 'fast';
 

@@ -1,0 +1,18 @@
+Échantillons de cordes — VS Chamber Orchestra 2: Community Edition (VSCO 2 CE)
+==============================================================================
+
+Auteur : Versilian Studios (Sam Gossner, Simon Dalzell)
+Licence : Creative Commons Zero 1.0 (CC0 1.0), domaine public
+          https://creativecommons.org/publicdomain/zero/1.0/
+Source : dépôt https://github.com/sgossner/VSCO-2-CE, dossier « Strings » :
+         « Cello Section/susvib » (pupitre de violoncelles, notes tenues avec
+         vibrato) pour le grave, « Viola Section/susvib » (pupitre d'altos) au-dessus
+Site : https://versilian-studios.com/vsco-community/
+
+Modifications apportées pour Oreille musicale
+(script : scripts/prepare-instrument-samples.mjs) :
+- sélection de 17 notes : violoncelles de C2 à B2, altos de C3 à D6 ;
+- passage en mono, coupure à 6 secondes avec un fondu de sortie d'une demi-seconde ;
+- gain fixe par note pour égaliser la sonie (-23 LUFS sur les 2 premières
+  secondes, crête limitée à -1 dBTP) ;
+- réencodage en MP3.

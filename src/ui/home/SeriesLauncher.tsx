@@ -5,7 +5,7 @@ import type { IntervalPresentation } from '../../core/exercise/rendition';
 import { DEFAULT_SERIES_LENGTH } from '../../core/session/series';
 import { INTERVAL_CODES, INTERVALS, type IntervalCode } from '../../core/theory';
 import { requestPersistentStorage } from '../../platform/storage';
-import { prepareAudio } from '../audio';
+import { loadingLabel, prepareAudio } from '../audio';
 import { intervalName } from '../format';
 import { OptionGroup } from '../components/OptionGroup';
 import { seriesPath } from '../series/seriesParams';
@@ -150,7 +150,7 @@ export function SeriesLauncher() {
       </button>
       {progress !== null && (
         <p role="status" className={muted}>
-          Chargement du piano… {Math.round(progress * 100)} %
+          {loadingLabel(settings.instrument, progress)}
         </p>
       )}
       {error && (

@@ -1,0 +1,16 @@
+Échantillons de vibraphone — Versilian Community Sample Library (VCSL)
+=======================================================================
+
+Auteur : Sam Gossner / Versilian Studios
+Licence : Creative Commons Zero 1.0 (CC0 1.0), domaine public
+          https://creativecommons.org/publicdomain/zero/1.0/
+Source : dépôt https://github.com/sgossner/VCSL, dossier
+         « Idiophones/Struck Idiophones/Vibraphone/Soft Mallets » (mailloches douces)
+
+Modifications apportées pour Oreille musicale
+(script : scripts/prepare-instrument-samples.mjs) :
+- sélection de 10 notes, de A3 à E6, une toutes les tierces ;
+- passage en mono, coupure à 5 secondes avec un fondu de sortie de 2 secondes ;
+- gain fixe par note pour égaliser la sonie (-23 LUFS sur les 2 premières
+  secondes, crête limitée à -1 dBTP) ;
+- réencodage en MP3.

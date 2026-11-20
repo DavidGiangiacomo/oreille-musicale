@@ -1,18 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { formatNote } from '../../core/theory';
-import { audioEngine, prepareAudio } from '../audio';
+import { audioEngine, loadingLabel, prepareAudio, SOUND_CHECK } from '../audio';
 import { OptionGroup } from '../components/OptionGroup';
 import { useSettings } from '../settings/settingsContext';
 import { card, cardTitle, muted, primaryButton, secondaryButton } from '../styles';
-
-/** Do-mi-sol-do, pour vérifier que le son passe. */
-const TEST_CHORD = [60, 64, 67, 72].map((midi, i) => ({
-  midi,
-  start: i * 0.35,
-  duration: 1.6 - i * 0.35,
-  velocity: 0.7,
-}));
 
 /** Premier lancement (§9.3) : test du son, choix de la notation, niveau. */
 export function WelcomeScreen() {
@@ -27,7 +19,7 @@ export function WelcomeScreen() {
     try {
       setLoading(0);
       await prepareAudio(settings.instrument, setLoading);
-      audioEngine.play(TEST_CHORD, { instrument: settings.instrument });
+      audioEngine.play(SOUND_CHECK, { instrument: settings.instrument });
       setHeard(true);
     } catch {
       setError('Le son n’a pas pu démarrer. Vérifie ta connexion et réessaie.');
@@ -73,7 +65,7 @@ export function WelcomeScreen() {
         </button>
         {loading !== null && (
           <p role="status" className={muted}>
-            Chargement du piano… {Math.round(loading * 100)} %
+            {loadingLabel(settings.instrument, loading)}
           </p>
         )}
         {heard && <p role="status">Tu as entendu do, mi, sol, do ? Le son fonctionne.</p>}

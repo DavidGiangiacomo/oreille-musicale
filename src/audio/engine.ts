@@ -1,5 +1,10 @@
-import type { InstrumentId, NoteEvent } from '../core/exercise/rendition';
-import { PIANO_SAMPLES, nearestSample, sampleUrl } from './samples';
+import {
+  isSampled,
+  type InstrumentId,
+  type NoteEvent,
+  type SampledInstrument,
+} from '../core/exercise/rendition';
+import { SAMPLE_BANKS, nearestSample, sampleUrl } from './samples';
 
 export interface PlaybackHandle {
   /** Instant de début, sur l'horloge du contexte audio (secondes). */
@@ -60,8 +65,12 @@ const LOOKAHEAD = 0.05;
 const ATTACK = 0.005;
 const RELEASE = 0.25;
 const FADE_OUT = 0.03;
-/** Les échantillons sont normalisés à -25 LUFS : ce gain les ramène à un niveau confortable. */
-const PIANO_GAIN = 1.6;
+/**
+ * Les échantillons ont tous la même sonie (-25 LUFS sur 5 s pour le piano, -23 LUFS
+ * sur leurs 2 premières secondes pour les autres) : ce gain les ramène à un niveau
+ * confortable.
+ */
+const SAMPLE_GAIN = 1.6;
 const PURE_GAIN = 0.32;
 /** Bourdon : attaque et relâchement lents, gain faible (la vélocité l'abaisse encore). */
 const DRONE_GAIN = 0.3;
@@ -74,8 +83,12 @@ export class WebAudioEngine implements AudioEngine {
   #volume = 1;
   #pureWave: PeriodicWave | null = null;
   #droneWave: PeriodicWave | null = null;
-  readonly #piano = new Map<number, AudioBuffer>();
-  #pianoLoading: Promise<void> | null = null;
+  readonly #buffers: Record<SampledInstrument, Map<number, AudioBuffer>> = {
+    piano: new Map(),
+    vibraphone: new Map(),
+    strings: new Map(),
+  };
+  readonly #loading = new Map<SampledInstrument, Promise<void>>();
   readonly #voices = new Set<Voice>();
   readonly #fetch: typeof fetch;
   readonly #baseUrl: string;
@@ -115,31 +128,42 @@ export class WebAudioEngine implements AudioEngine {
   }
 
   isLoaded(instrument: InstrumentId): boolean {
-    return instrument !== 'piano' || this.#piano.size === PIANO_SAMPLES.length;
+    return (
+      !isSampled(instrument) || this.#buffers[instrument].size === SAMPLE_BANKS[instrument].length
+    );
   }
 
   load(instrument: InstrumentId, onProgress?: (ratio: number) => void): Promise<void> {
-    if (this.isLoaded(instrument)) {
+    if (!isSampled(instrument) || this.isLoaded(instrument)) {
       onProgress?.(1);
       return Promise.resolve();
     }
-    this.#pianoLoading ??= this.#loadPiano(onProgress).catch((error: unknown) => {
-      this.#pianoLoading = null; // un nouvel essai reste possible
-      throw error;
-    });
-    return this.#pianoLoading;
+    let loading = this.#loading.get(instrument);
+    if (!loading) {
+      loading = this.#loadSamples(instrument, onProgress).catch((error: unknown) => {
+        this.#loading.delete(instrument); // un nouvel essai reste possible
+        throw error;
+      });
+      this.#loading.set(instrument, loading);
+    }
+    return loading;
   }
 
-  async #loadPiano(onProgress?: (ratio: number) => void): Promise<void> {
+  async #loadSamples(
+    instrument: SampledInstrument,
+    onProgress?: (ratio: number) => void,
+  ): Promise<void> {
+    const bank = SAMPLE_BANKS[instrument];
+    const buffers = this.#buffers[instrument];
     let loaded = 0;
     await Promise.all(
-      PIANO_SAMPLES.map(async ({ name, midi }) => {
-        const response = await this.#fetch(sampleUrl(this.#baseUrl, name));
+      bank.map(async ({ name, midi }) => {
+        const response = await this.#fetch(sampleUrl(this.#baseUrl, name, instrument));
         if (!response.ok) throw new Error(`Échantillon ${name} introuvable (${response.status})`);
         const buffer = await this.context.decodeAudioData(await response.arrayBuffer());
-        this.#piano.set(midi, buffer);
+        buffers.set(midi, buffer);
         loaded += 1;
-        onProgress?.(loaded / PIANO_SAMPLES.length);
+        onProgress?.(loaded / bank.length);
       }),
     );
   }
@@ -149,11 +173,12 @@ export class WebAudioEngine implements AudioEngine {
     const startTime = this.context.currentTime + LOOKAHEAD;
     const voices = notes.map((note) => {
       const instrument = note.instrument ?? options.instrument ?? 'piano';
+      // Un instrument pas encore chargé est remplacé par le son pur plutôt que par le silence.
       const voice =
         instrument === 'drone'
           ? this.#droneVoice(note, startTime)
-          : instrument === 'piano' && this.isLoaded('piano')
-            ? this.#pianoVoice(note, startTime)
+          : isSampled(instrument) && this.isLoaded(instrument)
+            ? this.#sampleVoice(instrument, note, startTime)
             : this.#pureVoice(note, startTime);
       this.#voices.add(voice);
       return voice;
@@ -222,13 +247,13 @@ export class WebAudioEngine implements AudioEngine {
     return this.#output;
   }
 
-  #pianoVoice(note: NoteEvent, startTime: number): Voice {
+  #sampleVoice(instrument: SampledInstrument, note: NoteEvent, startTime: number): Voice {
     const context = this.context;
-    const { sample, playbackRate } = nearestSample(note.midi);
+    const { sample, playbackRate } = nearestSample(note.midi, SAMPLE_BANKS[instrument]);
     const source = context.createBufferSource();
-    source.buffer = this.#piano.get(sample.midi) ?? null;
+    source.buffer = this.#buffers[instrument].get(sample.midi) ?? null;
     source.playbackRate.value = playbackRate;
-    return this.#schedule(source, note, startTime, note.velocity * PIANO_GAIN, null);
+    return this.#schedule(source, note, startTime, note.velocity * SAMPLE_GAIN, null);
   }
 
   #pureVoice(note: NoteEvent, startTime: number): Voice {

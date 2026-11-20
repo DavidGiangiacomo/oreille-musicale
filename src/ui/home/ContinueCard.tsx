@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { prepareAudio } from '../audio';
+import { loadingLabel, prepareAudio } from '../audio';
 import { PHASE_LABELS, stepSubtitle, stepTitle } from '../progress/labels';
 import { useProgress } from '../progress/useProgress';
 import { useSettings } from '../settings/settingsContext';
@@ -56,7 +56,7 @@ export function ContinueCard() {
           </button>
           {loading !== null && (
             <p role="status" className={muted}>
-              Chargement du piano… {Math.round(loading * 100)} %
+              {loadingLabel(settings.instrument, loading)}
             </p>
           )}
           {error && (
