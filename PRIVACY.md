@@ -1,6 +1,6 @@
 # Politique de confidentialité
 
-_Oreille musicale — dernière mise à jour : 19 novembre 2026_
+_Oreille musicale — dernière mise à jour : 20 novembre 2026_
 
 Oreille musicale est un logiciel libre d'entraînement de l'oreille musicale, sans compte, sans publicité et sans traceur. **Aucune donnée personnelle n'est collectée ni transmise.**
 
@@ -14,6 +14,7 @@ Oreille musicale est un logiciel libre d'entraînement de l'oreille musicale, sa
 
 - La **version web** est hébergée par GitHub Pages : comme pour tout site, GitHub peut enregistrer des données techniques de connexion (adresse IP, navigateur), selon sa propre [déclaration de confidentialité](https://docs.github.com/fr/site-policy/privacy-policies/github-general-privacy-statement). L'appli elle-même n'envoie aucune donnée.
 - L'**application Android** embarque tout ce dont elle a besoin et fonctionne sans connexion.
+- Le **lien de dons** de l'écran « À propos » ouvre la page Ko-fi du projet dans ton navigateur. Ko-fi est un service extérieur, avec sa propre politique de confidentialité ; l'appli ne lui transmet rien.
 
 ## Ce que l'appli n'utilise pas
 

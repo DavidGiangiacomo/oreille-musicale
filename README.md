@@ -67,3 +67,7 @@ cd android && ./gradlew assembleDebug
 Oreille musicale est un logiciel libre, distribué sous les termes de la [GNU General Public License](LICENSE), version 3 ou (à votre choix) toute version ultérieure.
 
 Les sons de piano proviennent du _Salamander Grand Piano_ d'Alexander Holm (CC BY 3.0), ceux du vibraphone et des cordes des bibliothèques libres de Versilian Studios (CC0) : voir les [crédits](CREDITS.md).
+
+## Soutenir le projet
+
+L'appli est gratuite et le restera. Si elle vous est utile, vous pouvez soutenir son développement sur [Ko-fi](https://ko-fi.com/davidgiangiacomobaudchon).

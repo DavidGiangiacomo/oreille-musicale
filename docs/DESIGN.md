@@ -129,7 +129,7 @@ Chaque fonctionnalité doit pouvoir se rattacher à l'un de ces principes.
 | Rappels | Une notification quotidienne (Android) | Souhaitable |
 | Chansons repères | Mnémotechniques par intervalle, personnalisables | Souhaitable |
 | Timbres supplémentaires | Son pur, puis vibraphone et cordes (v1.0) ; guitare, orgue… ensuite | Souhaitable |
-| Dons | Lien discret vers une page de dons (§10.11) | Souhaitable |
+| Dons | Lien discret vers la page Ko-fi du projet (§10.11) | Souhaitable |
 
 ### 5.2 Pistes pour la suite
 
@@ -852,7 +852,7 @@ oreille-musicale/
 - En-têtes de sécurité (CSP) sur l'hébergement web ; dépendances surveillées (Dependabot).
 - Crédits des échantillons et des bibliothèques dans l'appli et dans un fichier dédié.
 - **Code sous licence GNU GPL v3 ou ultérieure** (fichier `LICENSE`) ; échantillons et contenus sous licences compatibles (CC0, CC BY), crédités.
-- **Dons** : un lien discret (GitHub Sponsors, Ko-fi ou Liberapay) dans l'écran « À propos », jamais pendant les exercices. Avant une publication sur le Play Store, vérifier ses règles de paiement ; au besoin, n'afficher le lien que dans la version web.
+- **Dons** : un lien discret vers la page Ko-fi du projet, dans l'écran « À propos » seulement, jamais pendant les exercices ; aussi en bouton « Sponsor » sur le dépôt (`.github/FUNDING.yml`). L'APK étant distribué directement, le même lien sert sur le web et sur Android. Avant une éventuelle publication sur le Play Store, vérifier ses règles de paiement ; au besoin, n'afficher le lien que dans la version web.
 
 ---
 
@@ -994,6 +994,7 @@ On chante sur la syllabe de son choix (« la », noms des notes, numéros de deg
 | Confidentialité | Politique dans `PRIVACY.md` et dans l'écran « À propos » : aucune donnée collectée ni transmise |
 | Distribution Android | APK signé publié directement (page Releases de GitHub) pour commencer ; le Play Store pourra venir plus tard |
 | Timbres (v1.0) | Piano, vibraphone, cordes et son pur, au choix dans les préférences (le timbre choisi se fait entendre aussitôt). Banques libres de droits (CC0) de Versilian Studios ; la guitare attend une banque sous licence libre. Les timbres variés viendront avec le chapitre Expert |
+| Dons | Ko-fi : connu du grand public, don ponctuel sans abonnement, sans frais de plateforme sur les dons ponctuels. Lien dans « À propos » seulement (web et Android) et bouton « Sponsor » du dépôt |
 
 ### 14.2 Questions ouvertes
 

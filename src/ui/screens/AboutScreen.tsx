@@ -3,6 +3,8 @@ import { ScreenHeader } from '../components/ScreenParts';
 import { card, cardTitle, muted } from '../styles';
 
 const REPOSITORY = 'https://github.com/DavidGiangiacomo/oreille-musicale';
+/** Page de dons (§10.11) : seulement ici, jamais pendant les exercices. */
+const DONATIONS = 'https://ko-fi.com/davidgiangiacomobaudchon';
 
 function External({ href, children }: { href: string; children: ReactNode }) {
   return (
@@ -12,7 +14,7 @@ function External({ href, children }: { href: string; children: ReactNode }) {
   );
 }
 
-/** À propos : confidentialité (§10.11), crédits et licence. */
+/** À propos : confidentialité (§10.11), crédits, licence et dons. */
 export function AboutScreen() {
   return (
     <main className="mx-auto flex max-w-xl flex-col gap-5 px-4 py-6">
@@ -88,6 +90,20 @@ export function AboutScreen() {
           ultérieure. Le code source est sur <External href={REPOSITORY}>GitHub</External>.
         </p>
         <p className={`text-sm ${muted}`}>Version {__APP_VERSION__}</p>
+      </section>
+
+      <section className={card} aria-labelledby="soutenir">
+        <h2 id="soutenir" className={cardTitle}>
+          Soutenir le projet
+        </h2>
+        <p>
+          L’appli est gratuite et le restera. Si elle t’est utile, tu peux soutenir son
+          développement par un don : <External href={DONATIONS}>page Ko-fi</External>.
+        </p>
+        <p className={`text-sm ${muted}`}>
+          Ko-fi est un service extérieur, avec sa propre politique de confidentialité ; l’appli ne
+          lui transmet rien.
+        </p>
       </section>
     </main>
   );
