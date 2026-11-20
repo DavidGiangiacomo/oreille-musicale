@@ -2,7 +2,13 @@
 // (progression, révisions, statistiques) en seront des projections recalculables.
 import type { StepPhase, TrackId } from './curriculum';
 import type { CompetenceId } from './exercise/competence';
-import type { InstrumentId, Presentation, Tempo } from './exercise/rendition';
+import {
+  TIMBRES,
+  type InstrumentId,
+  type Presentation,
+  type Tempo,
+  type TimbreId,
+} from './exercise/rendition';
 import { DAILY_GOAL_CHOICES, DEFAULT_DAILY_GOAL_MINUTES } from './progress/activity';
 import { DEFAULT_REMINDER, parseTime, type ReminderSettings } from './progress/reminder';
 import type { AnsweredQuestion, SeriesConfig } from './session/series';
@@ -123,7 +129,7 @@ export function sessionConfigOf(config: SeriesConfig): SessionRecord['config'] {
 export interface Settings {
   noteNames: NoteNaming;
   octaveConvention: OctaveConvention;
-  instrument: InstrumentId;
+  instrument: TimbreId;
   tempo: Tempo;
   /** Volume général, de 0 à 1. */
   volume: number;
@@ -217,7 +223,7 @@ export function normalizeSettings(stored: unknown): Settings {
   return {
     noteNames: oneOf(raw.noteNames, ['fr', 'en'], d.noteNames),
     octaveConvention: oneOf(raw.octaveConvention, ['fr', 'scientific'], d.octaveConvention),
-    instrument: oneOf(raw.instrument, ['piano', 'pure'], d.instrument),
+    instrument: oneOf(raw.instrument, TIMBRES, d.instrument),
     tempo: oneOf(raw.tempo, ['slow', 'normal', 'fast'], d.tempo),
     volume: volume ? (raw.volume as number) : d.volume,
     autoAdvance: typeof raw.autoAdvance === 'boolean' ? raw.autoAdvance : d.autoAdvance,

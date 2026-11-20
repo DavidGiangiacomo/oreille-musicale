@@ -66,6 +66,12 @@ export function AboutScreen() {
           échantillons adaptés pour l’appli.
         </p>
         <p>
+          Vibraphone : <i>Versilian Community Sample Library</i>, Sam Gossner ; cordes :{' '}
+          <i>VS Chamber Orchestra 2: Community Edition</i>, Versilian Studios. Domaine public (
+          <External href="https://creativecommons.org/publicdomain/zero/1.0/deed.fr">CC0</External>
+          ), échantillons adaptés pour l’appli.
+        </p>
+        <p>
           Bibliothèques : React, React Router, Tonal, ts-fsrs, Dexie, Capacitor, Workbox, Tailwind
           CSS (licences MIT et Apache 2.0). Détail dans le fichier{' '}
           <External href={`${REPOSITORY}/blob/main/CREDITS.md`}>CREDITS.md</External>.

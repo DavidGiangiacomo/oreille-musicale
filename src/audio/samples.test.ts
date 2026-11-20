@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PIANO_SAMPLES, nearestSample, sampleUrl } from './samples';
+import { PIANO_SAMPLES, SAMPLE_BANKS, nearestSample, sampleUrl } from './samples';
 
 describe('PIANO_SAMPLES', () => {
   it('couvre A1 à C7 par tierces mineures', () => {
@@ -28,9 +28,39 @@ describe('nearestSample', () => {
   });
 });
 
+describe('SAMPLE_BANKS', () => {
+  it('nomme les notes comme les fichiers préparés', () => {
+    expect(SAMPLE_BANKS.vibraphone.map((s) => s.name)).toEqual([
+      'A3',
+      'C4',
+      'E4',
+      'G4',
+      'B4',
+      'D5',
+      'F5',
+      'A5',
+      'C6',
+      'E6',
+    ]);
+    expect(SAMPLE_BANKS.strings[0]).toEqual({ name: 'C2', midi: 36 });
+    expect(SAMPLE_BANKS.strings.at(-1)).toEqual({ name: 'D6', midi: 86 });
+  });
+
+  it('transpose de 2 demi-tons au plus dans la tessiture de chaque instrument', () => {
+    for (const bank of Object.values(SAMPLE_BANKS)) {
+      const low = bank[0]!.midi;
+      const high = bank.at(-1)!.midi;
+      for (let midi = low; midi <= high; midi++) {
+        expect(Math.abs(nearestSample(midi, bank).sample.midi - midi)).toBeLessThanOrEqual(2);
+      }
+    }
+  });
+});
+
 describe('sampleUrl', () => {
   it('construit une URL relative à la base de l’application', () => {
     expect(sampleUrl('./', 'A4')).toBe('./samples/piano/A4.mp3');
     expect(sampleUrl('/oreille-musicale', 'Ds2')).toBe('/oreille-musicale/samples/piano/Ds2.mp3');
+    expect(sampleUrl('./', 'C4', 'strings')).toBe('./samples/strings/C4.mp3');
   });
 });

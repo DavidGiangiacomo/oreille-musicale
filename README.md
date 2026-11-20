@@ -40,7 +40,7 @@ Les tests de bout en bout (`e2e/`) lancent le serveur de développement avec un 
 
 ## Hors-ligne et sauvegarde
 
-La version web s'installe sur l'écran d'accueil (« Installer » ou « Ajouter à l'écran d'accueil ») et fonctionne ensuite sans connexion : l'appli est mise en cache à la première visite, les sons de piano à leur première écoute. La progression reste sur l'appareil ; la carte « Sauvegarde » de l'accueil permet de l'exporter dans un fichier et de l'importer sur un autre appareil. Voir aussi la [politique de confidentialité](PRIVACY.md).
+La version web s'installe sur l'écran d'accueil (« Installer » ou « Ajouter à l'écran d'accueil ») et fonctionne ensuite sans connexion : l'appli est mise en cache à la première visite, les sons de chaque timbre à leur première écoute. La progression reste sur l'appareil ; la carte « Sauvegarde » de l'accueil permet de l'exporter dans un fichier et de l'importer sur un autre appareil. Voir aussi la [politique de confidentialité](PRIVACY.md).
 
 ## Android
 
@@ -66,4 +66,4 @@ cd android && ./gradlew assembleDebug
 
 Oreille musicale est un logiciel libre, distribué sous les termes de la [GNU General Public License](LICENSE), version 3 ou (à votre choix) toute version ultérieure.
 
-Les sons de piano proviennent du _Salamander Grand Piano_ d'Alexander Holm (CC BY 3.0) : voir les [crédits](CREDITS.md).
+Les sons de piano proviennent du _Salamander Grand Piano_ d'Alexander Holm (CC BY 3.0), ceux du vibraphone et des cordes des bibliothèques libres de Versilian Studios (CC0) : voir les [crédits](CREDITS.md).

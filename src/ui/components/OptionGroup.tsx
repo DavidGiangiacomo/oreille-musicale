@@ -5,6 +5,8 @@ interface OptionGroupProps<T extends string> {
   value: T;
   options: readonly { value: T; label: string }[];
   onChange: (value: T) => void;
+  /** Nombre de colonnes ; par défaut, toutes les options sur une ligne. */
+  columns?: number;
 }
 
 /** Groupe d'options exclusives, présenté comme des boutons à bascule. */
@@ -13,6 +15,7 @@ export function OptionGroup<T extends string>({
   value,
   options,
   onChange,
+  columns = options.length,
 }: OptionGroupProps<T>) {
   return (
     <fieldset className="flex flex-col gap-2">
@@ -21,7 +24,7 @@ export function OptionGroup<T extends string>({
       </legend>
       <div
         className="grid gap-2"
-        style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
+        style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
       >
         {options.map((option) => (
           <button

@@ -2,6 +2,7 @@ import { DAILY_GOAL_CHOICES } from '../../core/progress/activity';
 import { Link } from 'react-router';
 import { OptionGroup } from '../components/OptionGroup';
 import { ReminderPreference } from './ReminderPreference';
+import { TimbrePreference } from './TimbrePreference';
 import { useSettings } from '../settings/settingsContext';
 import { card, cardTitle } from '../styles';
 
@@ -35,15 +36,7 @@ export function PreferencesPanel() {
         ]}
         onChange={(theme) => updateSettings({ theme })}
       />
-      <OptionGroup
-        legend="Timbre"
-        value={settings.instrument}
-        options={[
-          { value: 'piano', label: 'Piano' },
-          { value: 'pure', label: 'Son pur' },
-        ]}
-        onChange={(instrument) => updateSettings({ instrument })}
-      />
+      <TimbrePreference />
       <OptionGroup
         legend="Noms des notes"
         value={settings.noteNames}

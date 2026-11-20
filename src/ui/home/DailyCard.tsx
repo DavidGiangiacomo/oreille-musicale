@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { DAILY } from '../../core/session/daily';
 import { REVIEW } from '../../core/session/review';
-import { prepareAudio } from '../audio';
+import { loadingLabel, prepareAudio } from '../audio';
 import { DailyGoal } from '../daily/DailyGoal';
 import { inDays } from '../daily/labels';
 import { stepTitle } from '../progress/labels';
@@ -76,7 +76,7 @@ export function DailyCard() {
       )}
       {loading !== null && (
         <p role="status" className={muted}>
-          Chargement du piano… {Math.round(loading * 100)} %
+          {loadingLabel(settings.instrument, loading)}
         </p>
       )}
       {error && (

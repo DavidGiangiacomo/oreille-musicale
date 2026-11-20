@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { audioEngine } from '../audio';
+import { audioEngine, loadingLabel } from '../audio';
 import { useSettings } from '../settings/settingsContext';
 import { card, muted, primaryButton } from '../styles';
 
@@ -45,7 +45,7 @@ export function AudioGate({ children, label }: { children: ReactNode; label: str
       </button>
       {loading !== null && (
         <p role="status" className={muted}>
-          Chargement du piano… {Math.round(loading * 100)} %
+          {loadingLabel(settings.instrument, loading)}
         </p>
       )}
       {error && (
