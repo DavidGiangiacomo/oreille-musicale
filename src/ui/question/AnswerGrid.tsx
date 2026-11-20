@@ -1,6 +1,6 @@
 import type { FamilyId } from '../../core/exercise/question';
 import type { QuestionResult } from '../../core/session/series';
-import { answerAccessibleName, answerLabel } from '../items';
+import { answerLabel, shortAbbreviatesName } from '../items';
 import { keyHint } from './keys';
 
 interface AnswerGridProps {
@@ -50,18 +50,25 @@ export function AnswerGrid({
             type="button"
             disabled={disabled}
             onClick={() => onAnswer(item)}
-            aria-label={answerAccessibleName(family, item)}
             aria-keyshortcuts={hint ?? undefined}
             className={`relative flex min-h-16 flex-col items-center justify-center rounded-xl border-2 px-2 py-2 transition-colors enabled:hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 disabled:cursor-default dark:enabled:hover:bg-slate-800 ${state} ${result !== null && !isCorrect && !isWrongChoice ? 'opacity-50' : ''}`}
           >
-            <span className={`${label.short.length > 7 ? 'text-base' : 'text-xl'} font-bold`}>
+            {/* Le nom accessible vient du texte visible (WCAG 2.5.3) ; le libellé court n'est
+                pas relu quand il abrège le nom (« 1er » / « 1er renversement »). */}
+            <span
+              aria-hidden={shortAbbreviatesName(label) || undefined}
+              className={`${label.short.length > 7 ? 'text-base' : 'text-xl'} font-bold`}
+            >
               {isCorrect && <span aria-hidden="true">✓ </span>}
               {isWrongChoice && <span aria-hidden="true">✗ </span>}
               {label.short}
             </span>
             <span className="text-xs leading-tight">{label.name}</span>
             {hint && (
-              <kbd className="absolute top-1 right-1.5 font-sans text-[10px] text-slate-400">
+              <kbd
+                aria-hidden="true"
+                className="absolute top-1 right-1.5 font-sans text-[10px] text-slate-500 dark:text-slate-400"
+              >
                 {hint}
               </kbd>
             )}

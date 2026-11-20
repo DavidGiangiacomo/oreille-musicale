@@ -14,7 +14,7 @@ const TEST_CHORD = [60, 64, 67, 72].map((midi, i) => ({
   velocity: 0.7,
 }));
 
-/** Premier lancement (§9.3) : test du son et choix de la notation. */
+/** Premier lancement (§9.3) : test du son, choix de la notation, niveau. */
 export function WelcomeScreen() {
   const { settings, updateSettings } = useSettings();
   const navigate = useNavigate();
@@ -36,9 +36,9 @@ export function WelcomeScreen() {
     }
   }
 
-  function finish() {
+  function finish(to: string) {
     updateSettings({ onboardingDone: true });
-    void navigate('/', { replace: true });
+    void navigate(to, { replace: true });
   }
 
   const example = formatNote('C4', {
@@ -111,9 +111,27 @@ export function WelcomeScreen() {
         </p>
       </section>
 
-      <button type="button" className={primaryButton} onClick={finish}>
-        C'est parti
-      </button>
+      <section className={card} aria-labelledby="niveau">
+        <h2 id="niveau" className={cardTitle}>
+          3. Ton niveau
+        </h2>
+        <p className={muted}>
+          Tu débutes ? Le parcours commence par trois repères. Tu as déjà des bases ? Un test rapide
+          valide d’emblée les étapes que tu maîtrises.
+        </p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <button type="button" className={primaryButton} onClick={() => finish('/')}>
+            C'est parti
+          </button>
+          <button
+            type="button"
+            className={secondaryButton}
+            onClick={() => finish('/positionnement')}
+          >
+            J'ai déjà des bases
+          </button>
+        </div>
+      </section>
     </main>
   );
 }

@@ -3,9 +3,9 @@ import { expect, test, type Page } from '@playwright/test';
 // Export puis import de la progression (§10.6) : d'un appareil à l'autre.
 
 const NAMES: Record<string, string> = {
-  M3: 'Tierce majeure (3M)',
-  P5: 'Quinte juste (5J)',
-  P8: 'Octave (8J)',
+  M3: '3M Tierce majeure',
+  P5: '5J Quinte juste',
+  P8: '8J Octave',
 };
 
 declare global {
@@ -52,8 +52,10 @@ test('transfère la progression d’un appareil à l’autre', async ({ page, br
   await otherBackup.getByLabel('Fichier de sauvegarde à importer').setInputFiles(file);
   await expect(otherBackup.getByText(/Elle remplacera toutes les données/)).toBeVisible();
   await expect(otherBackup.getByText(/1 séance et 12 réponses/)).toBeVisible();
+  // L'import recharge la page : attendre ce rechargement avant de naviguer.
+  const reloaded = other.waitForEvent('load');
   await otherBackup.getByRole('button', { name: 'Remplacer mes données' }).click();
-  await other.waitForLoadState('load');
+  await reloaded;
   await other.goto('./#/parcours');
   await expect(
     other.getByRole('region', { name: 'Intervalles' }).getByText('1 / 30 étapes validées'),

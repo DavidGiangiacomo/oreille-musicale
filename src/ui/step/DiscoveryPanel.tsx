@@ -6,6 +6,8 @@ import type { Random } from '../../core/random';
 import { comparisonExamples, discoveryExamples } from '../../core/session/step';
 import { audioEngine } from '../audio';
 import { itemLabel } from '../items';
+import type { IntervalCode } from '../../core/theory';
+import { Landmark } from '../question/Landmark';
 import { PHASE_LABELS } from '../progress/labels';
 import { useSettings } from '../settings/settingsContext';
 import { card, cardTitle, muted, primaryButton, secondaryButton } from '../styles';
@@ -61,6 +63,9 @@ export function DiscoveryPanel({
       {step.newItems.map((item) => (
         <div key={item} className="flex flex-col gap-2">
           <h3 className="font-semibold">{itemLabel(step.family, item)}</h3>
+          {step.family === 'int' && settings.showLandmarks && (
+            <Landmark code={item as IntervalCode} presentation={step.presentation} />
+          )}
           <button
             type="button"
             className={secondaryButton}

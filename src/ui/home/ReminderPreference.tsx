@@ -41,7 +41,7 @@ export function ReminderPreference() {
           value={reminder.time}
           disabled={!reminder.enabled}
           aria-label="Heure du rappel"
-          className="rounded-lg border border-slate-300 px-2 py-1 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900"
+          className="min-h-11 rounded-lg border border-slate-300 px-2 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900"
           onChange={(event) => {
             if (event.target.value)
               updateSettings({ reminder: { ...reminder, time: event.target.value } });

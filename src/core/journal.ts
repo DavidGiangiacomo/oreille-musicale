@@ -12,8 +12,8 @@ export type { Presentation } from './exercise/rendition';
 
 export interface SessionRecord {
   id: string;
-  /** Séance du jour, entraînement libre ou travail sur une étape du parcours. */
-  kind: 'daily' | 'custom' | 'step';
+  /** Séance du jour, entraînement libre, étape du parcours ou test de positionnement. */
+  kind: 'daily' | 'custom' | 'step' | 'placement';
   /** Horodatage en millisecondes. */
   startedAt: number;
   endedAt?: number;
@@ -23,6 +23,8 @@ export interface SessionRecord {
   config?: { presentation: Presentation; items: string[]; length: number };
   /** Étape travaillée, pour une séance d'étape. */
   stepId?: string;
+  /** Parcours testé, pour un test de positionnement. */
+  trackId?: TrackId;
 }
 
 /**
@@ -133,6 +135,12 @@ export interface Settings {
   dailyGoalMinutes: number;
   /** Rappel quotidien, sur Android (§10.7). */
   reminder: ReminderSettings;
+  /** Thème de l'interface (§9.6). */
+  theme: 'system' | 'light' | 'dark';
+  /** Afficher les chansons repères en découverte et dans le feedback (§6.1). */
+  showLandmarks: boolean;
+  /** Repères personnels, par intervalle et sens : { « M3:asc » : « Kumbaya » }. */
+  landmarks: Record<string, string>;
   /** Premier lancement terminé (test audio, notation). */
   onboardingDone: boolean;
 }
@@ -147,6 +155,9 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = {
   activeTracks: ['intervals', 'triads'],
   dailyGoalMinutes: DEFAULT_DAILY_GOAL_MINUTES,
   reminder: { ...DEFAULT_REMINDER },
+  theme: 'system',
+  showLandmarks: true,
+  landmarks: {},
   onboardingDone: false,
 };
 
@@ -158,6 +169,21 @@ const KNOWN_TRACKS: readonly TrackId[] = [
   'scales',
   'modes',
 ];
+
+const LANDMARK_KEY = /^(m2|M2|m3|M3|P4|TT|P5|m6|M6|m7|M7|P8):(asc|desc)$/;
+const MAX_LANDMARK_LENGTH = 80;
+
+/** Repères personnels : clés connues, textes non vides et pas trop longs. */
+function normalizeLandmarks(stored: unknown): Record<string, string> {
+  if (typeof stored !== 'object' || stored === null) return {};
+  const landmarks: Record<string, string> = {};
+  for (const [key, value] of Object.entries(stored)) {
+    if (!LANDMARK_KEY.test(key) || typeof value !== 'string') continue;
+    const text = value.trim().slice(0, MAX_LANDMARK_LENGTH);
+    if (text) landmarks[key] = text;
+  }
+  return landmarks;
+}
 
 function normalizeReminder(stored: unknown): ReminderSettings {
   const raw = (typeof stored === 'object' && stored !== null ? stored : {}) as Record<
@@ -200,6 +226,9 @@ export function normalizeSettings(stored: unknown): Settings {
       ? (raw.dailyGoalMinutes as number)
       : d.dailyGoalMinutes,
     reminder: normalizeReminder(raw.reminder),
+    theme: oneOf(raw.theme, ['system', 'light', 'dark'], d.theme),
+    showLandmarks: typeof raw.showLandmarks === 'boolean' ? raw.showLandmarks : d.showLandmarks,
+    landmarks: normalizeLandmarks(raw.landmarks),
     onboardingDone: raw.onboardingDone === true,
   };
 }

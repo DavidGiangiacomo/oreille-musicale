@@ -3,13 +3,17 @@ import { isNativeApp } from '../platform/native';
 import { AppLifecycle } from './AppLifecycle';
 import { UpdatePrompt } from './components/UpdatePrompt';
 import { ReminderScheduler } from './ReminderScheduler';
+import { RouteFocus } from './RouteFocus';
 import { CourseScreen } from './course/CourseScreen';
 import { DailySessionScreen } from './daily/DailySessionScreen';
 import { WelcomeScreen } from './onboarding/WelcomeScreen';
+import { PlacementHub, PlacementScreen } from './placement/PlacementScreen';
 import { AboutScreen } from './screens/AboutScreen';
 import { HomeScreen } from './screens/HomeScreen';
+import { LandmarksScreen } from './screens/LandmarksScreen';
 import { SeriesScreen } from './series/SeriesScreen';
 import { SettingsProvider } from './settings/SettingsProvider';
+import { StatsScreen } from './stats/StatsScreen';
 import { StepScreen } from './step/StepScreen';
 
 // Routage par « # » : GitHub Pages ne sait pas rediriger les routes vers index.html,
@@ -22,6 +26,10 @@ const router = createHashRouter([
   { path: '/etape/:stepId', element: <StepScreen /> },
   { path: '/serie', element: <SeriesScreen /> },
   { path: '/a-propos', element: <AboutScreen /> },
+  { path: '/statistiques', element: <StatsScreen /> },
+  { path: '/reperes', element: <LandmarksScreen /> },
+  { path: '/positionnement', element: <PlacementHub /> },
+  { path: '/positionnement/:trackId', element: <PlacementScreen /> },
   { path: '*', element: <Navigate to="/" replace /> },
 ]);
 
@@ -34,6 +42,7 @@ export function App() {
     <SettingsProvider>
       <RouterProvider router={router} />
       <AppLifecycle router={router} />
+      <RouteFocus router={router} />
       {native && <ReminderScheduler />}
       {withServiceWorker && <UpdatePrompt />}
     </SettingsProvider>

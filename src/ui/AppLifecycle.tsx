@@ -6,7 +6,7 @@ import { audioEngine } from './audio';
 type Router = ReturnType<typeof createHashRouter>;
 
 /** Écrans de séance : les quitter par le bouton retour demande confirmation (§10.7). */
-const SESSION_PATHS = ['/etape/', '/seance', '/serie'];
+const SESSION_PATHS = ['/etape/', '/seance', '/serie', '/positionnement/'];
 
 /**
  * Cycle de vie de l'appli : bouton retour d'Android (navigation interne, sortie

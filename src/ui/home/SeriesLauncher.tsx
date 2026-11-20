@@ -116,7 +116,7 @@ export function SeriesLauncher() {
             <button
               key={preset.label}
               type="button"
-              className="rounded-full border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+              className="min-h-11 rounded-full border border-slate-300 px-4 text-sm hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
               onClick={() => setItems(preset.items)}
             >
               {preset.label}
@@ -129,7 +129,7 @@ export function SeriesLauncher() {
               key={item}
               type="button"
               aria-pressed={items.includes(item)}
-              aria-label={intervalName(item)}
+              aria-label={`${INTERVALS[item].abbreviation} (${intervalName(item)})`}
               title={intervalName(item)}
               onClick={() => toggle(item)}
               className={toggleButton}

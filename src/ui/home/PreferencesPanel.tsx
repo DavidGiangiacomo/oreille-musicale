@@ -1,4 +1,5 @@
 import { DAILY_GOAL_CHOICES } from '../../core/progress/activity';
+import { Link } from 'react-router';
 import { OptionGroup } from '../components/OptionGroup';
 import { ReminderPreference } from './ReminderPreference';
 import { useSettings } from '../settings/settingsContext';
@@ -21,6 +22,19 @@ export function PreferencesPanel() {
         onChange={(value) => updateSettings({ dailyGoalMinutes: Number(value) })}
       />
       <ReminderPreference />
+      <Link to="/reperes" className="font-medium underline underline-offset-4">
+        Mes chansons repères
+      </Link>
+      <OptionGroup
+        legend="Thème"
+        value={settings.theme}
+        options={[
+          { value: 'system', label: 'Système' },
+          { value: 'light', label: 'Clair' },
+          { value: 'dark', label: 'Sombre' },
+        ]}
+        onChange={(theme) => updateSettings({ theme })}
+      />
       <OptionGroup
         legend="Timbre"
         value={settings.instrument}

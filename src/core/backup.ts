@@ -75,7 +75,7 @@ const isNumber = (value: unknown): value is number =>
 
 const validSession: Check = (s) =>
   isString(s.id) &&
-  ['daily', 'custom', 'step'].includes(s.kind as string) &&
+  ['daily', 'custom', 'step', 'placement'].includes(s.kind as string) &&
   isNumber(s.startedAt) &&
   (s.endedAt === undefined || isNumber(s.endedAt));
 

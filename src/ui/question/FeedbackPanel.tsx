@@ -13,6 +13,7 @@ import {
   type ModeCode,
 } from '../../core/theory';
 import { MiniKeyboard, type KeyMark } from '../components/MiniKeyboard';
+import { Landmark } from './Landmark';
 import { formatNotes } from '../format';
 import { answerLabel, answerWithArticle, itemDescription } from '../items';
 import { muted, primaryButton, secondaryButton } from '../styles';
@@ -155,6 +156,9 @@ export function FeedbackPanel({
           </>
         )}
         {symbols && <p className="font-semibold">{symbols}</p>}
+        {!brief && question.family === 'int' && settings.showLandmarks && (
+          <Landmark code={question.item} presentation={question.presentation} />
+        )}
         {!brief && (
           <p className="text-lg">
             {isScale

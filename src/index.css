@@ -1,13 +1,85 @@
 @import 'tailwindcss';
 
+/* Mode sombre piloté par l'attribut data-theme de <html> (réglage « Thème » : clair,
+   sombre ou celui du système), posé avant l'affichage par index.html. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
 @theme {
   --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
+/* Couleurs des statistiques (docs/DESIGN.md §9.1), validées pour chaque mode :
+   maîtrise en rampe ordinale ambre, intensités (confusions, activité) en rampe
+   séquentielle bleue ; « ink » donne le texte lisible sur chaque case (≥ 4,5:1). */
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
+  --chart-empty: #f1f5f9;
+  --chart-empty-ink: #475569;
+  --chart-grid: #e2e8f0;
+  --chart-line: #2a78d6;
+  --mastery-1: #f59e0b;
+  --mastery-2: #d97706;
+  --mastery-3: #b45309;
+  --mastery-4: #92400e;
+  --mastery-ink-1: #0f172a;
+  --mastery-ink-2: #0f172a;
+  --mastery-ink-3: #ffffff;
+  --mastery-ink-4: #ffffff;
+  --heat-1: #cde2fb;
+  --heat-2: #86b6ef;
+  --heat-3: #3987e5;
+  --heat-4: #1c5cab;
+  --heat-5: #0d366b;
+  --heat-ink-1: #0f172a;
+  --heat-ink-2: #0f172a;
+  --heat-ink-3: #0f172a;
+  --heat-ink-4: #ffffff;
+  --heat-ink-5: #ffffff;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --chart-empty: #1e293b;
+  --chart-empty-ink: #94a3b8;
+  --chart-grid: #334155;
+  --chart-line: #6da7ec;
+  --mastery-1: #92400e;
+  --mastery-2: #b45309;
+  --mastery-3: #d97706;
+  --mastery-4: #f59e0b;
+  --mastery-ink-1: #ffffff;
+  --mastery-ink-2: #ffffff;
+  --mastery-ink-3: #0f172a;
+  --mastery-ink-4: #0f172a;
+  --heat-1: #184f95;
+  --heat-2: #256abf;
+  --heat-3: #3987e5;
+  --heat-4: #6da7ec;
+  --heat-5: #b7d3f6;
+  --heat-ink-1: #ffffff;
+  --heat-ink-2: #ffffff;
+  --heat-ink-3: #0f172a;
+  --heat-ink-4: #0f172a;
+  --heat-ink-5: #0f172a;
 }
 
 body {
   @apply min-h-dvh bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+}
+
+/* Animations réduites à la demande du système (§9.6). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Titre d'écran qui reçoit le focus à la navigation : pas de cadre, il n'est pas cliquable. */
+h1[tabindex='-1']:focus {
+  outline: none;
 }

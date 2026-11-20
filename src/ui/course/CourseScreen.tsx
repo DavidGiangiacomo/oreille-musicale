@@ -19,7 +19,7 @@ const CELL_STYLES: Record<StepStatus, string> = {
   in_progress: 'bg-amber-100 text-amber-950 ring-amber-500 dark:bg-amber-950 dark:text-amber-50',
   available: 'bg-white ring-slate-400 dark:bg-slate-900',
   locked:
-    'bg-slate-100 text-slate-400 ring-slate-200 dark:bg-slate-900 dark:text-slate-600 dark:ring-slate-800',
+    'bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-950 dark:text-slate-400 dark:ring-slate-800',
 };
 
 const CELL_ICONS: Record<StepStatus, string> = {
@@ -112,7 +112,11 @@ function TrackGrid({ track, states }: { track: TrackDef; states: Map<string, Ste
               Étape
             </th>
             {track.rows.map((row) => (
-              <th key={row.presentation} scope="col" className="text-xs font-medium">
+              <th
+                key={row.presentation}
+                scope="col"
+                className="text-[11px] leading-tight font-medium hyphens-auto sm:text-xs"
+              >
                 {row.label}
               </th>
             ))}
@@ -150,6 +154,12 @@ function TrackGrid({ track, states }: { track: TrackDef; states: Map<string, Ste
           ? 'Une étape s’ouvre quand celle du dessus (élément précédent) et celle de gauche (présentation plus facile) sont validées.'
           : 'Chaque étape s’ouvre quand la précédente est validée.'}
       </p>
+      <Link
+        to={`/positionnement/${track.id}`}
+        className="text-sm font-medium underline underline-offset-4"
+      >
+        Test de positionnement : valider d’emblée ce que tu sais déjà
+      </Link>
       <label className="flex items-center gap-3 text-sm">
         <input
           type="checkbox"

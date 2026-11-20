@@ -8,6 +8,7 @@ import {
   STEPS,
   stepId,
   stepsOfTrack,
+  landmarkFor,
 } from './index';
 
 const steps = stepsOfTrack('intervals');
@@ -198,5 +199,16 @@ describe('parcours Gammes et Modes', () => {
     expect(getStep('mod.drone.01')?.requires).toEqual(['scl.updown.02']);
     expect(contrastItems(getStep('scl.updown.06')!)).toEqual(['major', 'harmin']);
     expect(contrastItems(getStep('mod.plain.06')!)).toEqual(['phrygian']);
+  });
+});
+
+describe('chansons repères', () => {
+  it('donne un repère à chaque intervalle, et préfère ceux de l’utilisateur', () => {
+    for (const code of INTERVAL_CODES) expect(landmarkFor(code, 'asc', {})).toBeTruthy();
+    expect(landmarkFor('M2', 'desc', {})).toBe('Yesterday (Beatles)');
+    expect(landmarkFor('M2', 'harm', {})).toBe('Frère Jacques');
+    expect(landmarkFor('TT', 'desc', {})).toBeNull();
+    expect(landmarkFor('M3', 'asc', { 'M3:asc': 'Kumbaya' })).toBe('Kumbaya');
+    expect(landmarkFor('M3', 'asc', { 'M3:asc': '  ' })).toBe('When the Saints Go Marching In');
   });
 });

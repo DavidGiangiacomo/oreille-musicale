@@ -167,7 +167,7 @@ Les codes servent d'identifiants internes ; l'interface affiche l'abréviation f
 | `M7` | 11 | Septième majeure | 7M | Do → Si | — | — |
 | `P8` | 12 | Octave juste | 8J | Do → Do | *Over the Rainbow* | — |
 
-\* Suggestions à vérifier une à une avant intégration. L'utilisateur pourra saisir ses propres repères : les plus efficaces sont des airs qu'on connaît bien.
+\* Repères retenus dans l'appli : ceux de ce tableau, avec *Greensleeves* pour la 3m montante, *The Entertainer* (après les notes d'appel) pour la 6m montante, *Nobody Knows the Trouble I've Seen* pour la 6M descendante et *Take On Me* (refrain) pour la 7M montante. À confirmer à l'oreille. L'utilisateur peut saisir ses propres repères (écran « Mes chansons repères ») : les plus efficaces sont des airs qu'on connaît bien.
 
 ### 6.2 Accords
 
