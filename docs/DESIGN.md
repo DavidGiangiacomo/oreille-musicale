@@ -1,9 +1,9 @@
 # Oreille musicale — Document de conception
 
-> **Statut** : brouillon v0.7, à relire et valider
-> **Date** : 18 novembre 2026
+> **Statut** : v0.8 ; version 1.0 de l'appli publiée, v2 en préparation
+> **Date** : 20 novembre 2026
 > **Objet** : application web et Android d'entraînement de l'oreille musicale (intervalles, accords, gammes et modes), avec difficulté progressive, suivi de progression et révisions espacées.
-> **Historique** : v0.1, version initiale ; v0.2, ajout des gammes et modes, et des exercices chantés prévus en v2 ; v0.3, premières décisions (public, framework, hébergement, licence) ; v0.4, révisions recalculées depuis le journal (J3) ; v0.5, accords et renversements (J4) ; v0.6, gammes et modes (J5), décisions de #10 ; v0.7, Android et hors-ligne (J6).
+> **Historique** : v0.1, version initiale ; v0.2, ajout des gammes et modes, et des exercices chantés prévus en v2 ; v0.3, premières décisions (public, framework, hébergement, licence) ; v0.4, révisions recalculées depuis le journal (J3) ; v0.5, accords et renversements (J4) ; v0.6, gammes et modes (J5), décisions de #10 ; v0.7, Android et hors-ligne (J6) ; v0.8, finitions et version 1.0 (J7), exercices chantés précisés pour la v2 (notes extraites d'un intervalle ou d'un accord, chant seul, instruments plus tard).
 
 ## Sommaire
 
@@ -858,7 +858,7 @@ oreille-musicale/
 
 ## 11. Évolution : exercices chantés (v2)
 
-Chanter ce qu'on reconnaît relie l'oreille à la voix : c'est l'idée des exercices du type « chante l'arpège de cet accord » ou « chante cette gamme ». Ils sortent du périmètre de la v1, mais la v1 est conçue pour les accueillir sans refonte (§11.7).
+Chanter ce qu'on reconnaît relie l'oreille à la voix : c'est l'idée des exercices du type « chante l'arpège de cet accord », « chante cette gamme » ou « chante la tierce de cet accord plaqué ». La v2 se limite au chant : la voix ne produit une note que si on l'entend intérieurement, alors qu'un instrument permet de la trouver sans l'entendre (§11.8). Ils sortent du périmètre de la v1, mais la v1 est conçue pour les accueillir sans refonte (§11.7).
 
 ### 11.1 Faisabilité
 
@@ -876,11 +876,23 @@ Les vraies difficultés sont ailleurs : bruit ambiant, micros d'entrée de gamme
 |---|---|---|
 | Écho | L'appli joue un arpège ou un fragment de gamme ; on le rechante | Chaque note |
 | Intervalle | « Voici Ré. Chante une sixte majeure au-dessus. » | La note d'arrivée |
+| Note extraite | L'appli joue un intervalle ou un accord, arpégé ou plaqué : « Chante la note grave », « Chante la tierce », « Chante toutes les notes, du grave à l'aigu » | La note visée (ou chaque note, dans l'ordre) |
 | Arpège | « Voici Do. Chante l'arpège de Do7M, en montant puis en descendant. » | La suite Do-Mi-Sol-Si-Sol-Mi-Do |
 | Gamme ou mode | « Sur ce bourdon de Ré, chante le mode dorien. » | Les huit notes, à la montée et à la descente |
 | Degré (avec l'écoute fonctionnelle) | « En sol majeur, chante le 6e degré. » | La note visée |
 
 On chante sur la syllabe de son choix (« la », noms des notes, numéros de degrés) : seule la hauteur est analysée.
+
+**Notes extraites**, du plus facile au plus difficile, en suivant les colonnes des parcours (arpégé, puis plaqué) :
+
+1. Intervalle arpégé : chanter la 1re ou la 2e note (mémoire mélodique).
+2. Intervalle plaqué : chanter la note aiguë, qui ressort d'elle-même, puis la note grave.
+3. Accord arpégé : chanter une note désignée (fondamentale, tierce, quinte, septième), ou toutes les notes du grave à l'aigu.
+4. Accord plaqué, voix extérieures : chanter la basse ou la note du dessus.
+5. Accord plaqué, voix intérieures : chanter la tierce ou la septième, le vrai travail d'oreille harmonique.
+6. Accord plaqué, en entier : chanter toutes les notes, du grave à l'aigu.
+
+Le son étant coupé pendant le chant (sauf avec un casque, §11.6), on chante de mémoire, après l'écoute : c'est justement ce qui exerce l'oreille intérieure.
 
 ### 11.3 Déroulé d'une question chantée
 
@@ -920,7 +932,7 @@ On chante sur la syllabe de son choix (« la », noms des notes, numéros de deg
 
 ### 11.8 Prolongements possibles
 
-- **Répondre à l'instrument** (flûte, violon, guitare en notes isolées) : même détection, puisqu'on joue une note à la fois.
+- **Répondre à l'instrument** (flûte, violon, guitare en notes isolées), en v3 au plus tôt : même détection, puisqu'on joue une note à la fois. Réservé de préférence aux exercices d'écho et de notes extraites : pour un intervalle à partir d'une note donnée, l'instrument permet de trouver la réponse sans l'entendre (compter une tierce sur un clavier), ce qui fausserait l'exercice.
 - **Clavier MIDI** (API Web MIDI, selon les navigateurs) pour répondre en jouant les notes.
 - Analyser des **accords joués** (plusieurs notes simultanées) est nettement plus difficile : pas avant une v3.
 
@@ -994,12 +1006,12 @@ On chante sur la syllabe de son choix (« la », noms des notes, numéros de deg
 | Confidentialité | Politique dans `PRIVACY.md` et dans l'écran « À propos » : aucune donnée collectée ni transmise |
 | Distribution Android | APK signé publié directement (page Releases de GitHub) pour commencer ; le Play Store pourra venir plus tard |
 | Timbres (v1.0) | Piano, vibraphone, cordes et son pur, au choix dans les préférences (le timbre choisi se fait entendre aussitôt). Banques libres de droits (CC0) de Versilian Studios ; la guitare attend une banque sous licence libre. Les timbres variés viendront avec le chapitre Expert |
+| Exercices chantés (v2) | Chant seul en v2 ; réponse à l'instrument éventuellement en v3 (§11.8). Exercices : écho, intervalle, notes extraites d'un intervalle ou d'un accord (arpégé puis plaqué), arpège, gamme ou mode (§11.2). Son coupé pendant le chant, sauf avec un casque déclaré dans les réglages (§11.6) |
 | Dons | Ko-fi : connu du grand public, don ponctuel sans abonnement, sans frais de plateforme sur les dons ponctuels. Lien dans « À propos » seulement (web et Android) et bouton « Sponsor » du dépôt |
 
 ### 14.2 Questions ouvertes
 
-1. **Exercices chantés** : les utiliserais-tu plutôt au casque ? Faut-il aussi prévoir de répondre en jouant d'un instrument ? (v2)
-2. **Timbres** à ajouter après le vibraphone et les cordes (guitare, orgue, voix…) ?
+1. **Timbres** à ajouter après le vibraphone et les cordes (guitare, orgue, voix…) ?
 
 ---
 
