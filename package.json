@@ -1,6 +1,6 @@
 {
   "name": "oreille-musicale",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Entraînement de l'oreille musicale : intervalles, accords, gammes et modes, avec progression et révisions espacées.",
   "license": "GPL-3.0-or-later",
