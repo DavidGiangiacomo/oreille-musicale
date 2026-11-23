@@ -2,6 +2,7 @@ import { INTERVAL_LANDMARKS, landmarkKey, type LandmarkDirection } from '../../c
 import { INTERVAL_CODES, INTERVALS } from '../../core/theory';
 import { ScreenHeader } from '../components/ScreenParts';
 import { intervalName } from '../format';
+import { LandmarkList } from '../question/Landmark';
 import { useSettings } from '../settings/settingsContext';
 import { card, muted } from '../styles';
 
@@ -11,8 +12,8 @@ const DIRECTIONS: readonly { direction: LandmarkDirection; label: string }[] = [
 ];
 
 /**
- * Mes chansons repères (§6.1) : un air connu pour chaque intervalle. Les champs vides
- * reprennent la suggestion de l'appli, affichée en grisé.
+ * Mes chansons repères (§6.1) : des airs connus pour chaque intervalle et chaque sens.
+ * Un champ rempli remplace les suggestions de l'appli ; vide, il les garde.
  */
 export function LandmarksScreen() {
   const { settings, updateSettings } = useSettings();
@@ -30,7 +31,7 @@ export function LandmarksScreen() {
         backTo="/"
         backLabel="Accueil"
         title="Mes chansons repères"
-        subtitle="Un air que tu connais bien, dont les deux premières notes forment l’intervalle. Laisse vide pour garder la suggestion."
+        subtitle="Des airs dont les deux premières notes forment l’intervalle. Tu peux les remplacer par un air que tu connais bien ; laisse vide pour garder les suggestions."
       />
       <label className="flex items-center gap-3">
         <input
@@ -48,19 +49,33 @@ export function LandmarksScreen() {
           </h2>
           {DIRECTIONS.map(({ direction, label }) => {
             const key = landmarkKey(code, direction);
-            const suggestion = INTERVAL_LANDMARKS[code][direction];
+            const id = `repere-${code}-${direction}`;
+            const suggestions = INTERVAL_LANDMARKS[code][direction];
             return (
-              <label key={key} className="flex flex-col gap-1 text-sm">
-                <span className={muted}>{label}</span>
+              <div key={key} className="flex flex-col gap-1 text-sm">
+                <label htmlFor={id} className={muted}>
+                  {label}
+                </label>
+                <p id={`${id}-suggestions`}>
+                  {suggestions.length > 0 ? (
+                    <>
+                      Suggestions : <LandmarkList landmarks={suggestions} />
+                    </>
+                  ) : (
+                    'Pas de suggestion : à toi de trouver'
+                  )}
+                </p>
                 <input
+                  id={id}
                   type="text"
                   maxLength={80}
                   value={settings.landmarks[key] ?? ''}
-                  placeholder={suggestion ?? 'Pas de suggestion : à toi de trouver'}
+                  placeholder="Ta chanson"
+                  aria-describedby={`${id}-suggestions`}
                   onChange={(event) => update(key, event.target.value)}
                   className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 placeholder:text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:placeholder:text-slate-400"
                 />
-              </label>
+              </div>
             );
           })}
         </section>
