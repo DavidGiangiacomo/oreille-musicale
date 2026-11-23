@@ -63,7 +63,14 @@ jobs:
         run: npm ci
       - name: Renseigner la base D1
         if: steps.config.outputs.ready == 'true'
-        run: sed -i "s/00000000-0000-0000-0000-000000000000/${D1_DATABASE_ID}/" wrangler.jsonc
+        run: |
+          id="$(printf '%s' "$D1_DATABASE_ID" | tr -d '[:space:]' | tr 'A-F' 'a-f')"
+          if ! printf '%s' "$id" | grep -Eq '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'; then
+            dashes="$(printf '%s' "$id" | tr -cd '-' | wc -c)"
+            echo "::error::D1_DATABASE_ID n'a pas la forme d'un identifiant de base D1 : 36 caractères, xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (valeur reçue : ${#id} caractères dont $dashes tirets). C'est le « Database ID » de la base oreille-musicale-sync, pas l'identifiant du compte."
+            exit 1
+          fi
+          sed -i "s/00000000-0000-0000-0000-000000000000/$id/" wrangler.jsonc
       - name: Mettre à jour le schéma de la base
         if: steps.config.outputs.ready == 'true'
         run: npm run migrate
