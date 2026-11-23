@@ -3,7 +3,8 @@ name: Serveur de synchronisation
 # Déploie le serveur de synchronisation sur Cloudflare (server/README.md).
 # Prérequis, dans Settings → Secrets and variables → Actions :
 #   - secrets CLOUDFLARE_API_TOKEN et CLOUDFLARE_ACCOUNT_ID ;
-#   - variable D1_DATABASE_ID (identifiant de la base D1 « oreille-musicale-sync »).
+#   - D1_DATABASE_ID (identifiant de la base D1 « oreille-musicale-sync »), en
+#     variable ou en secret.
 # Sans eux, le workflow s'arrête sans rien déployer.
 on:
   push:
@@ -33,15 +34,19 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      D1_DATABASE_ID: ${{ vars.D1_DATABASE_ID }}
+      D1_DATABASE_ID: ${{ vars.D1_DATABASE_ID || secrets.D1_DATABASE_ID }}
       WRANGLER_SEND_METRICS: 'false'
     steps:
       - name: Vérifier la configuration
         id: config
         working-directory: .
         run: |
-          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ] || [ -z "$D1_DATABASE_ID" ]; then
-            echo "::notice::Cloudflare n'est pas encore configuré : rien à déployer (voir server/README.md)."
+          missing=""
+          [ -n "$CLOUDFLARE_API_TOKEN" ] || missing="$missing CLOUDFLARE_API_TOKEN"
+          [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || missing="$missing CLOUDFLARE_ACCOUNT_ID"
+          [ -n "$D1_DATABASE_ID" ] || missing="$missing D1_DATABASE_ID"
+          if [ -n "$missing" ]; then
+            echo "::notice::Configuration Cloudflare incomplète, rien n'est déployé. Manquant :$missing (voir server/README.md)."
             echo "ready=false" >> "$GITHUB_OUTPUT"
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"
