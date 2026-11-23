@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import { MemorySyncServer, SyncAccessDenied } from '../src/sync/memoryServer';
 
@@ -63,6 +64,15 @@ async function connect(context: BrowserContext, server: MemorySyncServer) {
   });
 }
 
+/** Audit d'accessibilité (WCAG 2.1 AA) de la carte de synchronisation. */
+async function audit(page: Page) {
+  const results = await new AxeBuilder({ page })
+    .include('section[aria-labelledby="synchronisation"]')
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  expect(results.violations.map((v) => `${v.id} : ${v.nodes[0]?.target.join(' ')}`)).toEqual([]);
+}
+
 async function onboard(page: Page) {
   await page.goto('./#/bienvenue');
   await page.getByRole('button', { name: /Écouter un accord/ }).click();
@@ -106,6 +116,7 @@ test('deux appareils reliés par une clé retrouvent la même progression', asyn
   const key = (await syncA.getByText(/^[0-9A-Z]{4}-[0-9A-Z]{4}-/).textContent()) ?? '';
   expect(key).toMatch(/^[0-9A-Z*~$=]{4}(-[0-9A-Z*~$=]{1,4}){6}$/);
   await expect(syncA.getByText(/Dernière synchronisation/)).toBeVisible();
+  await audit(a);
 
   // Second appareil : la clé saisie en minuscules, sans tirets.
   await onboard(b);
@@ -114,9 +125,14 @@ test('deux appareils reliés par une clé retrouvent la même progression', asyn
   await syncB.getByLabel('Clé de synchronisation').fill('ABCD');
   await syncB.getByRole('button', { name: 'Relier cet appareil' }).click();
   await expect(syncB.getByRole('alert')).toHaveText('Cette clé est incomplète ou mal recopiée.');
+  await audit(b);
   await syncB.getByLabel('Clé de synchronisation').fill(key.toLowerCase().replace(/-/g, ''));
   await syncB.getByRole('button', { name: 'Relier cet appareil' }).click();
   await expect(syncB.getByText(/Dernière synchronisation/)).toBeVisible();
+
+  await syncB.getByRole('button', { name: 'Désactiver sur cet appareil' }).click();
+  await audit(b);
+  await syncB.getByRole('button', { name: 'Annuler' }).click();
 
   await b.goto('./#/parcours');
   await expect(

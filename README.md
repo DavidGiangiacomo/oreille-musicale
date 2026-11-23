@@ -38,9 +38,11 @@ Les règles d'isolation de `src/core` sont vérifiées par ESLint et par `tsconf
 
 Les tests de bout en bout (`e2e/`) lancent le serveur de développement avec un moteur audio silencieux (`VITE_FAKE_AUDIO=1`) et simulent l'horloge pour enchaîner plusieurs jours de révisions. Avant la première exécution : `npx playwright install chromium`.
 
-## Hors-ligne et sauvegarde
+## Hors-ligne, sauvegarde et synchronisation
 
-La version web s'installe sur l'écran d'accueil (« Installer » ou « Ajouter à l'écran d'accueil ») et fonctionne ensuite sans connexion : l'appli est mise en cache à la première visite, les sons de chaque timbre à leur première écoute. La progression reste sur l'appareil ; la carte « Sauvegarde » de l'accueil permet de l'exporter dans un fichier et de l'importer sur un autre appareil. Voir aussi la [politique de confidentialité](PRIVACY.md).
+La version web s'installe sur l'écran d'accueil (« Installer » ou « Ajouter à l'écran d'accueil ») et fonctionne ensuite sans connexion : l'appli est mise en cache à la première visite, les sons de chaque timbre à leur première écoute. La progression reste sur l'appareil ; la carte « Sauvegarde » de l'accueil permet de l'exporter dans un fichier et de l'importer sur un autre appareil.
+
+La carte « Synchronisation » relie tes appareils, sans compte ni e-mail : le premier crée une clé, que l'on saisit sur les autres. Les données sont chiffrées sur l'appareil avant l'envoi ; le serveur ([`server/`](server/README.md), un Cloudflare Worker) ne voit que des blocs illisibles. Voir aussi la [politique de confidentialité](PRIVACY.md).
 
 ## Android
 

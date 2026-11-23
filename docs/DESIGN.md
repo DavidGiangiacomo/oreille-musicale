@@ -891,7 +891,7 @@ oreille-musicale/
 
 ### 10.11 Confidentialité, sécurité et licences
 
-- Aucune donnée ne quitte l'appareil en v1 : ni compte, ni traceur, ni publicité.
+- Ni compte, ni traceur, ni publicité. En v1, aucune donnée ne quitte l'appareil ; en v2, seule la synchronisation, facultative, envoie des données, chiffrées de bout en bout (§10.8).
 - Politique de confidentialité courte (exigée par le Play Store).
 - En-têtes de sécurité (CSP) sur l'hébergement web ; dépendances surveillées (Dependabot).
 - Crédits des échantillons et des bibliothèques dans l'appli et dans un fichier dédié.

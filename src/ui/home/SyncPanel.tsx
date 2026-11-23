@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, useSyncExternalStore, type FormEvent } from 'react';
+import { Fragment, useEffect, useId, useState, useSyncExternalStore, type FormEvent } from 'react';
 import { canShareText, copyText, shareText } from '../../platform/share';
 import { card, cardTitle, muted, primaryButton, secondaryButton } from '../styles';
 import {
@@ -41,15 +41,25 @@ function KeyBox({ syncKey }: { syncKey: string }) {
   return (
     <div className="flex flex-col gap-3 rounded-xl bg-amber-50 p-4 dark:bg-amber-950/40">
       <p className="text-sm font-medium">Clé de synchronisation</p>
-      <p className="font-mono text-lg font-semibold tracking-wider break-all select-all">
-        {syncKey}
+      {/* Retour à la ligne seulement après un tiret, jamais au milieu d'un groupe. */}
+      <p className="font-mono text-lg font-semibold tracking-wider select-all">
+        {syncKey.split('-').map((group, i) => (
+          <Fragment key={i}>
+            {i > 0 && (
+              <>
+                -<wbr />
+              </>
+            )}
+            <span className="whitespace-nowrap">{group}</span>
+          </Fragment>
+        ))}
       </p>
       <p className="text-sm">
         Saisis-la sur ton autre appareil, dans « J’ai déjà une clé ». Garde-la en lieu sûr : elle
         seule permet de relier tes appareils et de relire tes données. Personne d’autre ne peut la
         retrouver.
       </p>
-      <div className="grid grid-cols-2 gap-2">
+      <div className={`grid gap-2 ${canShareText() ? 'grid-cols-2' : ''}`}>
         <button
           type="button"
           className={secondaryButton}

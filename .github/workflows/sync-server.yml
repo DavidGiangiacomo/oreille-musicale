@@ -6,9 +6,7 @@ name: Serveur de synchronisation
 # rien déployer. La base D1 « oreille-musicale-sync » est retrouvée, ou créée, seule.
 on:
   push:
-    # TEMPORAIRE : branche de travail ajoutée pour vérifier la configuration
-    # Cloudflare avant la PR ; à retirer avant la fusion.
-    branches: [main, ccr-3cdc9837-hsf7nd]
+    branches: [main]
     paths:
       - 'server/**'
       - 'src/sync/protocol.ts'
