@@ -4,6 +4,9 @@
 import { envelope, parseEnvelope, recordKey, type SyncRecord } from '../core/sync/records';
 import { seal, unseal, type SealedRecord, type SyncKeys } from './crypto';
 
+/** Serveur injoignable (pas de réseau, coupure) : la synchronisation reprendra plus tard. */
+export class SyncUnreachable extends Error {}
+
 /** Enregistrement lu sur le serveur, avec sa position dans le dossier. */
 export interface StoredRecord extends SealedRecord {
   seq: number;
@@ -40,6 +43,7 @@ export interface SyncReport {
   rejected: number;
 }
 
+/** Lot d'envoi et page de lecture ; au plus MAX_PUSH_RECORDS (sync/protocol.ts). */
 export const BATCH_SIZE = 200;
 
 async function decode(keys: SyncKeys, sealed: SealedRecord) {

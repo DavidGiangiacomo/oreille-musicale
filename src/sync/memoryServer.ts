@@ -1,7 +1,7 @@
 // Serveur de synchronisation en mémoire, au comportement du vrai (docs/DESIGN.md
 // §10.8) : pour les tests, et comme référence du protocole.
 import type { SealedRecord } from './crypto';
-import type { StoredRecord, SyncTransport } from './engine';
+import { SyncUnreachable, type StoredRecord, type SyncTransport } from './engine';
 
 interface Bucket {
   token: string;
@@ -11,20 +11,23 @@ interface Bucket {
 }
 
 export class SyncAccessDenied extends Error {}
-export class SyncOffline extends Error {}
+export class SyncOffline extends SyncUnreachable {}
 
 export class MemorySyncServer {
   readonly #buckets = new Map<string, Bucket>();
 
-  /** Le dossier est créé au premier accès, avec ce jeton ; un autre jeton est refusé. */
-  #bucket(bucket: string, token: string): Bucket {
+  /**
+   * Le dossier est créé au premier envoi, lié à ce jeton ; un autre jeton est
+   * refusé. Lire un dossier qui n'existe pas encore ne renvoie rien.
+   */
+  #bucket(bucket: string, token: string, create: boolean): Bucket | null {
     let found = this.#buckets.get(bucket);
-    if (!found) {
+    if (!found && create) {
       found = { token, seq: 0, ids: new Set(), records: [] };
       this.#buckets.set(bucket, found);
     }
-    if (found.token !== token) throw new SyncAccessDenied('Jeton refusé');
-    return found;
+    if (found && found.token !== token) throw new SyncAccessDenied('Jeton refusé');
+    return found ?? null;
   }
 
   /** Nombre de blocs gardés pour un dossier (tests). */
@@ -40,7 +43,7 @@ export class MemorySyncServer {
     return {
       push: async (records: readonly SealedRecord[]) => {
         check();
-        const target = this.#bucket(bucket, token);
+        const target = this.#bucket(bucket, token, true)!;
         for (const { id, data } of records) {
           if (target.ids.has(id)) continue;
           target.ids.add(id);
@@ -51,8 +54,8 @@ export class MemorySyncServer {
       },
       pull: async (after: number, limit: number) => {
         check();
-        const target = this.#bucket(bucket, token);
-        const next = target.records.filter((record) => record.seq > after);
+        const target = this.#bucket(bucket, token, false);
+        const next = (target?.records ?? []).filter((record) => record.seq > after);
         await Promise.resolve();
         return { records: next.slice(0, limit), more: next.length > limit };
       },

@@ -832,9 +832,17 @@ L'identifiant envoyé est le HMAC de la clé : le serveur dédoublonne sans savo
 
 **Sauvegarde importée** avec la synchronisation active : elle remplace les données de l'appareil, puis tout le dossier du serveur est relu et fusionné avec elle, et elle est envoyée à son tour.
 
-**Serveur** : un Cloudflare Worker et une base D1, dont le code est dans le dépôt (auto-hébergeable). Il ne voit que l'identifiant du dossier, le jeton, des identifiants opaques et des blocs chiffrés. Perdre la clé rend le dossier illisible ; les données des appareils, elles, restent. La suppression du dossier efface tout côté serveur.
+**Serveur** (`server/`) : un Cloudflare Worker et une base D1, libres et auto-hébergeables. Il ne voit que l'identifiant du dossier, l'empreinte SHA-256 du jeton, des identifiants opaques et des blocs chiffrés. Protocole (`sync/protocol.ts`) :
 
-**Code** : fusion et format dans `core/sync` (pur, testé) ; chiffrement et moteur dans `sync/`, indépendants du serveur (`SyncTransport`) et de la base (`SyncStore`, implémenté dans `data/sync.ts`) ; un serveur en mémoire au comportement du vrai sert de référence et de banc d'essai : deux appareils simulés, hors-ligne puis en ligne, dans des ordres tirés au hasard.
+| Requête | Effet |
+|---|---|
+| `POST /v1/buckets/:dossier/records` | Ajoute jusqu'à 200 blocs ; un identifiant déjà connu est ignoré. Le premier envoi crée le dossier et le lie au jeton |
+| `GET /v1/buckets/:dossier/records?after=N&limit=M` | Blocs suivant la position N, avec leur numéro, par pages de 500 au plus |
+| `DELETE /v1/buckets/:dossier` | Efface le dossier et tout son contenu |
+
+Jeton dans l'en-tête `Authorization` (jamais de cookie, donc toutes origines acceptées) ; un autre jeton est refusé (403) ; un dossier inexistant se lit vide. Limites : blocs de 16 Ko, 200 000 par dossier. Chaque envoi est une transaction D1 où chaque bloc nouveau prend le numéro suivant du dossier : un lecteur ne peut pas manquer un bloc. Perdre la clé rend le dossier illisible ; les données des appareils, elles, restent. Déploiement par un workflow GitHub (`sync-server.yml`), une fois le compte Cloudflare configuré (`server/README.md`).
+
+**Code** : fusion et format dans `core/sync` (pur, testé) ; chiffrement, moteur et accès HTTP dans `sync/`, indépendants du serveur (`SyncTransport`) et de la base (`SyncStore`, implémenté dans `data/sync.ts`). Tests : deux appareils simulés avec un serveur en mémoire, hors-ligne puis en ligne, dans des ordres tirés au hasard ; le Worker sur le SQLite de Node (D1 est du SQLite) ; le moteur de l'appli contre le Worker, par HTTP.
 
 ### 10.9 Organisation du dépôt
 
@@ -850,9 +858,11 @@ oreille-musicale/
 │   │   ├── exercise/
 │   │   ├── session/
 │   │   ├── progress/
-│   │   └── srs/
+│   │   ├── srs/
+│   │   └── sync/            ← format et fusion des enregistrements synchronisés
 │   ├── audio/
 │   ├── data/
+│   ├── sync/                ← chiffrement, moteur et protocole de synchronisation
 │   ├── platform/
 │   ├── ui/
 │   │   ├── screens/
@@ -862,6 +872,7 @@ oreille-musicale/
 ├── public/
 │   └── samples/<timbre>/    ← échantillons et leur licence (piano, vibraphone, cordes)
 ├── android/                 ← projet natif généré par Capacitor
+├── server/                  ← serveur de synchronisation (Cloudflare Worker et D1)
 ├── e2e/                     ← tests Playwright
 ├── capacitor.config.ts
 ├── vite.config.ts

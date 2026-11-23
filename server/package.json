@@ -1,0 +1,21 @@
+{
+  "name": "oreille-musicale-sync",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Serveur de synchronisation d'Oreille musicale : un Cloudflare Worker et une base D1 qui ne gardent que des blocs chiffrés.",
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "deploy": "wrangler deploy",
+    "migrate": "wrangler d1 migrations apply oreille-musicale-sync --remote"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261108.1",
+    "typescript": "~6.0.3",
+    "vitest": "^5.1.1",
+    "wrangler": "4.158.0"
+  }
+}

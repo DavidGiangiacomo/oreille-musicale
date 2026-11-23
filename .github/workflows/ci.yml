@@ -31,6 +31,32 @@ jobs:
       - run: npm test
       - run: npm run build
 
+  sync-server:
+    name: Serveur de synchronisation
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            server/package-lock.json
+      # Les tests d'intégration utilisent le moteur de synchronisation de l'appli.
+      - run: npm ci
+      - run: npm ci
+        working-directory: server
+      - run: npm run typecheck
+        working-directory: server
+      - run: npm test
+        working-directory: server
+      - run: npm run build
+        working-directory: server
+        env:
+          WRANGLER_SEND_METRICS: 'false'
+
   e2e:
     name: Tests de bout en bout
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
