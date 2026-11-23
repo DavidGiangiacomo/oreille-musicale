@@ -119,6 +119,10 @@ describe('schéma de la base', () => {
       attempts: 'id, sessionId, at, competenceId, stepId',
       settings: 'id',
       events: 'id, at, stepId, type',
+      settingChanges: 'key, field',
+      syncedKeys: 'key',
+      syncMeta: 'key',
+      syncDeferred: 'id',
     });
   });
 
@@ -139,6 +143,44 @@ describe('schéma de la base', () => {
     expect(await journal.attemptsOf('s1')).toHaveLength(1);
     expect((await journal.loadSettings()).noteNames).toBe('en');
     expect(await journal.events()).toEqual([]);
+  });
+
+  it('migre une base de la version 2 (v1.0 de l’appli) vers la synchronisation', async () => {
+    const name = `migration-${++counter}`;
+    const v2 = openDatabase(name, 2);
+    await v2.open();
+    await v2.sessions.add(session('s1', 1));
+    await v2.attempts.add(attempt('a1', 's1', 2, true));
+    await createJournal(v2).addEvent({
+      id: 'e1',
+      at: 3,
+      type: 'phase_started',
+      stepId: 'int.asc.01',
+      phase: 'train',
+    });
+    await v2.settings.put({ id: 'settings', tempo: 'slow' });
+    v2.close();
+
+    const current = freshDatabase(name);
+    await current.open();
+    const journal = createJournal(current);
+    expect(await journal.attemptsOf('s1')).toHaveLength(1);
+    expect(await journal.events()).toHaveLength(1);
+    expect((await journal.loadSettings()).tempo).toBe('slow');
+    expect(await current.settingChanges.count()).toBe(0);
+  });
+});
+
+describe('réglages', () => {
+  it('garde la trace horodatée de chaque réglage partagé modifié', async () => {
+    const db = freshDatabase();
+    const journal = createJournal(db);
+    await journal.saveSettings({ ...DEFAULT_SETTINGS, tempo: 'fast', volume: 0.5 });
+    const changes = await db.settingChanges.toArray();
+    // Le volume reste propre à l'appareil : seul le tempo est partagé.
+    expect(changes.map((change) => [change.field, change.value])).toEqual([['tempo', 'fast']]);
+    await journal.saveSettings({ ...DEFAULT_SETTINGS, tempo: 'fast', volume: 0.2 });
+    expect(await db.settingChanges.count()).toBe(1);
   });
 });
 

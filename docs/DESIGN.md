@@ -1,9 +1,9 @@
 # Oreille musicale — Document de conception
 
-> **Statut** : v0.8 ; version 1.0 de l'appli publiée, v2 en préparation
+> **Statut** : v0.9 ; version 1.0 de l'appli publiée, v2 en cours
 > **Date** : 20 novembre 2026
 > **Objet** : application web et Android d'entraînement de l'oreille musicale (intervalles, accords, gammes et modes), avec difficulté progressive, suivi de progression et révisions espacées.
-> **Historique** : v0.1, version initiale ; v0.2, ajout des gammes et modes, et des exercices chantés prévus en v2 ; v0.3, premières décisions (public, framework, hébergement, licence) ; v0.4, révisions recalculées depuis le journal (J3) ; v0.5, accords et renversements (J4) ; v0.6, gammes et modes (J5), décisions de #10 ; v0.7, Android et hors-ligne (J6) ; v0.8, finitions et version 1.0 (J7), exercices chantés précisés pour la v2 (notes extraites d'un intervalle ou d'un accord, chant seul, instruments plus tard).
+> **Historique** : v0.1, version initiale ; v0.2, ajout des gammes et modes, et des exercices chantés prévus en v2 ; v0.3, premières décisions (public, framework, hébergement, licence) ; v0.4, révisions recalculées depuis le journal (J3) ; v0.5, accords et renversements (J4) ; v0.6, gammes et modes (J5), décisions de #10 ; v0.7, Android et hors-ligne (J6) ; v0.8, finitions et version 1.0 (J7), exercices chantés précisés pour la v2 (notes extraites d'un intervalle ou d'un accord, chant seul, instruments plus tard) ; v0.9, synchronisation chiffrée de bout en bout, sans compte (§10.8).
 
 ## Sommaire
 
@@ -801,7 +801,40 @@ Volumétrie : environ 100 réponses par jour, soit près de 36 000 par an (quelq
 
 ### 10.8 Synchronisation (v2)
 
-Pas de synchronisation en v1 : l'export/import permet de passer d'un appareil à l'autre. Le journal en ajout seul la rend simple à ajouter plus tard : chaque appareil envoie ses événements (identifiants uniques), récupère ceux des autres et recalcule ses projections. Backend envisageable : Supabase (Postgres + authentification, hébergement en UE) ou un petit serveur maison.
+En v1, l'export/import permet de passer d'un appareil à l'autre. En v2, une synchronisation **facultative, sans compte et chiffrée de bout en bout** relie les appareils d'une même personne (#52). L'appli reste entièrement utilisable sans elle, hors-ligne.
+
+**Clé de synchronisation.** Le premier appareil tire un secret aléatoire de 128 bits et l'affiche sous forme d'une clé lisible : 26 caractères en base 32 de Crockford (sans I, L, O ni U), plus un caractère de contrôle contre les fautes de frappe, par groupes de 4 (« 7KQ3-M2XA-… »), ou en QR code. On la saisit sur les autres appareils. Du secret, HKDF-SHA-256 dérive quatre valeurs indépendantes :
+
+| Valeur | Rôle | Connue du serveur |
+|---|---|---|
+| Dossier (128 bits) | Où ranger les enregistrements de cette personne | Oui |
+| Jeton (256 bits) | Droit de lire et d'écrire dans ce dossier | Oui |
+| Clé de chiffrement (AES-GCM 256) | Chiffrer le contenu des enregistrements | Non |
+| Clé de nommage (HMAC-SHA-256) | Donner à chaque enregistrement un identifiant opaque | Non |
+
+**Enregistrements.** Le serveur ne garde qu'un ensemble de blocs chiffrés, **en ajout seul** : un identifiant déjà connu est ignoré, et chaque nouveau bloc reçoit un numéro croissant pour la lecture incrémentale. Chaque *version* d'enregistrement a sa propre clé, ce qui évite toute réécriture :
+
+| Enregistrement | Clé | Fusion |
+|---|---|---|
+| Réponse, événement | `attempt:<id>`, `event:<id>` | Union (ils ne changent jamais) |
+| Séance | `session:<id>:<fin ou open>` | La version terminée, et la fin la plus tardive |
+| Modification d'un réglage | `setting:<champ>:<horodatage>:<appareil>` | La plus récente l'emporte, champ par champ (puis l'appareil, puis la valeur, pour un ordre total) |
+
+L'identifiant envoyé est le HMAC de la clé : le serveur dédoublonne sans savoir ce qu'il range. Le contenu `{ v, record }` est chiffré en AES-GCM, avec l'identifiant en données associées (un bloc déplacé ne se déchiffre plus).
+
+**Réglages partagés** : notation, octaves, timbre, tempo, passage automatique, parcours actifs, objectif quotidien, chansons repères, accueil terminé. Le volume, le thème et le rappel restent propres à chaque appareil. Chaque modification d'un réglage partagé est gardée, horodatée ; sur un même appareil, les horodatages sont strictement croissants. L'appareil qui crée la clé partage tous ses réglages ; celui qui la rejoint adopte ceux des autres, sauf modifications plus récentes de sa part.
+
+**Déroulé d'une synchronisation** : (1) relire les enregistrements mis de côté ; (2) envoyer, par lots de 200, ce que le serveur n'a pas encore (les clés déjà envoyées ou reçues sont notées) ; (3) lire, par pages, ce qui est arrivé depuis la dernière position, le fusionner, et avancer la position. Une coupure arrête la synchronisation sur une erreur : ce qui est acquis le reste, la suivante reprend là. Les projections (étapes, révisions, statistiques) se recalculent d'elles-mêmes à partir du journal : tous les appareils arrivent au même état, quel que soit l'ordre des envois.
+
+**Versions d'appli différentes.** Un enregistrement d'un format plus récent n'est ni perdu ni appliqué : l'appareil le garde de côté et le relit à chaque synchronisation, jusqu'à pouvoir le comprendre après une mise à jour. Une valeur de réglage inconnue (un timbre ajouté depuis) est ignorée, le réglage garde sa valeur.
+
+**Heures des appareils.** Réponses et séances gardent l'heure de l'appareil qui les a enregistrées : le jour d'étude et les échéances se calculent comme avant. Un léger décalage d'horloge ne joue que sur l'arbitrage entre deux modifications quasi simultanées d'un même réglage.
+
+**Sauvegarde importée** avec la synchronisation active : elle remplace les données de l'appareil, puis tout le dossier du serveur est relu et fusionné avec elle, et elle est envoyée à son tour.
+
+**Serveur** : un Cloudflare Worker et une base D1, dont le code est dans le dépôt (auto-hébergeable). Il ne voit que l'identifiant du dossier, le jeton, des identifiants opaques et des blocs chiffrés. Perdre la clé rend le dossier illisible ; les données des appareils, elles, restent. La suppression du dossier efface tout côté serveur.
+
+**Code** : fusion et format dans `core/sync` (pur, testé) ; chiffrement et moteur dans `sync/`, indépendants du serveur (`SyncTransport`) et de la base (`SyncStore`, implémenté dans `data/sync.ts`) ; un serveur en mémoire au comportement du vrai sert de référence et de banc d'essai : deux appareils simulés, hors-ligne puis en ligne, dans des ordres tirés au hasard.
 
 ### 10.9 Organisation du dépôt
 
@@ -990,7 +1023,7 @@ Le son étant coupé pendant le chant (sauf avec un casque, §11.6), on chante d
 | Accords en révision | Le contexte de réponse est la famille et la présentation : triades et septièmes acquises dans une même présentation partagent les boutons d'une révision. Pas de duel de renversements |
 | Test d'étape | Au moins deux questions par nouvel élément (R6 en introduit huit) ; une étape sans nouvel élément (R4) commence directement à l'entraînement |
 | Parcours actifs par défaut | Intervalles et Triades ; Septièmes et Renversements s'ajoutent depuis l'écran Parcours |
-| Synchronisation | Export/import en v1 ; la synchronisation entre appareils est une tâche à part, en v2 ou v3 (#52) |
+| Synchronisation | Export/import en v1 ; en v2, synchronisation facultative sans compte, chiffrée de bout en bout, par une clé de synchronisation et un petit serveur Cloudflare (Worker et D1) qui ne voit que des blocs illisibles (§10.8, #52). Choisie plutôt que Supabase (projets gratuits mis en pause, e-mails et données lisibles chez un tiers), le Drive de chaque utilisateur ou un serveur loué |
 | Terminologie | Convention française par défaut : Do3 central, 4J, 7M |
 | Ordre pédagogique | Celui du §7.2, accords suspendus compris dès la v1 |
 | Gammes v1 | La sélection du §6.3 ; mineure mélodique en forme classique (elle redescend en mineure naturelle), donc absente de la ligne « descendante » |

@@ -13,6 +13,9 @@ import { SettingsContext } from './settingsContext';
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const stored = useLiveQuery(() => journal.loadSettings(), []);
   const [local, setLocal] = useState<Settings | null>(null);
+  // La copie locale ne sert qu'en attendant l'écriture : une fois la base à jour,
+  // elle s'efface, et un réglage reçu d'un autre appareil (§10.8) s'affiche aussitôt.
+  if (local !== null && JSON.stringify(stored) === JSON.stringify(local)) setLocal(null);
   const settings = local ?? stored ?? DEFAULT_SETTINGS;
 
   useEffect(() => {
