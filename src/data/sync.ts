@@ -85,6 +85,7 @@ export function createSyncStore(db: OreilleDatabase) {
         await Promise.all([
           db.syncMeta.delete('syncKey'),
           db.syncMeta.delete('cursor'),
+          db.syncMeta.delete('lastSyncAt'),
           db.syncedKeys.clear(),
           db.syncDeferred.clear(),
         ]);
@@ -99,6 +100,16 @@ export function createSyncStore(db: OreilleDatabase) {
 
     async setCursor(cursor: number): Promise<void> {
       await db.syncMeta.put({ key: 'cursor', value: cursor });
+    },
+
+    /** Heure de la dernière synchronisation réussie, ou null. */
+    async lastSyncAt(): Promise<number | null> {
+      const row = await db.syncMeta.get('lastSyncAt');
+      return typeof row?.value === 'number' ? row.value : null;
+    },
+
+    async setLastSyncAt(at: number): Promise<void> {
+      await db.syncMeta.put({ key: 'lastSyncAt', value: at });
     },
 
     /** Enregistrements de l'appareil que le serveur n'a pas encore. */

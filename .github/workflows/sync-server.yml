@@ -86,5 +86,25 @@ jobs:
         if: steps.config.outputs.ready == 'true'
         run: npm run migrate
       - name: Déployer le Worker
+        id: deploy
         if: steps.config.outputs.ready == 'true'
-        run: npm run deploy
+        run: |
+          npm run deploy | tee deploy.log
+          url="$(grep -Eo 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+      - name: Vérifier le serveur en ligne
+        if: steps.config.outputs.ready == 'true' && steps.deploy.outputs.url != ''
+        env:
+          URL: ${{ steps.deploy.outputs.url }}
+        run: |
+          # Un dossier jetable : un bloc envoyé, relu, puis le dossier effacé.
+          bucket="$(openssl rand -hex 16)"
+          token="$(openssl rand -base64 32 | tr '+/' '-_' | tr -d '=')"
+          auth="Authorization: Bearer $token"
+          curl -fsS "$URL/v1/health"
+          curl -fsS -X POST -H "$auth" -H 'Content-Type: application/json' \
+            -d '{"records":[{"id":"verification-en-ligne0","data":"essai"}]}' \
+            "$URL/v1/buckets/$bucket/records"
+          curl -fsS -H "$auth" "$URL/v1/buckets/$bucket/records?after=0&limit=10" | grep -q '"seq":1'
+          curl -fsS -X DELETE -H "$auth" "$URL/v1/buckets/$bucket"
+          echo "Serveur en ligne : $URL"

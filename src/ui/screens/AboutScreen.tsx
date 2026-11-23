@@ -25,13 +25,17 @@ export function AboutScreen() {
           Confidentialité
         </h2>
         <p className="font-semibold">
-          Aucune donnée personnelle n’est collectée ni transmise : ni compte, ni publicité, ni
-          traceur.
+          Aucune donnée personnelle n’est collectée : ni compte, ni publicité, ni traceur.
         </p>
         <ul className="flex list-disc flex-col gap-2 pl-5">
           <li>
-            Ta progression (réponses, étapes, réglages) est enregistrée uniquement sur cet appareil
-            et ne le quitte jamais.
+            Ta progression (réponses, étapes, réglages) est enregistrée sur cet appareil. Elle ne le
+            quitte que si tu actives la synchronisation, chiffrée avant l’envoi : le serveur ne peut
+            pas la lire, et ta clé ne quitte jamais tes appareils.
+          </li>
+          <li>
+            Le serveur de synchronisation tourne chez Cloudflare, qui peut enregistrer des données
+            techniques de connexion (adresse IP) ; tu peux y effacer tes données à tout moment.
           </li>
           <li>Le rappel quotidien, sur Android, est programmé sur le téléphone lui-même.</li>
           <li>

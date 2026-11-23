@@ -14,7 +14,7 @@ export interface SettingChangeRow extends SettingChange {
 
 /** Valeurs propres à la synchronisation : appareil, clé, position de lecture. */
 export interface SyncMetaRow {
-  key: 'device' | 'syncKey' | 'cursor';
+  key: 'device' | 'syncKey' | 'cursor' | 'lastSyncAt';
   value: string | number;
 }
 

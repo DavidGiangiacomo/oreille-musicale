@@ -4,6 +4,7 @@ import { AppLifecycle } from './AppLifecycle';
 import { UpdatePrompt } from './components/UpdatePrompt';
 import { ReminderScheduler } from './ReminderScheduler';
 import { RouteFocus } from './RouteFocus';
+import { SyncManager } from './SyncManager';
 import { CourseScreen } from './course/CourseScreen';
 import { DailySessionScreen } from './daily/DailySessionScreen';
 import { WelcomeScreen } from './onboarding/WelcomeScreen';
@@ -43,6 +44,7 @@ export function App() {
       <RouterProvider router={router} />
       <AppLifecycle router={router} />
       <RouteFocus router={router} />
+      <SyncManager />
       {native && <ReminderScheduler />}
       {withServiceWorker && <UpdatePrompt />}
     </SettingsProvider>
