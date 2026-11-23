@@ -156,18 +156,18 @@ Les codes servent d'identifiants internes ; l'interface affiche l'abréviation f
 |---|---|---|---|---|---|---|
 | `m2` | 1 | Seconde mineure | 2m | Do → Ré♭ | *Les Dents de la mer* | *La Lettre à Élise* |
 | `M2` | 2 | Seconde majeure | 2M | Do → Ré | *Frère Jacques* | *Yesterday* |
-| `m3` | 3 | Tierce mineure | 3m | Do → Mi♭ | *Smoke on the Water* | *Hey Jude* |
+| `m3` | 3 | Tierce mineure | 3m | Do → Mi♭ | *Greensleeves* | *Hey Jude* |
 | `M3` | 4 | Tierce majeure | 3M | Do → Mi | *When the Saints* | *5e Symphonie* (Beethoven) |
 | `P4` | 5 | Quarte juste | 4J | Do → Fa | *La Marseillaise* | *Une petite musique de nuit* |
-| `TT` | 6 | Triton (quarte augmentée / quinte diminuée) | 4+ / 5− | Do → Fa♯ | *Les Simpson* | — |
+| `TT` | 6 | Triton (quarte augmentée / quinte diminuée) | 4+ / 5− | Do → Fa♯ | *Les Simpson* | *Black Sabbath* (après l'octave) |
 | `P5` | 7 | Quinte juste | 5J | Do → Sol | *Ah ! vous dirai-je, maman* | *Les Pierrafeu* |
-| `m6` | 8 | Sixte mineure | 6m | Do → La♭ | — | — |
-| `M6` | 9 | Sixte majeure | 6M | Do → La | *My Bonnie* | — |
+| `m6` | 8 | Sixte mineure | 6m | Do → La♭ | *The Entertainer* (après les notes d'appel) | — |
+| `M6` | 9 | Sixte majeure | 6M | Do → La | *My Bonnie* | *Nobody Knows the Trouble I've Seen* |
 | `m7` | 10 | Septième mineure | 7m | Do → Si♭ | *Star Trek* (série originale) | — |
-| `M7` | 11 | Septième majeure | 7M | Do → Si | — | — |
+| `M7` | 11 | Septième majeure | 7M | Do → Si | *Take On Me* (refrain) | *I Love You* (Cole Porter) |
 | `P8` | 12 | Octave juste | 8J | Do → Do | *Over the Rainbow* | — |
 
-\* Repères retenus dans l'appli : ceux de ce tableau, avec *Greensleeves* pour la 3m montante, *The Entertainer* (après les notes d'appel) pour la 6m montante, *Nobody Knows the Trouble I've Seen* pour la 6M descendante et *Take On Me* (refrain) pour la 7M montante. À confirmer à l'oreille. L'utilisateur peut saisir ses propres repères (écran « Mes chansons repères ») : les plus efficaces sont des airs qu'on connaît bien.
+\* Premier repère de chaque sens. L'appli en propose plusieurs par intervalle et par sens, du plus cité au moins cité (`src/core/curriculum/landmarks.ts`) : par exemple *Seven Nation Army* pour la 3m montante, *Where Is My Mind?* (riff de guitare) pour la 3M dans les deux sens, *In the End* (riff de piano) pour la 5J montante. Un sens reste vide quand aucun air n'est sûr. À confirmer à l'oreille. L'utilisateur peut saisir son propre repère (écran « Mes chansons repères »), qui remplace alors les suggestions : les plus efficaces sont des airs qu'on connaît bien.
 
 ### 6.2 Accords
 
