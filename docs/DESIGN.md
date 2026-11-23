@@ -1,9 +1,9 @@
 # Oreille musicale — Document de conception
 
-> **Statut** : brouillon v0.7, à relire et valider
-> **Date** : 18 novembre 2026
+> **Statut** : v0.9 ; version 1.0 de l'appli publiée, v2 en cours
+> **Date** : 20 novembre 2026
 > **Objet** : application web et Android d'entraînement de l'oreille musicale (intervalles, accords, gammes et modes), avec difficulté progressive, suivi de progression et révisions espacées.
-> **Historique** : v0.1, version initiale ; v0.2, ajout des gammes et modes, et des exercices chantés prévus en v2 ; v0.3, premières décisions (public, framework, hébergement, licence) ; v0.4, révisions recalculées depuis le journal (J3) ; v0.5, accords et renversements (J4) ; v0.6, gammes et modes (J5), décisions de #10 ; v0.7, Android et hors-ligne (J6).
+> **Historique** : v0.1, version initiale ; v0.2, ajout des gammes et modes, et des exercices chantés prévus en v2 ; v0.3, premières décisions (public, framework, hébergement, licence) ; v0.4, révisions recalculées depuis le journal (J3) ; v0.5, accords et renversements (J4) ; v0.6, gammes et modes (J5), décisions de #10 ; v0.7, Android et hors-ligne (J6) ; v0.8, finitions et version 1.0 (J7), exercices chantés précisés pour la v2 (notes extraites d'un intervalle ou d'un accord, chant seul, instruments plus tard) ; v0.9, synchronisation chiffrée de bout en bout, sans compte (§10.8).
 
 ## Sommaire
 
@@ -801,7 +801,48 @@ Volumétrie : environ 100 réponses par jour, soit près de 36 000 par an (quelq
 
 ### 10.8 Synchronisation (v2)
 
-Pas de synchronisation en v1 : l'export/import permet de passer d'un appareil à l'autre. Le journal en ajout seul la rend simple à ajouter plus tard : chaque appareil envoie ses événements (identifiants uniques), récupère ceux des autres et recalcule ses projections. Backend envisageable : Supabase (Postgres + authentification, hébergement en UE) ou un petit serveur maison.
+En v1, l'export/import permet de passer d'un appareil à l'autre. En v2, une synchronisation **facultative, sans compte et chiffrée de bout en bout** relie les appareils d'une même personne (#52). L'appli reste entièrement utilisable sans elle, hors-ligne.
+
+**Clé de synchronisation.** Le premier appareil tire un secret aléatoire de 128 bits et l'affiche sous forme d'une clé lisible : 26 caractères en base 32 de Crockford (sans I, L, O ni U), plus un caractère de contrôle contre les fautes de frappe, par groupes de 4 (« 7KQ3-M2XA-… »), ou en QR code. On la saisit sur les autres appareils. Du secret, HKDF-SHA-256 dérive quatre valeurs indépendantes :
+
+| Valeur | Rôle | Connue du serveur |
+|---|---|---|
+| Dossier (128 bits) | Où ranger les enregistrements de cette personne | Oui |
+| Jeton (256 bits) | Droit de lire et d'écrire dans ce dossier | Oui |
+| Clé de chiffrement (AES-GCM 256) | Chiffrer le contenu des enregistrements | Non |
+| Clé de nommage (HMAC-SHA-256) | Donner à chaque enregistrement un identifiant opaque | Non |
+
+**Enregistrements.** Le serveur ne garde qu'un ensemble de blocs chiffrés, **en ajout seul** : un identifiant déjà connu est ignoré, et chaque nouveau bloc reçoit un numéro croissant pour la lecture incrémentale. Chaque *version* d'enregistrement a sa propre clé, ce qui évite toute réécriture :
+
+| Enregistrement | Clé | Fusion |
+|---|---|---|
+| Réponse, événement | `attempt:<id>`, `event:<id>` | Union (ils ne changent jamais) |
+| Séance | `session:<id>:<fin ou open>` | La version terminée, et la fin la plus tardive |
+| Modification d'un réglage | `setting:<champ>:<horodatage>:<appareil>` | La plus récente l'emporte, champ par champ (puis l'appareil, puis la valeur, pour un ordre total) |
+
+L'identifiant envoyé est le HMAC de la clé : le serveur dédoublonne sans savoir ce qu'il range. Le contenu `{ v, record }` est chiffré en AES-GCM, avec l'identifiant en données associées (un bloc déplacé ne se déchiffre plus).
+
+**Réglages partagés** : notation, octaves, timbre, tempo, passage automatique, parcours actifs, objectif quotidien, chansons repères, accueil terminé. Le volume, le thème et le rappel restent propres à chaque appareil. Chaque modification d'un réglage partagé est gardée, horodatée ; sur un même appareil, les horodatages sont strictement croissants. L'appareil qui crée la clé partage tous ses réglages ; celui qui la rejoint adopte ceux des autres, sauf modifications plus récentes de sa part.
+
+**Déroulé d'une synchronisation** : (1) relire les enregistrements mis de côté ; (2) envoyer, par lots de 200, ce que le serveur n'a pas encore (les clés déjà envoyées ou reçues sont notées) ; (3) lire, par pages, ce qui est arrivé depuis la dernière position, le fusionner, et avancer la position. Une coupure arrête la synchronisation sur une erreur : ce qui est acquis le reste, la suivante reprend là. Les projections (étapes, révisions, statistiques) se recalculent d'elles-mêmes à partir du journal : tous les appareils arrivent au même état, quel que soit l'ordre des envois.
+
+**Versions d'appli différentes.** Un enregistrement d'un format plus récent n'est ni perdu ni appliqué : l'appareil le garde de côté et le relit à chaque synchronisation, jusqu'à pouvoir le comprendre après une mise à jour. Une valeur de réglage inconnue (un timbre ajouté depuis) est ignorée, le réglage garde sa valeur.
+
+**Heures des appareils.** Réponses et séances gardent l'heure de l'appareil qui les a enregistrées : le jour d'étude et les échéances se calculent comme avant. Un léger décalage d'horloge ne joue que sur l'arbitrage entre deux modifications quasi simultanées d'un même réglage.
+
+**Sauvegarde importée** avec la synchronisation active : elle remplace les données de l'appareil, puis tout le dossier du serveur est relu et fusionné avec elle, et elle est envoyée à son tour.
+
+**Serveur** (`server/`) : un Cloudflare Worker et une base D1, libres et auto-hébergeables. Il ne voit que l'identifiant du dossier, l'empreinte SHA-256 du jeton, des identifiants opaques et des blocs chiffrés. Protocole (`sync/protocol.ts`) :
+
+| Requête | Effet |
+|---|---|
+| `POST /v1/buckets/:dossier/records` | Ajoute jusqu'à 200 blocs ; un identifiant déjà connu est ignoré. Le premier envoi crée le dossier et le lie au jeton |
+| `GET /v1/buckets/:dossier/records?after=N&limit=M` | Blocs suivant la position N, avec leur numéro, par pages de 500 au plus |
+| `DELETE /v1/buckets/:dossier` | Efface le dossier et tout son contenu |
+
+Jeton dans l'en-tête `Authorization` (jamais de cookie, donc toutes origines acceptées) ; un autre jeton est refusé (403) ; un dossier inexistant se lit vide. Limites : blocs de 16 Ko, 200 000 par dossier. Chaque envoi est une transaction D1 où chaque bloc nouveau prend le numéro suivant du dossier : un lecteur ne peut pas manquer un bloc. Perdre la clé rend le dossier illisible ; les données des appareils, elles, restent. Déploiement par un workflow GitHub (`sync-server.yml`), une fois le compte Cloudflare configuré (`server/README.md`).
+
+**Code** : fusion et format dans `core/sync` (pur, testé) ; chiffrement, moteur et accès HTTP dans `sync/`, indépendants du serveur (`SyncTransport`) et de la base (`SyncStore`, implémenté dans `data/sync.ts`). Tests : deux appareils simulés avec un serveur en mémoire, hors-ligne puis en ligne, dans des ordres tirés au hasard ; le Worker sur le SQLite de Node (D1 est du SQLite) ; le moteur de l'appli contre le Worker, par HTTP.
 
 ### 10.9 Organisation du dépôt
 
@@ -817,9 +858,11 @@ oreille-musicale/
 │   │   ├── exercise/
 │   │   ├── session/
 │   │   ├── progress/
-│   │   └── srs/
+│   │   ├── srs/
+│   │   └── sync/            ← format et fusion des enregistrements synchronisés
 │   ├── audio/
 │   ├── data/
+│   ├── sync/                ← chiffrement, moteur et protocole de synchronisation
 │   ├── platform/
 │   ├── ui/
 │   │   ├── screens/
@@ -829,6 +872,7 @@ oreille-musicale/
 ├── public/
 │   └── samples/<timbre>/    ← échantillons et leur licence (piano, vibraphone, cordes)
 ├── android/                 ← projet natif généré par Capacitor
+├── server/                  ← serveur de synchronisation (Cloudflare Worker et D1)
 ├── e2e/                     ← tests Playwright
 ├── capacitor.config.ts
 ├── vite.config.ts
@@ -847,7 +891,7 @@ oreille-musicale/
 
 ### 10.11 Confidentialité, sécurité et licences
 
-- Aucune donnée ne quitte l'appareil en v1 : ni compte, ni traceur, ni publicité.
+- Ni compte, ni traceur, ni publicité. En v1, aucune donnée ne quitte l'appareil ; en v2, seule la synchronisation, facultative, envoie des données, chiffrées de bout en bout (§10.8).
 - Politique de confidentialité courte (exigée par le Play Store).
 - En-têtes de sécurité (CSP) sur l'hébergement web ; dépendances surveillées (Dependabot).
 - Crédits des échantillons et des bibliothèques dans l'appli et dans un fichier dédié.
@@ -858,7 +902,7 @@ oreille-musicale/
 
 ## 11. Évolution : exercices chantés (v2)
 
-Chanter ce qu'on reconnaît relie l'oreille à la voix : c'est l'idée des exercices du type « chante l'arpège de cet accord » ou « chante cette gamme ». Ils sortent du périmètre de la v1, mais la v1 est conçue pour les accueillir sans refonte (§11.7).
+Chanter ce qu'on reconnaît relie l'oreille à la voix : c'est l'idée des exercices du type « chante l'arpège de cet accord », « chante cette gamme » ou « chante la tierce de cet accord plaqué ». La v2 se limite au chant : la voix ne produit une note que si on l'entend intérieurement, alors qu'un instrument permet de la trouver sans l'entendre (§11.8). Ils sortent du périmètre de la v1, mais la v1 est conçue pour les accueillir sans refonte (§11.7).
 
 ### 11.1 Faisabilité
 
@@ -876,11 +920,23 @@ Les vraies difficultés sont ailleurs : bruit ambiant, micros d'entrée de gamme
 |---|---|---|
 | Écho | L'appli joue un arpège ou un fragment de gamme ; on le rechante | Chaque note |
 | Intervalle | « Voici Ré. Chante une sixte majeure au-dessus. » | La note d'arrivée |
+| Note extraite | L'appli joue un intervalle ou un accord, arpégé ou plaqué : « Chante la note grave », « Chante la tierce », « Chante toutes les notes, du grave à l'aigu » | La note visée (ou chaque note, dans l'ordre) |
 | Arpège | « Voici Do. Chante l'arpège de Do7M, en montant puis en descendant. » | La suite Do-Mi-Sol-Si-Sol-Mi-Do |
 | Gamme ou mode | « Sur ce bourdon de Ré, chante le mode dorien. » | Les huit notes, à la montée et à la descente |
 | Degré (avec l'écoute fonctionnelle) | « En sol majeur, chante le 6e degré. » | La note visée |
 
 On chante sur la syllabe de son choix (« la », noms des notes, numéros de degrés) : seule la hauteur est analysée.
+
+**Notes extraites**, du plus facile au plus difficile, en suivant les colonnes des parcours (arpégé, puis plaqué) :
+
+1. Intervalle arpégé : chanter la 1re ou la 2e note (mémoire mélodique).
+2. Intervalle plaqué : chanter la note aiguë, qui ressort d'elle-même, puis la note grave.
+3. Accord arpégé : chanter une note désignée (fondamentale, tierce, quinte, septième), ou toutes les notes du grave à l'aigu.
+4. Accord plaqué, voix extérieures : chanter la basse ou la note du dessus.
+5. Accord plaqué, voix intérieures : chanter la tierce ou la septième, le vrai travail d'oreille harmonique.
+6. Accord plaqué, en entier : chanter toutes les notes, du grave à l'aigu.
+
+Le son étant coupé pendant le chant (sauf avec un casque, §11.6), on chante de mémoire, après l'écoute : c'est justement ce qui exerce l'oreille intérieure.
 
 ### 11.3 Déroulé d'une question chantée
 
@@ -920,7 +976,7 @@ On chante sur la syllabe de son choix (« la », noms des notes, numéros de deg
 
 ### 11.8 Prolongements possibles
 
-- **Répondre à l'instrument** (flûte, violon, guitare en notes isolées) : même détection, puisqu'on joue une note à la fois.
+- **Répondre à l'instrument** (flûte, violon, guitare en notes isolées), en v3 au plus tôt : même détection, puisqu'on joue une note à la fois. Réservé de préférence aux exercices d'écho et de notes extraites : pour un intervalle à partir d'une note donnée, l'instrument permet de trouver la réponse sans l'entendre (compter une tierce sur un clavier), ce qui fausserait l'exercice.
 - **Clavier MIDI** (API Web MIDI, selon les navigateurs) pour répondre en jouant les notes.
 - Analyser des **accords joués** (plusieurs notes simultanées) est nettement plus difficile : pas avant une v3.
 
@@ -978,7 +1034,7 @@ On chante sur la syllabe de son choix (« la », noms des notes, numéros de deg
 | Accords en révision | Le contexte de réponse est la famille et la présentation : triades et septièmes acquises dans une même présentation partagent les boutons d'une révision. Pas de duel de renversements |
 | Test d'étape | Au moins deux questions par nouvel élément (R6 en introduit huit) ; une étape sans nouvel élément (R4) commence directement à l'entraînement |
 | Parcours actifs par défaut | Intervalles et Triades ; Septièmes et Renversements s'ajoutent depuis l'écran Parcours |
-| Synchronisation | Export/import en v1 ; la synchronisation entre appareils est une tâche à part, en v2 ou v3 (#52) |
+| Synchronisation | Export/import en v1 ; en v2, synchronisation facultative sans compte, chiffrée de bout en bout, par une clé de synchronisation et un petit serveur Cloudflare (Worker et D1) qui ne voit que des blocs illisibles (§10.8, #52). Choisie plutôt que Supabase (projets gratuits mis en pause, e-mails et données lisibles chez un tiers), le Drive de chaque utilisateur ou un serveur loué |
 | Terminologie | Convention française par défaut : Do3 central, 4J, 7M |
 | Ordre pédagogique | Celui du §7.2, accords suspendus compris dès la v1 |
 | Gammes v1 | La sélection du §6.3 ; mineure mélodique en forme classique (elle redescend en mineure naturelle), donc absente de la ligne « descendante » |
@@ -994,12 +1050,12 @@ On chante sur la syllabe de son choix (« la », noms des notes, numéros de deg
 | Confidentialité | Politique dans `PRIVACY.md` et dans l'écran « À propos » : aucune donnée collectée ni transmise |
 | Distribution Android | APK signé publié directement (page Releases de GitHub) pour commencer ; le Play Store pourra venir plus tard |
 | Timbres (v1.0) | Piano, vibraphone, cordes et son pur, au choix dans les préférences (le timbre choisi se fait entendre aussitôt). Banques libres de droits (CC0) de Versilian Studios ; la guitare attend une banque sous licence libre. Les timbres variés viendront avec le chapitre Expert |
+| Exercices chantés (v2) | Chant seul en v2 ; réponse à l'instrument éventuellement en v3 (§11.8). Exercices : écho, intervalle, notes extraites d'un intervalle ou d'un accord (arpégé puis plaqué), arpège, gamme ou mode (§11.2). Son coupé pendant le chant, sauf avec un casque déclaré dans les réglages (§11.6) |
 | Dons | Ko-fi : connu du grand public, don ponctuel sans abonnement, sans frais de plateforme sur les dons ponctuels. Lien dans « À propos » seulement (web et Android) et bouton « Sponsor » du dépôt |
 
 ### 14.2 Questions ouvertes
 
-1. **Exercices chantés** : les utiliserais-tu plutôt au casque ? Faut-il aussi prévoir de répondre en jouant d'un instrument ? (v2)
-2. **Timbres** à ajouter après le vibraphone et les cordes (guitare, orgue, voix…) ?
+1. **Timbres** à ajouter après le vibraphone et les cordes (guitare, orgue, voix…) ?
 
 ---
 

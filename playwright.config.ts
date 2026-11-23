@@ -23,7 +23,8 @@ export default defineConfig({
   webServer: [
     {
       command: `npx vite --port ${PORT} --strictPort`,
-      env: { VITE_FAKE_AUDIO: '1' },
+      // Son silencieux, et serveur de synchronisation simulé par les tests (e2e/synchronisation).
+      env: { VITE_FAKE_AUDIO: '1', VITE_SYNC_URL: 'https://sync.test' },
       url: `http://localhost:${PORT}/`,
       reuseExistingServer: !process.env.CI,
     },

@@ -67,19 +67,20 @@ export type ParsedBackup =
 
 type Check = (value: Record<string, unknown>) => boolean;
 
-const isObject = (value: unknown): value is Record<string, unknown> =>
+export const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 const isString = (value: unknown): value is string => typeof value === 'string';
 const isNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
 
-const validSession: Check = (s) =>
+/** Vérifications de forme, partagées avec la synchronisation (core/sync). */
+export const validSession: Check = (s) =>
   isString(s.id) &&
   ['daily', 'custom', 'step', 'placement'].includes(s.kind as string) &&
   isNumber(s.startedAt) &&
   (s.endedAt === undefined || isNumber(s.endedAt));
 
-const validAttempt: Check = (a) =>
+export const validAttempt: Check = (a) =>
   isString(a.id) &&
   isString(a.sessionId) &&
   isNumber(a.at) &&
@@ -92,7 +93,7 @@ const validAttempt: Check = (a) =>
   isNumber(a.replays) &&
   typeof a.helpUsed === 'boolean';
 
-const validEvent: Check = (e) =>
+export const validEvent: Check = (e) =>
   isString(e.id) &&
   isNumber(e.at) &&
   isString(e.stepId) &&

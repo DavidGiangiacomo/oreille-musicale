@@ -6,7 +6,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig([
-  globalIgnores(['dist', 'coverage', 'android', 'node_modules']),
+  globalIgnores(['dist', 'coverage', 'android', 'node_modules', 'server/dist', 'server/.wrangler']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -30,8 +30,8 @@ export default defineConfig([
         {
           patterns: [
             {
-              regex: '(^|/)(ui|audio|data|platform)(/|$)',
-              message: 'src/core ne doit pas importer ui, audio, data ou platform (§10.3).',
+              regex: '(^|/)(ui|audio|data|platform|sync)(/|$)',
+              message: 'src/core ne doit pas importer ui, audio, data, platform ou sync (§10.3).',
             },
             {
               group: ['react', 'react-dom', 'react-dom/*', 'react-router'],

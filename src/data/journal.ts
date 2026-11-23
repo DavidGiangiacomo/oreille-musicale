@@ -6,7 +6,9 @@ import {
   type Settings,
 } from '../core/journal';
 import type { BackupData } from '../core/backup';
+import { settingChanges } from '../core/sync/merge';
 import type { OreilleDatabase } from './database';
+import { deviceId, nextStamp, settingChangeRow } from './sync';
 
 export interface SessionSummary {
   session: SessionRecord;
@@ -81,8 +83,18 @@ export function createJournal(db: OreilleDatabase) {
       return normalizeSettings(await db.settings.get('settings'));
     },
 
+    /**
+     * Enregistre les réglages, et chaque réglage partagé modifié, horodaté : c'est
+     * ce qui permet de fusionner les réglages entre appareils (§10.8).
+     */
     async saveSettings(settings: Settings): Promise<void> {
-      await db.settings.put({ ...settings, id: 'settings' });
+      const device = await deviceId(db);
+      await db.transaction('rw', [db.settings, db.settingChanges], async () => {
+        const previous = normalizeSettings(await db.settings.get('settings'));
+        const changes = settingChanges(previous, settings, await nextStamp(db), device);
+        await db.settingChanges.bulkPut(changes.map(settingChangeRow));
+        await db.settings.put({ ...settings, id: 'settings' });
+      });
     },
 
     /** Tout le journal et les réglages, pour une sauvegarde (§10.6). */
@@ -103,16 +115,33 @@ export function createJournal(db: OreilleDatabase) {
      * transaction : en cas d'erreur, rien n'est modifié.
      */
     async replaceAll(data: BackupData): Promise<void> {
-      await db.transaction('rw', [db.sessions, db.attempts, db.events, db.settings], async () => {
+      const device = await deviceId(db);
+      const tables = [
+        db.sessions,
+        db.attempts,
+        db.events,
+        db.settings,
+        db.settingChanges,
+        db.syncedKeys,
+        db.syncMeta,
+      ];
+      await db.transaction('rw', tables, async () => {
+        const previous = normalizeSettings(await db.settings.get('settings'));
         await Promise.all([
           db.sessions.clear(),
           db.attempts.clear(),
           db.events.clear(),
           db.settings.clear(),
+          // Avec la synchronisation active, tout le dossier du serveur sera relu et
+          // fusionné avec la sauvegarde importée, puis celle-ci envoyée.
+          db.syncedKeys.clear(),
         ]);
+        if (await db.syncMeta.get('cursor')) await db.syncMeta.put({ key: 'cursor', value: 0 });
         await db.sessions.bulkAdd(data.sessions);
         await db.attempts.bulkAdd(data.attempts);
         await db.events.bulkAdd(data.events);
+        const changes = settingChanges(previous, data.settings, await nextStamp(db), device);
+        await db.settingChanges.bulkPut(changes.map(settingChangeRow));
         await db.settings.put({ ...data.settings, id: 'settings' });
       });
     },

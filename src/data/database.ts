@@ -1,9 +1,27 @@
 import { Dexie, type EntityTable } from 'dexie';
 import type { Attempt, ProgressEvent, SessionRecord, Settings } from '../core/journal';
+import type { SettingChange } from '../core/sync/records';
 
 /** Ligne unique des réglages ; seuls les champs connus sont relus (normalizeSettings). */
 export interface SettingsRow extends Partial<Settings> {
   id: 'settings';
+}
+
+/** Modification d'un réglage partagé, gardée pour la fusion entre appareils (§10.8). */
+export interface SettingChangeRow extends SettingChange {
+  key: string;
+}
+
+/** Valeurs propres à la synchronisation : appareil, clé, position de lecture. */
+export interface SyncMetaRow {
+  key: 'device' | 'syncKey' | 'cursor' | 'lastSyncAt';
+  value: string | number;
+}
+
+/** Enregistrement reçu d'une version plus récente de l'appli, à relire après mise à jour. */
+export interface DeferredRow {
+  id: string;
+  data: string;
 }
 
 export type OreilleDatabase = Dexie & {
@@ -11,6 +29,11 @@ export type OreilleDatabase = Dexie & {
   attempts: EntityTable<Attempt, 'id'>;
   settings: EntityTable<SettingsRow, 'id'>;
   events: EntityTable<ProgressEvent, 'id'>;
+  settingChanges: EntityTable<SettingChangeRow, 'key'>;
+  /** Clés des enregistrements déjà présents sur le serveur. */
+  syncedKeys: EntityTable<{ key: string }, 'key'>;
+  syncMeta: EntityTable<SyncMetaRow, 'key'>;
+  syncDeferred: EntityTable<DeferredRow, 'id'>;
 };
 
 /**
@@ -35,6 +58,20 @@ export const SCHEMA_VERSIONS = [
       attempts: 'id, sessionId, at, competenceId, stepId',
       settings: 'id',
       events: 'id, at, stepId, type',
+    },
+  },
+  {
+    // v2 de l'appli : synchronisation entre appareils (§10.8).
+    version: 3,
+    stores: {
+      sessions: 'id, startedAt',
+      attempts: 'id, sessionId, at, competenceId, stepId',
+      settings: 'id',
+      events: 'id, at, stepId, type',
+      settingChanges: 'key, field',
+      syncedKeys: 'key',
+      syncMeta: 'key',
+      syncDeferred: 'id',
     },
   },
 ] as const;

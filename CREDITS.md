@@ -27,4 +27,4 @@ Les échantillons ont été modifiés pour l'appli (sélection de notes, mono, d
 
 ## Outils de développement
 
-Vite, vite-plugin-pwa, TypeScript, Vitest, fast-check, Playwright, axe-core (audit d’accessibilité, MPL-2.0), ESLint et Prettier servent à construire et à tester l'appli. Ils ne sont pas inclus dans ce qui est distribué.
+Vite, vite-plugin-pwa, TypeScript, Vitest, fast-check, Playwright, axe-core (audit d’accessibilité, MPL-2.0), Wrangler (déploiement du serveur de synchronisation), ESLint et Prettier servent à construire et à tester l'appli. Ils ne sont pas inclus dans ce qui est distribué.

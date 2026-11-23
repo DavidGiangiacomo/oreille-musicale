@@ -5,6 +5,7 @@ import { DailyCard } from '../home/DailyCard';
 import { HistoryList } from '../home/HistoryList';
 import { PreferencesPanel } from '../home/PreferencesPanel';
 import { SeriesLauncher } from '../home/SeriesLauncher';
+import { SyncPanel } from '../home/SyncPanel';
 import { useSettings } from '../settings/settingsContext';
 
 export function HomeScreen() {
@@ -33,6 +34,7 @@ export function HomeScreen() {
       <SeriesLauncher />
       <HistoryList />
       <PreferencesPanel />
+      <SyncPanel />
       <BackupPanel />
 
       <footer className="flex flex-col gap-1 text-xs text-slate-500 dark:text-slate-400">
