@@ -8,7 +8,7 @@ import {
   STEPS,
   stepId,
   stepsOfTrack,
-  landmarkFor,
+  landmarksFor,
 } from './index';
 
 const steps = stepsOfTrack('intervals');
@@ -203,12 +203,27 @@ describe('parcours Gammes et Modes', () => {
 });
 
 describe('chansons repères', () => {
-  it('donne un repère à chaque intervalle, et préfère ceux de l’utilisateur', () => {
-    for (const code of INTERVAL_CODES) expect(landmarkFor(code, 'asc', {})).toBeTruthy();
-    expect(landmarkFor('M2', 'desc', {})).toBe('Yesterday (Beatles)');
-    expect(landmarkFor('M2', 'harm', {})).toBe('Frère Jacques');
-    expect(landmarkFor('TT', 'desc', {})).toBeNull();
-    expect(landmarkFor('M3', 'asc', { 'M3:asc': 'Kumbaya' })).toBe('Kumbaya');
-    expect(landmarkFor('M3', 'asc', { 'M3:asc': '  ' })).toBe('When the Saints Go Marching In');
+  it('donne au moins un repère montant à chaque intervalle, sans doublon', () => {
+    for (const code of INTERVAL_CODES) {
+      expect(landmarksFor(code, 'asc', {}).length).toBeGreaterThan(0);
+      for (const presentation of ['asc', 'desc']) {
+        const landmarks = landmarksFor(code, presentation, {});
+        expect(new Set(landmarks).size).toBe(landmarks.length);
+        for (const landmark of landmarks) expect(landmark.trim()).toBe(landmark);
+      }
+    }
+  });
+
+  it('propose plusieurs repères, et préfère celui de l’utilisateur', () => {
+    expect(landmarksFor('M2', 'desc', {})).toEqual([
+      'Yesterday (Beatles)',
+      'Mary Had a Little Lamb',
+      'Three Blind Mice',
+    ]);
+    expect(landmarksFor('M2', 'harm', {})[0]).toBe('Frère Jacques');
+    expect(landmarksFor('P5', 'asc', {})).toContain('In the End (Linkin Park), riff de piano');
+    expect(landmarksFor('m6', 'desc', {})).toEqual([]);
+    expect(landmarksFor('M3', 'asc', { 'M3:asc': ' Ma chanson ' })).toEqual(['Ma chanson']);
+    expect(landmarksFor('M3', 'asc', { 'M3:asc': '  ' })[0]).toBe('When the Saints Go Marching In');
   });
 });
