@@ -1,11 +1,9 @@
 name: Serveur de synchronisation
 
 # Déploie le serveur de synchronisation sur Cloudflare (server/README.md).
-# Prérequis, dans Settings → Secrets and variables → Actions :
-#   - secrets CLOUDFLARE_API_TOKEN et CLOUDFLARE_ACCOUNT_ID ;
-#   - D1_DATABASE_ID (identifiant de la base D1 « oreille-musicale-sync »), en
-#     variable ou en secret.
-# Sans eux, le workflow s'arrête sans rien déployer.
+# Prérequis, dans Settings → Secrets and variables → Actions : les secrets
+# CLOUDFLARE_API_TOKEN et CLOUDFLARE_ACCOUNT_ID. Sans eux, le workflow s'arrête sans
+# rien déployer. La base D1 « oreille-musicale-sync » est retrouvée, ou créée, seule.
 on:
   push:
     # TEMPORAIRE : branche de travail ajoutée pour vérifier la configuration
@@ -34,7 +32,6 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      D1_DATABASE_ID: ${{ vars.D1_DATABASE_ID || secrets.D1_DATABASE_ID }}
       WRANGLER_SEND_METRICS: 'false'
     steps:
       - name: Vérifier la configuration
@@ -44,7 +41,6 @@ jobs:
           missing=""
           [ -n "$CLOUDFLARE_API_TOKEN" ] || missing="$missing CLOUDFLARE_API_TOKEN"
           [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || missing="$missing CLOUDFLARE_ACCOUNT_ID"
-          [ -n "$D1_DATABASE_ID" ] || missing="$missing D1_DATABASE_ID"
           if [ -n "$missing" ]; then
             echo "::notice::Configuration Cloudflare incomplète, rien n'est déployé. Manquant :$missing (voir server/README.md)."
             echo "ready=false" >> "$GITHUB_OUTPUT"
@@ -61,21 +57,31 @@ jobs:
           cache-dependency-path: server/package-lock.json
       - if: steps.config.outputs.ready == 'true'
         run: npm ci
-      - name: Renseigner la base D1
+      - name: Retrouver ou créer la base D1
         if: steps.config.outputs.ready == 'true'
         run: |
-          clean() { printf '%s' "$1" | tr -d '[:space:]-' | tr 'A-F' 'a-f'; }
-          id="$(clean "$D1_DATABASE_ID")"
-          if [ "$id" = "$(clean "$CLOUDFLARE_ACCOUNT_ID")" ]; then
-            echo "::error::D1_DATABASE_ID contient l'identifiant du compte Cloudflare. Il faut celui de la base : Storage & databases → D1 → oreille-musicale-sync → « Database ID »."
+          find_database() {
+            npx wrangler d1 list --json | node -e '
+              let text = "";
+              process.stdin.on("data", (chunk) => (text += chunk));
+              process.stdin.on("end", () => {
+                const found = JSON.parse(text).find((db) => db.name === "oreille-musicale-sync");
+                process.stdout.write(found ? found.uuid : "");
+              });'
+          }
+          id="$(find_database)"
+          if [ -z "$id" ]; then
+            echo "Création de la base D1 oreille-musicale-sync."
+            npx wrangler d1 create oreille-musicale-sync > /dev/null
+            id="$(find_database)"
+          fi
+          if [ -z "$id" ]; then
+            echo "::error::Base D1 introuvable et impossible à créer : vérifier que le jeton d'API a la permission « D1 → Edit »."
             exit 1
           fi
-          if ! printf '%s' "$id" | grep -Eq '^[0-9a-f]{32}$'; then
-            echo "::error::D1_DATABASE_ID n'a pas la forme d'un identifiant de base D1 (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx ; valeur reçue : ${#id} caractères hors tirets et espaces)."
-            exit 1
-          fi
-          uuid="${id:0:8}-${id:8:4}-${id:12:4}-${id:16:4}-${id:20:12}"
-          sed -i "s/00000000-0000-0000-0000-000000000000/$uuid/" wrangler.jsonc
+          # L'identifiant n'est pas un secret, mais il n'a rien à faire dans les journaux.
+          echo "::add-mask::$id"
+          sed -i "s/00000000-0000-0000-0000-000000000000/$id/" wrangler.jsonc
       - name: Mettre à jour le schéma de la base
         if: steps.config.outputs.ready == 'true'
         run: npm run migrate

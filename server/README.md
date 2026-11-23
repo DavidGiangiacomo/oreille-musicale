@@ -26,12 +26,9 @@ npx wrangler dev
 
 1. **Créer un compte** sur [dash.cloudflare.com](https://dash.cloudflare.com/sign-up).
 2. **Noter l'identifiant du compte** : page d'accueil du tableau de bord, menu « ⋯ » à côté du nom du compte → « Copy account ID » (ou dans la colonne de droite de la page « Workers & Pages »).
-3. **Créer la base D1** : « Storage & databases » → « D1 SQL database » → « Create », nom `oreille-musicale-sync`. Noter son identifiant (« Database ID »).
-4. **Créer un jeton d'API** : « My Profile » → « API Tokens » → « Create Token » → modèle « Edit Cloudflare Workers », puis ajouter la permission « Account → D1 → Edit ». Le copier : il ne s'affiche qu'une fois.
-5. **Dans GitHub**, Settings → Secrets and variables → Actions :
-   - onglet « Secrets » : `CLOUDFLARE_API_TOKEN` (le jeton) et `CLOUDFLARE_ACCOUNT_ID` (l'identifiant du compte) ;
-   - onglet « Variables » : `D1_DATABASE_ID` (l'identifiant de la base).
-6. **Déployer** : onglet Actions → « Serveur de synchronisation » → « Run workflow ». Le workflow crée les tables, puis publie le Worker à l'adresse `https://oreille-musicale-sync.<sous-domaine>.workers.dev`. Il se relance ensuite seul à chaque modification du serveur sur `main`.
+3. **Créer un jeton d'API** : « My Profile » → « API Tokens » → « Create Token » → modèle « Edit Cloudflare Workers », puis ajouter la permission « Account → D1 → Edit ». Le copier : il ne s'affiche qu'une fois.
+4. **Dans GitHub**, Settings → Secrets and variables → Actions → onglet « Secrets » : `CLOUDFLARE_API_TOKEN` (le jeton) et `CLOUDFLARE_ACCOUNT_ID` (l'identifiant du compte).
+5. **Déployer** : onglet Actions → « Serveur de synchronisation » → « Run workflow ». Le workflow retrouve la base D1 `oreille-musicale-sync`, ou la crée, met ses tables à jour, puis publie le Worker à l'adresse `https://oreille-musicale-sync.<sous-domaine>.workers.dev`. Il se relance ensuite tout seul à chaque modification du serveur sur `main`.
 
 Ne jamais mettre le jeton d'API dans le dépôt ni le coller dans une discussion : il ne vit que dans les secrets GitHub.
 
