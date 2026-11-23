@@ -7,7 +7,9 @@ name: Serveur de synchronisation
 # Sans eux, le workflow s'arrête sans rien déployer.
 on:
   push:
-    branches: [main]
+    # TEMPORAIRE : branche de travail ajoutée pour vérifier la configuration
+    # Cloudflare avant la PR ; à retirer avant la fusion.
+    branches: [main, ccr-3cdc9837-hsf7nd]
     paths:
       - 'server/**'
       - 'src/sync/protocol.ts'
