@@ -39,6 +39,9 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Exercices chantés : le micro n'est ouvert que pendant le chant, rien n'est enregistré. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <!-- Le rappel quotidien n'a pas besoin d'être à la minute près : pas d'alarme exacte,
          réservée par le Play Store aux applications de réveil et d'agenda. -->
     <uses-permission

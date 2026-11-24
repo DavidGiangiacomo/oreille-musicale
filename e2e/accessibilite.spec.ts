@@ -11,6 +11,7 @@ const SCREENS: { name: string; path: string; ready: RegExp | string }[] = [
   { name: 'positionnement', path: './#/positionnement', ready: 'Tests de positionnement' },
   { name: 'repères', path: './#/reperes', ready: 'Mes chansons repères' },
   { name: 'à propos', path: './#/a-propos', ready: 'À propos' },
+  { name: 'labo micro', path: './#/labo-micro', ready: 'Labo micro' },
 ];
 
 async function audit(page: Page) {

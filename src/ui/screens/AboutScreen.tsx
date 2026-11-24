@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Link } from 'react-router';
 import { ScreenHeader } from '../components/ScreenParts';
 import { card, cardTitle, muted } from '../styles';
 
@@ -47,7 +48,11 @@ export function AboutScreen() {
             techniques de connexion selon sa propre politique. L’application Android fonctionne sans
             connexion.
           </li>
-          <li>Ni micro, ni caméra, ni position, ni contacts, ni mesure d’audience.</li>
+          <li>
+            Le micro ne s’ouvre que dans le Labo micro, et seulement à ta demande : le son n’est ni
+            enregistré ni envoyé, seule la hauteur détectée est affichée.
+          </li>
+          <li>Ni caméra, ni position, ni contacts, ni mesure d’audience.</li>
           <li>
             Pour tout effacer : désinstalle l’application, ou efface les données du site dans ton
             navigateur (exporte d’abord ta progression si tu veux la garder).
@@ -78,8 +83,8 @@ export function AboutScreen() {
           ), échantillons adaptés pour l’appli.
         </p>
         <p>
-          Bibliothèques : React, React Router, Tonal, ts-fsrs, Dexie, Capacitor, Workbox, Tailwind
-          CSS (licences MIT et Apache 2.0). Détail dans le fichier{' '}
+          Bibliothèques : React, React Router, Tonal, ts-fsrs, pitchy, Dexie, Capacitor, Workbox,
+          Tailwind CSS (licences MIT et Apache 2.0). Détail dans le fichier{' '}
           <External href={`${REPOSITORY}/blob/main/CREDITS.md`}>CREDITS.md</External>.
         </p>
       </section>
@@ -94,6 +99,19 @@ export function AboutScreen() {
           ultérieure. Le code source est sur <External href={REPOSITORY}>GitHub</External>.
         </p>
         <p className={`text-sm ${muted}`}>Version {__APP_VERSION__}</p>
+      </section>
+
+      <section className={card} aria-labelledby="labo">
+        <h2 id="labo" className={cardTitle}>
+          Labo micro
+        </h2>
+        <p>
+          Les exercices chantés sont en préparation. En attendant, le Labo micro permet de vérifier
+          que ta voix est bien reconnue sur cet appareil.
+        </p>
+        <Link to="/labo-micro" className="font-medium underline underline-offset-4">
+          Essayer la détection de la voix
+        </Link>
       </section>
 
       <section className={card} aria-labelledby="soutenir">

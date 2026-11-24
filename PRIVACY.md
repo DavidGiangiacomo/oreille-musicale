@@ -1,6 +1,6 @@
 # Politique de confidentialité
 
-_Oreille musicale — dernière mise à jour : 23 novembre 2026_
+_Oreille musicale — dernière mise à jour : 24 novembre 2026_
 
 Oreille musicale est un logiciel libre d'entraînement de l'oreille musicale, sans compte, sans publicité et sans traceur. **Aucune donnée personnelle n'est collectée.** Si tu actives la synchronisation entre tes appareils, ta progression est chiffrée sur l'appareil avant d'être envoyée : personne d'autre que toi ne peut la lire.
 
@@ -26,9 +26,10 @@ Désactivée par défaut. Si tu l'actives, l'appli crée une **clé de synchroni
 - L'**application Android** embarque tout ce dont elle a besoin et fonctionne sans connexion (la synchronisation, si tu l'actives, se fait quand le réseau est là).
 - Le **lien de dons** de l'écran « À propos » ouvre la page Ko-fi du projet dans ton navigateur. Ko-fi est un service extérieur, avec sa propre politique de confidentialité ; l'appli ne lui transmet rien.
 
-## Ce que l'appli n'utilise pas
+## Micro, et ce que l'appli n'utilise pas
 
-Ni micro, ni caméra, ni position, ni contacts, ni identifiant publicitaire, ni outil de mesure d'audience.
+- **Micro** : il ne s'ouvre que dans le Labo micro (écran « À propos »), et plus tard dans les exercices chantés, à ta demande et seulement pendant l'exercice. Le son est analysé sur l'appareil, au fil de l'eau : il n'est ni enregistré ni envoyé, seule la hauteur détectée est utilisée. Sur Android, l'appli demande pour cela l'autorisation d'utiliser le micro.
+- Ni caméra, ni position, ni contacts, ni identifiant publicitaire, ni outil de mesure d'audience.
 
 ## Supprimer tes données
 

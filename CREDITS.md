@@ -14,16 +14,17 @@ Les échantillons ont été modifiés pour l'appli (sélection de notes, mono, d
 
 ## Bibliothèques incluses dans l'appli
 
-| Bibliothèque                                                                                         | Rôle                                                        | Licence    |
-| ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ---------- |
-| [React](https://react.dev) et React DOM                                                              | Interface                                                   | MIT        |
-| [React Router](https://reactrouter.com)                                                              | Navigation                                                  | MIT        |
-| [Tonal](https://github.com/tonaljs/tonal)                                                            | Théorie musicale (orthographe des notes et des intervalles) | MIT        |
-| [ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs)                                         | Révisions espacées (algorithme FSRS)                        | MIT        |
-| [Capacitor](https://capacitorjs.com) et ses extensions (App, Filesystem, Share, Local Notifications) | Application Android                                         | MIT        |
-| [Workbox](https://developer.chrome.com/docs/workbox)                                                 | Fonctionnement hors-ligne de la version web                 | MIT        |
-| [Dexie](https://dexie.org)                                                                           | Stockage local (IndexedDB)                                  | Apache 2.0 |
-| [Tailwind CSS](https://tailwindcss.com)                                                              | Styles                                                      | MIT        |
+| Bibliothèque                                                                                         | Rôle                                                               | Licence    |
+| ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | ---------- |
+| [React](https://react.dev) et React DOM                                                              | Interface                                                          | MIT        |
+| [React Router](https://reactrouter.com)                                                              | Navigation                                                         | MIT        |
+| [Tonal](https://github.com/tonaljs/tonal)                                                            | Théorie musicale (orthographe des notes et des intervalles)        | MIT        |
+| [ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs)                                         | Révisions espacées (algorithme FSRS)                               | MIT        |
+| [Capacitor](https://capacitorjs.com) et ses extensions (App, Filesystem, Share, Local Notifications) | Application Android                                                | MIT        |
+| [Workbox](https://developer.chrome.com/docs/workbox)                                                 | Fonctionnement hors-ligne de la version web                        | MIT        |
+| [pitchy](https://github.com/ianprime0509/pitchy) et [fft.js](https://github.com/indutny/fft.js)      | Détection de la hauteur de la voix (Labo micro, exercices chantés) | MIT        |
+| [Dexie](https://dexie.org)                                                                           | Stockage local (IndexedDB)                                         | Apache 2.0 |
+| [Tailwind CSS](https://tailwindcss.com)                                                              | Styles                                                             | MIT        |
 
 ## Outils de développement
 

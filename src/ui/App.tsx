@@ -12,6 +12,7 @@ import { PlacementHub, PlacementScreen } from './placement/PlacementScreen';
 import { AboutScreen } from './screens/AboutScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { LandmarksScreen } from './screens/LandmarksScreen';
+import { MicLabScreen } from './screens/MicLabScreen';
 import { SeriesScreen } from './series/SeriesScreen';
 import { SettingsProvider } from './settings/SettingsProvider';
 import { StatsScreen } from './stats/StatsScreen';
@@ -29,6 +30,7 @@ const router = createHashRouter([
   { path: '/a-propos', element: <AboutScreen /> },
   { path: '/statistiques', element: <StatsScreen /> },
   { path: '/reperes', element: <LandmarksScreen /> },
+  { path: '/labo-micro', element: <MicLabScreen /> },
   { path: '/positionnement', element: <PlacementHub /> },
   { path: '/positionnement/:trackId', element: <PlacementScreen /> },
   { path: '*', element: <Navigate to="/" replace /> },
